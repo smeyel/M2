@@ -23,13 +23,13 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="include\TimeMeasurementCodeDefines.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="include\myconfigmanager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="include\PhoneProxy.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\TimeMeasurementCodeDefines.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

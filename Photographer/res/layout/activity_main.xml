@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent">
+    
+    
+    <ImageView
+        android:id="@+id/ivPhoto"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:visibility="gone"
+        android:contentDescription="@string/ivPhoto"
+        />
+
+    <Button
+        android:id="@+id/btnHttpGet"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/btnReg" />
+
+    <TextView
+        android:id="@+id/TextView_message"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/TextView_message"
+        android:textSize="20sp" />
+
+
+    <TextView
+        android:id="@+id/TextView_receivedme"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/TextView_receivedme" />
+
+    <TextView
+        android:id="@+id/TextView_time"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="24dp"
+        android:text="@string/TextView_time" 
+        android:textSize="20sp"/>
+        
+
+    <TextView
+        android:id="@+id/TextView_timegot"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/TextView_timegot" />
+    
+
+</LinearLayout>
+    

@@ -1,0 +1,26 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Visual Studio 2010
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Cpp_socket", "Cpp_socket.vcxproj", "{29BB5575-46EB-4B0E-821B-BD2936EACAC7}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DummySmartphone", "DummySmartphone\DummySmartphone.vcxproj", "{2C7AF266-7907-4419-9573-124D1430CD18}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		Release|Win32 = Release|Win32
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{29BB5575-46EB-4B0E-821B-BD2936EACAC7}.Debug|Win32.ActiveCfg = Debug|Win32
+		{29BB5575-46EB-4B0E-821B-BD2936EACAC7}.Debug|Win32.Build.0 = Debug|Win32
+		{29BB5575-46EB-4B0E-821B-BD2936EACAC7}.Release|Win32.ActiveCfg = Release|Win32
+		{29BB5575-46EB-4B0E-821B-BD2936EACAC7}.Release|Win32.Build.0 = Release|Win32
+		{2C7AF266-7907-4419-9573-124D1430CD18}.Debug|Win32.ActiveCfg = Debug|Win32
+		{2C7AF266-7907-4419-9573-124D1430CD18}.Debug|Win32.Build.0 = Debug|Win32
+		{2C7AF266-7907-4419-9573-124D1430CD18}.Release|Win32.ActiveCfg = Release|Win32
+		{2C7AF266-7907-4419-9573-124D1430CD18}.Release|Win32.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

@@ -21,6 +21,10 @@
 //#include "FileLogger.h"
 #include "StdOutLogger.h"
 
+#include "JsonMessage.h"
+
+#include "picojson.h"
+
 using namespace cv;
 using namespace std;
 using namespace LogConfigTime;
@@ -121,6 +125,16 @@ void init(char *inifilename)
 }
 
 
+
+void handleJSON(char *json)
+{
+	JsonMessage *msg = JsonMessage::parse(json);
+
+	// TODO: Handle message
+	msg->log();
+	return;
+}
+
 int main(int argc, char *argv[])
 {
 	if (argc>=2)
@@ -177,6 +191,8 @@ int main(int argc, char *argv[])
 		memset(json,0,4096);
 		memcpy(json,start,finish-start+1);
 		printf("JSON: %s\n",json);
+
+		handleJSON(json);
 
 		char *response = "{ \"type\"=\"pong\" }";
 		n = send(sock,response,strlen(response),0);

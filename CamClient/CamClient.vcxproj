@@ -11,10 +11,16 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\JsonMessage.cpp" />
     <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\PingMessage.cpp" />
+    <ClCompile Include="src\TakePictureMessage.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="include\JsonMessage.h" />
     <ClInclude Include="include\myconfigmanager.h" />
+    <ClInclude Include="include\PingMessage.h" />
+    <ClInclude Include="include\TakePictureMessage.h" />
     <ClInclude Include="include\TimeMeasurementCodeDefines.h" />
   </ItemGroup>
   <ItemGroup>
@@ -67,7 +73,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(OPENCV_DIR)\include;%(AdditionalIncludeDirectories); include;$(SolutionDir)/Framework/libVideoInput/include;$(SolutionDir)/Framework/libLogConfigTime/include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(OPENCV_DIR)\include;%(AdditionalIncludeDirectories); include;$(SolutionDir)/Framework/libVideoInput/include;$(SolutionDir)/Framework/libLogConfigTime/include;$(SolutionDir)/Framework/libCommunication/include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>

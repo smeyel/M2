@@ -1,9 +1,9 @@
 #include <iostream>
-#include <sstream>
-#include <time.h>
-#include <fstream>	// For marker data export into file...
+//#include <sstream>
+//#include <time.h>
+//#include <fstream>	// For marker data export into file...
 
-#include <windows.h>	// for sleep
+//#include <windows.h>	// for sleep
 
 #include <opencv2/opencv.hpp>
 #include <opencv2/core/core.hpp>

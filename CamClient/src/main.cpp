@@ -124,14 +124,23 @@ void init(char *inifilename)
 	initServerSocket(configManager.serverPort);
 }
 
-
-
-void handleJSON(char *json)
+void handleJSON(char *json, SOCKET sock)
 {
 	JsonMessage *msg = JsonMessage::parse(json);
 
 	// TODO: Handle message
+	Logger::getInstance()->Log(Logger::LOGLEVEL_INFO,"CamClient","Executing command:\n");
 	msg->log();
+
+	char *response = "{ \"type\"=\"pong\" }";
+	int n = send(sock,response,strlen(response),0);
+	if (n < 0)
+	{
+		Logger::getInstance()->Log(Logger::LOGLEVEL_ERROR,"CamClient","Error on reading from socket.\n");
+	}
+
+
+	Logger::getInstance()->Log(Logger::LOGLEVEL_INFO,"CamClient","Command handled\n");
 	return;
 }
 
@@ -192,15 +201,8 @@ int main(int argc, char *argv[])
 		memcpy(json,start,finish-start+1);
 		printf("JSON: %s\n",json);
 
-		handleJSON(json);
-
-		char *response = "{ \"type\"=\"pong\" }";
-		n = send(sock,response,strlen(response),0);
-		if (n < 0)
-		{
-			Logger::getInstance()->Log(Logger::LOGLEVEL_ERROR,"CamClient","Error on reading from socket.\n");
-		}
-		Logger::getInstance()->Log(Logger::LOGLEVEL_INFO,"CamClient","Command handled\n");
+		// ---------- Message received, now handle it
+		handleJSON(json, sock);
 
 		// Close connection
 		closesocket(sock); 

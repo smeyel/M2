@@ -52,7 +52,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(OPENCV_DIR)\include;%(AdditionalIncludeDirectories);include;$(SolutionDir)Framework\libMiscTimeAndConfig\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(OPENCV_DIR)\include;%(AdditionalIncludeDirectories);include;$(SolutionDir)Framework\libLogConfigTime\include;$(SolutionDir)Framework\libCommunication/include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -81,16 +81,17 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="src\main.cpp" />
-    <ClCompile Include="src\PhoneProxy.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\myconfigmanager.h" />
-    <ClInclude Include="include\PhoneProxy.h" />
     <ClInclude Include="include\TimeMeasurementCodeDefines.h" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Framework\libMiscTimeAndConfig\libMiscTimeAndConfig.vcxproj">
+    <ProjectReference Include="..\Framework\libCommunication\libCommunication.vcxproj">
       <Project>{9e89c9bd-92d5-46a6-b7ab-b59a0ddfb391}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\Framework\libLogConfigTime\libLogConfigTime.vcxproj">
+      <Project>{8927a516-de0f-4550-ae3f-14876252f716}</Project>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

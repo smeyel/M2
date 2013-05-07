@@ -2,7 +2,7 @@
 #define __TIMEMEASUREMENTCODEDEFINES_H_
 
 #include "TimeMeasurement.h"
-using namespace MiscTimeAndConfig;
+using namespace LogConfigTime;
 
 namespace M2
 {

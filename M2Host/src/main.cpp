@@ -16,47 +16,45 @@
 //#include "VideoInputFactory.h"
 //#include "VideoInputPs3EyeParameters.h"
 
+#include "TimeMeasurement.h"
+//#include "Logger.h"
+#include "FileLogger.h"
+
 #include "../include/TimeMeasurementCodeDefines.h"
 
 using namespace cv;
 using namespace std;
-using namespace MiscTimeAndConfig;
 
 MyConfigManager configManager;
-char *configfilename = "m2_default.ini";
+char *configfilename = "m2_default.ini";	// 1st command line parameter overrides it (if exists)
 
 /** Implementation of M2 scenario
 */
-void main()
+int main(int argc, char *argv[])
 {
+	if (argc>=2)
+	{
+		// INI file is given as command line parameter
+		configfilename = argv[1];
+	}
 	// Setup config management
 	configManager.init(configfilename);
 
 	// Setup statistics output file
-	ofstream log;
-	log.open(configManager.logFileName,ios_base::out);
+	Logger *logger = new FileLogger(configManager.logFileName.c_str());
+	logger->SetLogLevel(Logger::LOGLEVEL_INFO);
+	Logger::getInstance()->Log(Logger::LOGLEVEL_VERBOSE,"M2Host","M2Host started\n");
+
 	cout << "Log is written to: " << configManager.logFileName << endl;
 
 	// Write current time and date to log
     time_t t = time(0);   // get time now
     struct tm * now = localtime( & t );
-	log << "Current time: " 
-		<< (now->tm_year + 1900) << '-' 
-        << (now->tm_mon + 1) << '-'
-        <<  now->tm_mday << " "
-		<< now->tm_hour << ":" << now->tm_min << ":" << now->tm_sec
-        << endl;
-
-	// Write name of config and input files into log
-	log << "Config file: " << configfilename << endl;
-	log << "Output (CSV) file: " << configManager.outputFileName << endl;
-	log << "Input cam files: " << endl <<
-		"  " << configManager.cam0FileName << endl <<
-		"  " << configManager.cam1FileName << endl <<
-		"  " << configManager.cam2FileName << endl;
+	Logger::getInstance()->Log(Logger::LOGLEVEL_VERBOSE,"M2Host","Current time: %d-%d-%d, %d:%d:%d\n",
+		(now->tm_year + 1900),(now->tm_mon + 1),now->tm_mday,now->tm_hour,now->tm_min,now->tm_sec );
 
 	// Setup time management
-	MiscTimeAndConfig::TimeMeasurement timeMeasurement;
+	LogConfigTime::TimeMeasurement timeMeasurement;
 	timeMeasurement.init();
 	M2::TimeMeasurementCodeDefs::setnames(&timeMeasurement);
 
@@ -68,9 +66,11 @@ void main()
 
 		// Request image from the phone
 
-		char *ip = "152.66.173.130";
-		int port = 6000;
-		PhoneProxy proxy(&log);
+		//char *ip = "152.66.173.130";
+		char ip[20];
+		strcpy(ip,configManager.phoneIpAddress.c_str());
+		int port = configManager.phonePort;
+		PhoneProxy proxy;
 
 		char tmpBuff[100];
 		/*cout << "Press enter to start connecting..." << endl;
@@ -80,7 +80,9 @@ void main()
 		proxy.RequestPing();
 		proxy.ReceiveDebug();
 		//proxy.Receive("d:\\temp\\nothing.txt");
-		proxy.Disconnect();*/
+		proxy.Disconnect();
+
+		continue;	// WARNING, function bypass! */
 
 		_int64 desiredTimeStamp = 0;
 		_int64 last1PictureTimeStamp = 0;	// Last timestamp
@@ -148,6 +150,7 @@ void main()
 		frameIdx++;
 	}
 	timeMeasurement.finish(M2::TimeMeasurementCodeDefs::FullExecution);
+/*	Logger::getInstance()->Log(Logger::LOGLEVEL_VERBOSE,"M2Host","Current time\n"
 	log << "--- Main loop time measurement results:" << endl;
 	timeMeasurement.showresults(&log);
 
@@ -156,7 +159,7 @@ void main()
 	log << "Number of processed frames: " << frameIdx << endl;
 
 	log.flush();
-	log.close();
+	log.close();*/
 
 	cout << "Done." << endl;
 }

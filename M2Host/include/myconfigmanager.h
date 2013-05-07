@@ -1,30 +1,34 @@
 #ifndef __MYCONFIGMANAGER_H
 #define __MYCONFIGMANAGER_H
 #include "stdlib.h"
-#include "ConfigManagerBase.h"
+#include "SimpleIniConfigReader.h"
 
+using namespace LogConfigTime;
 
-class MyConfigManager : public MiscTimeAndConfig::ConfigManagerBase
+class MyConfigManager
 {
-	// This method is called by init of the base class to read the configuration values.
-	virtual bool readConfiguration(CSimpleIniA *ini)
+	virtual bool readConfiguration(char *filename)
 	{
-		showInputImage = ini->GetBoolValue("Main","showInputImage",false,NULL);
-		interactive = ini->GetBoolValue("Main","interactive",false,NULL);
-		logFileName = std::string(ini->GetValue("Main","logFileName","",NULL));
-		outputFileName = std::string(ini->GetValue("Main","outputFileName","",NULL));
+		SimpleIniConfigReader *SIreader = new SimpleIniConfigReader(filename);
+		ConfigReader *reader = SIreader;
+
+		logFileName = reader->getStringValue("main","logFileName");
+		phoneIpAddress = reader->getStringValue("main","phoneIpAddress");
+		phonePort = reader->getIntValue("main","phonePort");
+
 		return true;
 	}
 
 public:
+	void init(char *filename)
+	{
+		readConfiguration(filename);
+	}
+
 	// --- Settings
-	bool showInputImage;
-	bool interactive;
 	std::string logFileName;
-	std::string cam0FileName;
-	std::string cam1FileName;
-	std::string cam2FileName;
-	std::string outputFileName;
+	std::string phoneIpAddress;
+	int phonePort;
 };
 
 #endif

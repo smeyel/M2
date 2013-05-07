@@ -18,6 +18,7 @@ public class TimeMeasurement {
 	long[] StartTickValues;
 	double[] SumValues; //TODO Overflow?
 	int[] NumValues;	
+	String[] Names;
 	MeasurementLog UsedLog;
 	static Context appContext;
 	
@@ -26,6 +27,7 @@ public class TimeMeasurement {
 		StartTickValues = new long[MAX_TIMING_INDEX];
 		SumValues = new double[MAX_TIMING_INDEX];
 		NumValues = new int[MAX_TIMING_INDEX];
+		Names = new String[MAX_TIMING_INDEX];
 		for(int i=0; i<MAX_TIMING_INDEX; i++)
 		{
 			StartTickValues[i] = 0;
@@ -38,7 +40,7 @@ public class TimeMeasurement {
 	{
 		if (isOpenCVLoaded)
 		{
-			//FIXME negativ ID handling
+			
 			//assert (MeasurementID<0) : "ID can't be a negativ number"; 
 			TickFrequency = Core.getTickFrequency();
 			StartTickValues[MeasurementID] = Core.getCPUTickCount();
@@ -62,7 +64,8 @@ public class TimeMeasurement {
 			double currentResult = (double)(Math.round((StopTick - StartTickValues[MeasurementID]) / divider) / 1000.0);
 			SumValues[MeasurementID] += currentResult;
 			NumValues[MeasurementID]++;
-			ElapsedTimeResult Result = new ElapsedTimeResult(MeasurementID, currentResult);
+			String ActualName = Names[MeasurementID];//FIXME vizsgálni, hogy nevet beállítottak-e
+			ElapsedTimeResult Result = new ElapsedTimeResult(ActualName, currentResult);
 			UsedLog.push(Result);//FIXME vizsgálni, hogy log-ot beállítottak-e már
 			return currentResult; // in milliseconds TODO return value needed?
 		}
@@ -89,7 +92,7 @@ public class TimeMeasurement {
 		}
 	}
 	
-	public double calculateIntervall(long StartTick, long FinishTick) //Ticks are in microseconds
+	public static double calculateIntervall(long StartTick, long FinishTick) //Ticks are in microseconds
 	{
 		double TimeInterval = (double)(Math.round(FinishTick - StartTick) / 1000.0); // in milliseconds
 		return TimeInterval;
@@ -105,5 +108,16 @@ public class TimeMeasurement {
 		
 		this.UsedLog = new MeasurementLog();
 		this.UsedLog = UsedLog;
+	}
+	
+	public void setName(int MeasurementID, String Name)
+	{
+		Names[MeasurementID] = Name;
+	}
+	
+	public void pushIntervallToLog(String Name, double Intervall)
+	{
+		ElapsedTimeResult Result = new ElapsedTimeResult(Name,Intervall);
+		UsedLog.push(Result);
 	}
 }

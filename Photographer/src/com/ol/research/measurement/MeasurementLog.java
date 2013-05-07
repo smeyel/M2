@@ -37,12 +37,12 @@ public class MeasurementLog {
 			Iterator<MeasurementResult> i = ResultVector.iterator();
 			while(i.hasNext())
 			{
-				json = i.next().WriteJSON();
+				json = i.next().getJSON();
 				jArray.put(json);
 			}
 			String JSONArrayString = new String();
 			JSONArrayString = jArray.toString();
-			StringBuilder sb = new StringBuilder("{\"type\":\"measurementlog\":"); 
+			StringBuilder sb = new StringBuilder("{\"type\":\"measurementlog\",\"items\":"); 
 			sb.append(JSONArrayString);
 			sb.append("}#");
 			String JSONMessage = new String();

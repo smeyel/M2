@@ -36,6 +36,7 @@ import android.widget.Toast;
 import com.ol.research.measurement.*;
 
 /**
+ * @author Milan Tenk
  * MainActivity of the application (UI thread)
  * It starts the CommsThread, and if picture was taken, the SendImageService
  * 
@@ -61,10 +62,11 @@ public class MainActivity extends Activity {
 	 protected static final int TIME_ID = 0x1338;
 	 private boolean saveToSD = false;
 	 private static final String  TAG = "TMEAS";
-	 static ServerSocket ss = null;
+	 //static ServerSocket ss = null;
 	 static String mClientMsg = "";
 	 static byte[] lastPhotoData;
 	 static long OnShutterEventTimestamp;
+	 
 	 Camera mCamera;
 	 Thread myCommsThread = null;
 	 String current_time = null;
@@ -74,7 +76,8 @@ public class MainActivity extends Activity {
 	        @Override
 	        public void onPictureTaken(byte[] data, Camera camera) {
 	        	//TempTickCountStorage.OnPictureTakenEvent = TempTickCountStorage.GetTimeStamp();
-	        	
+	        	CommsThread.TM.Stop(CommsThread.PostProcessJPEGMsID);
+	        	CommsThread.TM.Start(CommsThread.PostProcessPostJpegMsID);
 	        	//Option to save the picture to SD card
 	        	if(saveToSD)
 	        	{
@@ -108,7 +111,8 @@ public class MainActivity extends Activity {
     			//TempTickCountStorage.OnShutterEvent = TempTickCountStorage.GetTimeStamp();
 	    		OnShutterEventTimestamp = TimeMeasurement.getTimeStamp();
 	            current_time = String.valueOf(OnShutterEventTimestamp); 
-	    		    		
+	    		CommsThread.TM.Stop(CommsThread.TakePictureMsID);   
+	    		CommsThread.TM.Start(CommsThread.PostProcessJPEGMsID);
 	    		Message timeMessage = new Message();
 	    		timeMessage.what = TIME_ID;
 	            myUpdateHandler.sendMessage(timeMessage);
@@ -225,12 +229,12 @@ public class MainActivity extends Activity {
 		super.onStop();
 		myCommsThread.interrupt(); //a socketkapcsolatra várakozó thread-et hogyan érdemes kezelni?
 		
-		try {
+		/*try {
 			ss.close();
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-		}
+		}*/
 	}
 	
 	

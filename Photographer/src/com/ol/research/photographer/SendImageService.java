@@ -46,12 +46,17 @@ public class SendImageService extends IntentService{
 	        
 	        // Send data
             //TempTickCountStorage.OnSendingResponse = TempTickCountStorage.GetTimeStamp();
+	        CommsThread.TM.Stop(CommsThread.PostProcessPostJpegMsID);
+	        CommsThread.TM.Stop(CommsThread.AllNoCommMsID);
+	        CommsThread.TM.Start(CommsThread.SendingJsonMsID);
 	        
 	        Log.i("COMM","Sending JSON and image to PC");
 	        DataOutputStream output = new DataOutputStream(os);     
 	        output.writeUTF(JSON_message);
 	        output.flush();
             //TempTickCountStorage.OnSendingJPEG = TempTickCountStorage.GetTimeStamp();
+	        CommsThread.TM.Stop(CommsThread.SendingJsonMsID);
+	        CommsThread.TM.Start(CommsThread.SendingJpegMsID);
 	       // CommsThread.ActualResult.PostProcessPostJpegMs = PostProcessPostJpegMs.TimeMeasurementStop();
 	        // ??? Ezt nem az output-ba kellene írni?
 	        os.write(mybytearray,0,mybytearray.length);
@@ -65,6 +70,8 @@ public class SendImageService extends IntentService{
 	        // Flush output stream
 	        os.flush();
             //TempTickCountStorage.OnResponseSent = TempTickCountStorage.GetTimeStamp();
+	        CommsThread.TM.Stop(CommsThread.SendingJpegMsID);
+	        CommsThread.TM.Stop(CommsThread.AllMsID);
 	        // Notify CommsThread that data has been sent
 	        Log.i("COMM","Data sent, sending notification to CommsThread...");
 	        synchronized (CommsThread.s)

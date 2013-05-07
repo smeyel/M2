@@ -10,18 +10,21 @@ import android.util.Log;
 
 public class ElapsedTimeResult implements MeasurementResult {
 	
-		int MeasurementID;
+		//int MeasurementID;
+		String Name;
 		double Result;
 	
-		ElapsedTimeResult(int MeasurementID, double TimeIntervall)
+		//ElapsedTimeResult(int MeasurementID, double TimeIntervall)
+		ElapsedTimeResult(String Name, double TimeIntervall)
 		{
-			this.MeasurementID = MeasurementID;
+			//this.MeasurementID = MeasurementID;
+			this.Name = Name;
 			this.Result = TimeIntervall;
 		}
 		
 		
 		@Override
-		public JSONObject WriteJSON() {
+		public JSONObject getJSON() {
 			/*StringBuilder sb = new StringBuilder("{\"measurementid\":\"");
 			sb.append(MeasurementID);
 			sb.append("\",\"result\":\"");
@@ -30,8 +33,9 @@ public class ElapsedTimeResult implements MeasurementResult {
 			JSONObject json = new JSONObject();
 			try {
 				String temp = new String();
-				temp = Integer.toString(MeasurementID); //if json.put gets string, it will use ""
-				json.put("measurementid",temp);
+				//temp = Integer.toString(MeasurementID); //if json.put gets string, it will use ""
+				//json.put("measurementid",temp);
+				json.put("measurementname",Name);
 				temp = Double.toString(Result);
 				json.put("result", temp);
 			} catch (JSONException e) {

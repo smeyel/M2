@@ -10,6 +10,7 @@ import java.net.SocketException;
 import java.util.Enumeration;
 
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.conn.util.InetAddressUtils;
 import org.apache.http.impl.client.BasicResponseHandler;
 import org.opencv.android.BaseLoaderCallback;
 import org.opencv.android.LoaderCallbackInterface;
@@ -244,7 +245,8 @@ public class MainActivity extends Activity {
 				NetworkInterface intf = (NetworkInterface) en.nextElement();
 				for (Enumeration enumIpAddr = intf.getInetAddresses(); enumIpAddr.hasMoreElements();) {
 					InetAddress inetAddress = (InetAddress) enumIpAddr.nextElement();
-					if (!inetAddress.isLoopbackAddress()) {
+					if (!inetAddress.isLoopbackAddress() && InetAddressUtils.isIPv4Address(inetAddress.getHostAddress())) {
+						// temporary (?) solution to use only ipv4 address
 						return inetAddress.getHostAddress().toString();
 					}
 				}

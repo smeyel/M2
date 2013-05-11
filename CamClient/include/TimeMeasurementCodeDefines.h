@@ -4,17 +4,17 @@
 #include "TimeMeasurement.h"
 using namespace LogConfigTime;
 
-namespace M2
+namespace CamClient
 {
 	class TimeMeasurementCodeDefs
 	{
 	public:
 		const static int FrameAll			= 0;	// Processing a frame
-		const static int Capture			= 1;	// Capturing a frame from the input source
-		const static int Calibration		= 2;	// 
-		const static int Tracking			= 3;	// 
-		const static int ShowImages			= 4;	// 
-		const static int InterFrameDelay	= 5;	// 
+		const static int ReceiveCommand		= 1;	// All types of commands (!)
+		const static int Capture			= 2;	// Capturing a frame from the input source
+		const static int ShowImage			= 3;	// 
+		const static int JpegCompression	= 4;	// 
+		const static int Answering			= 5;	// 
 		const static int FullExecution		= 6;	// 
 
 		static void setnames(TimeMeasurement *measurement)
@@ -22,11 +22,11 @@ namespace M2
 			measurement->setMeasurementName("Main loop");
 
 			measurement->setname(FrameAll,"FrameAll");
+			measurement->setname(ReceiveCommand,"ReceiveCommand");
 			measurement->setname(Capture,"Capture");
-			measurement->setname(Calibration,"Calibration");
-			measurement->setname(Tracking,"Tracking");
-			measurement->setname(ShowImages,"ShowImages");
-			measurement->setname(InterFrameDelay,"InterFrameDelay");
+			measurement->setname(ShowImage,"ShowImage");
+			measurement->setname(JpegCompression,"JpegCompression");
+			measurement->setname(Answering,"Answering");
 			measurement->setname(FullExecution,"FullExecution");
 		}
 	};

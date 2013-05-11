@@ -8,7 +8,8 @@
 // For socket communication
 #include <winsock2.h>
 #include <ws2tcpip.h>
-
+#include <sstream>	// for ostringstream (assembly of answers)
+#include <fstream>
 
 #include "myconfigmanager.h"
 #include "TimeMeasurementCodeDefines.h"
@@ -22,6 +23,8 @@
 #include "StdOutLogger.h"
 
 #include "JsonMessage.h"
+#include "PingMessage.h"
+#include "TakePictureMessage.h"
 
 #include "picojson.h"
 
@@ -31,10 +34,15 @@ using namespace LogConfigTime;
 
 char *inifilename = "default.ini";	// 1st command line parameter overrides it
 
+const char *imageWindowName = "CamClient JPEG";
+
 MyConfigManager configManager;
 TimeMeasurement timeMeasurement;
 Mat *frameCaptured;
 SOCKET serversock;
+VideoInput *videoInput;
+int imageNumber=0;	// Counts the number of images taken
+bool running=true;	// Used to finish the main loop...
 
 bool takePicture(VideoInput *videoInput, Mat *frameCaptured)
 {
@@ -111,11 +119,30 @@ void init(char *inifilename)
 
 	// Init time measurement
 	timeMeasurement.init();
-	M2::TimeMeasurementCodeDefs::setnames(&timeMeasurement);
+	CamClient::TimeMeasurementCodeDefs::setnames(&timeMeasurement);
 
 	// Initialize camera
-	VideoInput *videoInput = VideoInputFactory::CreateVideoInput(VIDEOINPUTTYPE_GENERIC);
-	videoInput->init(configManager.camSource.data());
+	if (configManager.usePs3eye)
+	{
+		videoInput = VideoInputFactory::CreateVideoInput(VIDEOINPUTTYPE_PS3EYE);
+	}
+	else
+	{
+		videoInput = VideoInputFactory::CreateVideoInput(VIDEOINPUTTYPE_GENERIC);
+	}
+	if (configManager.camID>=0)
+	{
+		videoInput->init(configManager.camID);
+	}
+	else
+	{
+		videoInput->init(configManager.camSourceFilename.data());
+	}
+
+	if (configManager.showImage)
+	{
+		namedWindow(imageWindowName, CV_WINDOW_AUTOSIZE);
+	}
 
 	// Init matrices
 	frameCaptured = new Mat(480,640,CV_8UC4);	// Warning: this assumes the resolution and 4 channel color depth
@@ -124,25 +151,107 @@ void init(char *inifilename)
 	initServerSocket(configManager.serverPort);
 }
 
-void handleJSON(char *json, SOCKET sock)
+void handlePing(PingMessage *msg, SOCKET sock)
 {
-	JsonMessage *msg = JsonMessage::parse(json);
-
-	// TODO: Handle message
-	Logger::getInstance()->Log(Logger::LOGLEVEL_INFO,"CamClient","Executing command:\n");
-	msg->log();
-
 	char *response = "{ \"type\"=\"pong\" }";
 	int n = send(sock,response,strlen(response),0);
 	if (n < 0)
 	{
-		Logger::getInstance()->Log(Logger::LOGLEVEL_ERROR,"CamClient","Error on reading from socket.\n");
+		Logger::getInstance()->Log(Logger::LOGLEVEL_ERROR,"CamClient","Error on writing answer to socket.\n");
+	}
+}
+
+void handleTakePicture(TakePictureMessage *msg, SOCKET sock)
+{
+	// TODO wait for desired timestamp if defined
+	if (msg->desiredtimestamp > 0)
+	{
+		double freq = cv::getTickFrequency();
+		double multiplierForUs = 1000000.0 / freq;
+		// TODO: if desiredtimestamp is far away, sleep this thread...
+		while( cv::getTickCount()*multiplierForUs < msg->desiredtimestamp );
 	}
 
+	// Taking a picture
+	timeMeasurement.start(CamClient::TimeMeasurementCodeDefs::Capture);
+	videoInput->captureFrame(*frameCaptured);
+	timeMeasurement.finish(CamClient::TimeMeasurementCodeDefs::Capture);
+
+	// JPEG compression
+	timeMeasurement.start(CamClient::TimeMeasurementCodeDefs::JpegCompression);
+	vector<uchar> buff;//buffer for coding
+	vector<int> param = vector<int>(2);
+	param[0]=CV_IMWRITE_JPEG_QUALITY;
+	param[1]=95;//default(95) 0-100
+
+	imencode(".jpg",*frameCaptured,buff,param);
+	timeMeasurement.finish(CamClient::TimeMeasurementCodeDefs::JpegCompression);
+	
+	// Assembly of the answer
+	timeMeasurement.start(CamClient::TimeMeasurementCodeDefs::Answering);
+	// TODO: timestamp and filesize
+	long long timestamp = 0;
+	long filesize = buff.size();
+	std::ostringstream out;
+	out << "{ \"type\":\"jpeg\", \"timestamp\": \"" << timestamp << "\", \"size\": \"" << filesize << "\" }#";
+
+	// Sending the answer and the JPEG encoded picture
+	std::string tmpStr = out.str();
+	const char* tmpPtr = tmpStr.c_str();
+
+	int n = send(sock,tmpPtr,strlen(tmpPtr),0);
+	if (n < 0)
+	{
+		Logger::getInstance()->Log(Logger::LOGLEVEL_ERROR,"CamClient","Error on writing answer to socket.\n");
+	}
+
+	n = send(sock,(const char*)(buff.data()),buff.size(),0);
+	if (n < 0)
+	{
+		Logger::getInstance()->Log(Logger::LOGLEVEL_ERROR,"CamClient","Error on writing answer to socket.\n");
+	}
+	timeMeasurement.finish(CamClient::TimeMeasurementCodeDefs::Answering);
+
+	// Showing the image after sending it, so that it causes smaller delay...
+	if (configManager.showImage)
+	{
+		timeMeasurement.start(CamClient::TimeMeasurementCodeDefs::ShowImage);
+		Mat show = imdecode(Mat(buff),CV_LOAD_IMAGE_COLOR); 
+		imshow(imageWindowName,show);
+		int key = waitKey(25);	// TODO: needs some kind of delay to show!!!
+		timeMeasurement.finish(CamClient::TimeMeasurementCodeDefs::ShowImage);
+	}
+
+	imageNumber++;
+}
+
+void handleJSON(char *json, SOCKET sock)
+{
+	JsonMessage *msg = JsonMessage::parse(json);
+
+	Logger::getInstance()->Log(Logger::LOGLEVEL_INFO,"CamClient","Received command:\n");
+	msg->log();
+
+	switch(msg->getMessageType())
+	{
+	case Default:
+		Logger::getInstance()->Log(Logger::LOGLEVEL_WARNING,"CamClient","Handling default message, nothing to do.\n");
+		break;
+	case Ping:
+		handlePing((PingMessage*)msg,sock);
+		break;
+	case TakePicture:
+		handleTakePicture((TakePictureMessage*)msg,sock);
+		break;
+	default:
+		Logger::getInstance()->Log(Logger::LOGLEVEL_WARNING,"CamClient","Unknown message type!\n");
+	}
 
 	Logger::getInstance()->Log(Logger::LOGLEVEL_INFO,"CamClient","Command handled\n");
 	return;
 }
+
+
 
 int main(int argc, char *argv[])
 {
@@ -153,12 +262,16 @@ int main(int argc, char *argv[])
 	}
 	init(inifilename);
 
+	// TODO: measure times
+	// TODO: allow using continuous open socket
+	// TODO: allow shutting down or otherwise save the time measurement results into configManager.resultFileName
+	// TODO: allow automatic camera parameter setting
+
 	// TODO: Register the node
 
 	openServerSocket();
 
 	// Enter main loop: wait for commands and execute them.
-	bool running=true;
 	while(running)
 	{
 		// Wait for connection
@@ -210,6 +323,20 @@ int main(int argc, char *argv[])
 	}
 
 	closeServerSocket();
+
+	ofstream results;
+	results.open(configManager.resultFileName.c_str(),ios_base::out);
+	Logger::getInstance()->Log(Logger::LOGLEVEL_INFO,"CamClient","Results written to %s\n",configManager.resultFileName.c_str());
+	results << "--- Main loop time measurement results:" << endl;
+	timeMeasurement.showresults(&results);
+
+	results << "--- Further details:" << endl;
+	results << "max fps: " << timeMeasurement.getmaxfps(CamClient::TimeMeasurementCodeDefs::FrameAll) << endl;
+	results << "Number of captured images: " << imageNumber << endl;
+
+	results.flush();
+	results.close();
+
 
 	return 0;
 }

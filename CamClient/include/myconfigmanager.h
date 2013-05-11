@@ -17,7 +17,6 @@ class MyConfigManager
 		serverPort = reader->getIntValue("main","serverPort");
 		camSourceFilename = reader->getBoolValue("main","camSourceFilename");
 		logFileName = reader->getStringValue("main","logFileName");
-		resultFileName = reader->getStringValue("main","resultFileName");
 		usePs3eye = reader->getBoolValue("main","usePs3eye");
 		camID = reader->getIntValue("main","camID");
 
@@ -36,7 +35,6 @@ public:
 	int camID;	// ID of camera, of <0 for filename
 	std::string camSourceFilename;	// If !usePs3eye, may be filename
 	std::string logFileName;
-	std::string resultFileName;
 	int serverPort;
 };
 

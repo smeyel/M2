@@ -24,6 +24,7 @@
 
 #include "JsonMessage.h"
 #include "PingMessage.h"
+#include "SendlogMessage.h"
 #include "TakePictureMessage.h"
 
 #include "picojson.h"
@@ -115,6 +116,10 @@ void init(char *inifilename)
 	Logger *logger = new StdoutLogger();
 	logger->SetLogLevel(Logger::LOGLEVEL_INFO);
 	Logger::getInstance()->Log(Logger::LOGLEVEL_VERBOSE,"CamClient","CamClient started\n");
+    time_t t = time(0);   // get time now
+    struct tm * now = localtime( & t );
+	Logger::getInstance()->Log(Logger::LOGLEVEL_INFO,"CamClient","Current time: %d-%d-%d, %d:%d:%d\n",
+		(now->tm_year + 1900),(now->tm_mon + 1),now->tm_mday,now->tm_hour,now->tm_min,now->tm_sec );
 	Logger::getInstance()->Log(Logger::LOGLEVEL_VERBOSE,"CamClient","Ini file: %s\n",inifilename);
 
 	// Init time measurement
@@ -166,10 +171,13 @@ void handleTakePicture(TakePictureMessage *msg, SOCKET sock)
 	// TODO wait for desired timestamp if defined
 	if (msg->desiredtimestamp > 0)
 	{
-		double freq = cv::getTickFrequency();
-		double multiplierForUs = 1000000.0 / freq;
+		long long currentTimeStamp = timeMeasurement.getTimeStamp();
 		// TODO: if desiredtimestamp is far away, sleep this thread...
-		while( cv::getTickCount()*multiplierForUs < msg->desiredtimestamp );
+		while( currentTimeStamp < msg->desiredtimestamp )
+		{
+			cout << "Waiting, desiredtimestamp=" << msg->desiredtimestamp << ", current: " << currentTimeStamp << endl;	// TODO: this takes pretty much time!!! Remove this...
+			currentTimeStamp = timeMeasurement.getTimeStamp();
+		}
 	}
 
 	// Taking a picture
@@ -188,12 +196,12 @@ void handleTakePicture(TakePictureMessage *msg, SOCKET sock)
 	timeMeasurement.finish(CamClient::TimeMeasurementCodeDefs::JpegCompression);
 	
 	// Assembly of the answer
-	timeMeasurement.start(CamClient::TimeMeasurementCodeDefs::Answering);
-	// TODO: timestamp and filesize
-	long long timestamp = 0;
+	timeMeasurement.start(CamClient::TimeMeasurementCodeDefs::AnsweringTakePicture);
+	// TODO: timestamp
+	long long timestamp = timeMeasurement.getTimeStamp();
 	long filesize = buff.size();
 	std::ostringstream out;
-	out << "{ \"type\":\"jpeg\", \"timestamp\": \"" << timestamp << "\", \"size\": \"" << filesize << "\" }#";
+	out << "{ \"type\":\"JPEG\", \"timestamp\":\"" << timestamp << "\", \"size\":\"" << filesize << "\" }#";
 
 	// Sending the answer and the JPEG encoded picture
 	std::string tmpStr = out.str();
@@ -210,7 +218,7 @@ void handleTakePicture(TakePictureMessage *msg, SOCKET sock)
 	{
 		Logger::getInstance()->Log(Logger::LOGLEVEL_ERROR,"CamClient","Error on writing answer to socket.\n");
 	}
-	timeMeasurement.finish(CamClient::TimeMeasurementCodeDefs::Answering);
+	timeMeasurement.finish(CamClient::TimeMeasurementCodeDefs::AnsweringTakePicture);
 
 	// Showing the image after sending it, so that it causes smaller delay...
 	if (configManager.showImage)
@@ -224,6 +232,48 @@ void handleTakePicture(TakePictureMessage *msg, SOCKET sock)
 
 	imageNumber++;
 }
+
+void handleSendlog(SendlogMessage *msg, SOCKET sock)
+{
+	timeMeasurement.start(CamClient::TimeMeasurementCodeDefs::AnsweringSendlog);
+
+	// Create the log
+	std::ostringstream measurementLog;
+	// Write results to the results file
+	time_t t = time(0);   // get time now
+    struct tm * now = localtime( & t );
+	measurementLog << "--- New results at " << (now->tm_year + 1900) << "-" << (now->tm_mon + 1) << "-" << now->tm_mday
+		<< " " << now->tm_hour << ":" << now->tm_min << ":" << now->tm_sec << ":" << endl;
+	measurementLog << "Ini file: " << inifilename << endl;
+	measurementLog << "Log file: " << configManager.logFileName << endl;
+	measurementLog << "--- Main loop time measurement results:" << endl;
+	timeMeasurement.showresults(&measurementLog);
+	measurementLog << "--- Further details:" << endl;
+	measurementLog << "max fps: " << timeMeasurement.getmaxfps(CamClient::TimeMeasurementCodeDefs::FrameAll) << endl;
+	measurementLog << "Number of captured images: " << imageNumber << endl;
+	measurementLog << "--- End of results" << endl;
+	std::string measurementLogString = measurementLog.str();
+
+	// TODO: timestamp
+	long long timestamp = timeMeasurement.getTimeStamp();
+	long filesize = measurementLogString.length();
+	std::ostringstream answer;
+	answer << "{ \"type\":\"measurementlog\", \"timestamp\": \"" << timestamp << "\", \"size\": \"" << filesize << "\" }#";
+	answer << measurementLogString;
+
+	// Sending the answer and the JPEG encoded picture
+	std::string tmpStr = answer.str();
+	const char* tmpPtr = tmpStr.c_str();
+
+	int n = send(sock,tmpPtr,strlen(tmpPtr),0);
+	if (n < 0)
+	{
+		Logger::getInstance()->Log(Logger::LOGLEVEL_ERROR,"CamClient","Error on writing answer to socket.\n");
+	}
+	timeMeasurement.finish(CamClient::TimeMeasurementCodeDefs::AnsweringSendlog);
+}
+
+
 
 void handleJSON(char *json, SOCKET sock)
 {
@@ -242,6 +292,9 @@ void handleJSON(char *json, SOCKET sock)
 		break;
 	case TakePicture:
 		handleTakePicture((TakePictureMessage*)msg,sock);
+		break;
+	case Sendlog:
+		handleSendlog((SendlogMessage*)msg,sock);
 		break;
 	default:
 		Logger::getInstance()->Log(Logger::LOGLEVEL_WARNING,"CamClient","Unknown message type!\n");
@@ -289,6 +342,8 @@ int main(int argc, char *argv[])
 		inet_ntop( AF_INET, &addr.sin_addr, ipAddressStr, INET_ADDRSTRLEN );
 		Logger::getInstance()->Log(Logger::LOGLEVEL_INFO,"CamClient","Connection received from %s\n",ipAddressStr);
 
+		// TODO: while socket is not closed by remote size, repeat waiting for commands and execute them...
+
 		// Handle connection
 		char buffer[4096];	// Data receive buffer
 		memset(buffer,0,4096);
@@ -323,20 +378,6 @@ int main(int argc, char *argv[])
 	}
 
 	closeServerSocket();
-
-	ofstream results;
-	results.open(configManager.resultFileName.c_str(),ios_base::out);
-	Logger::getInstance()->Log(Logger::LOGLEVEL_INFO,"CamClient","Results written to %s\n",configManager.resultFileName.c_str());
-	results << "--- Main loop time measurement results:" << endl;
-	timeMeasurement.showresults(&results);
-
-	results << "--- Further details:" << endl;
-	results << "max fps: " << timeMeasurement.getmaxfps(CamClient::TimeMeasurementCodeDefs::FrameAll) << endl;
-	results << "Number of captured images: " << imageNumber << endl;
-
-	results.flush();
-	results.close();
-
 
 	return 0;
 }

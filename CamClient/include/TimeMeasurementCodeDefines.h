@@ -14,8 +14,9 @@ namespace CamClient
 		const static int Capture			= 2;	// Capturing a frame from the input source
 		const static int ShowImage			= 3;	// 
 		const static int JpegCompression	= 4;	// 
-		const static int Answering			= 5;	// 
-		const static int FullExecution		= 6;	// 
+		const static int AnsweringTakePicture	= 5;	// 
+		const static int AnsweringSendlog		= 6;	// 
+		const static int FullExecution		= 7;	// 
 
 		static void setnames(TimeMeasurement *measurement)
 		{
@@ -26,7 +27,8 @@ namespace CamClient
 			measurement->setname(Capture,"Capture");
 			measurement->setname(ShowImage,"ShowImage");
 			measurement->setname(JpegCompression,"JpegCompression");
-			measurement->setname(Answering,"Answering");
+			measurement->setname(AnsweringTakePicture,"AnsweringTakePicture");
+			measurement->setname(AnsweringSendlog,"AnsweringSendlog");
 			measurement->setname(FullExecution,"FullExecution");
 		}
 	};

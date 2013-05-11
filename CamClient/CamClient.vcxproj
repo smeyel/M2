@@ -12,8 +12,11 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\messagehandling.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="include\globals.h" />
+    <ClInclude Include="include\messagehandling.h" />
     <ClInclude Include="include\myconfigmanager.h" />
     <ClInclude Include="include\TimeMeasurementCodeDefines.h" />
   </ItemGroup>

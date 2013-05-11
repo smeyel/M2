@@ -27,7 +27,9 @@
 #include "SendlogMessage.h"
 #include "TakePictureMessage.h"
 
-#include "picojson.h"
+//#include "picojson.h"
+#include "messagehandling.h"
+
 
 using namespace cv;
 using namespace std;
@@ -40,10 +42,10 @@ const char *imageWindowName = "CamClient JPEG";
 MyConfigManager configManager;
 TimeMeasurement timeMeasurement;
 Mat *frameCaptured;
-SOCKET serversock;
 VideoInput *videoInput;
 int imageNumber=0;	// Counts the number of images taken
 bool running=true;	// Used to finish the main loop...
+SOCKET serversock;
 
 bool takePicture(VideoInput *videoInput, Mat *frameCaptured)
 {
@@ -155,155 +157,6 @@ void init(char *inifilename)
 	// Initialize socket communication and server socket
 	initServerSocket(configManager.serverPort);
 }
-
-void handlePing(PingMessage *msg, SOCKET sock)
-{
-	char *response = "{ \"type\"=\"pong\" }";
-	int n = send(sock,response,strlen(response),0);
-	if (n < 0)
-	{
-		Logger::getInstance()->Log(Logger::LOGLEVEL_ERROR,"CamClient","Error on writing answer to socket.\n");
-	}
-}
-
-void handleTakePicture(TakePictureMessage *msg, SOCKET sock)
-{
-	// TODO wait for desired timestamp if defined
-	if (msg->desiredtimestamp > 0)
-	{
-		long long currentTimeStamp = timeMeasurement.getTimeStamp();
-		// TODO: if desiredtimestamp is far away, sleep this thread...
-		while( currentTimeStamp < msg->desiredtimestamp )
-		{
-			cout << "Waiting, desiredtimestamp=" << msg->desiredtimestamp << ", current: " << currentTimeStamp << endl;	// TODO: this takes pretty much time!!! Remove this...
-			currentTimeStamp = timeMeasurement.getTimeStamp();
-		}
-	}
-
-	// Taking a picture
-	timeMeasurement.start(CamClient::TimeMeasurementCodeDefs::Capture);
-	videoInput->captureFrame(*frameCaptured);
-	timeMeasurement.finish(CamClient::TimeMeasurementCodeDefs::Capture);
-
-	// JPEG compression
-	timeMeasurement.start(CamClient::TimeMeasurementCodeDefs::JpegCompression);
-	vector<uchar> buff;//buffer for coding
-	vector<int> param = vector<int>(2);
-	param[0]=CV_IMWRITE_JPEG_QUALITY;
-	param[1]=95;//default(95) 0-100
-
-	imencode(".jpg",*frameCaptured,buff,param);
-	timeMeasurement.finish(CamClient::TimeMeasurementCodeDefs::JpegCompression);
-	
-	// Assembly of the answer
-	timeMeasurement.start(CamClient::TimeMeasurementCodeDefs::AnsweringTakePicture);
-	// TODO: timestamp
-	long long timestamp = timeMeasurement.getTimeStamp();
-	long filesize = buff.size();
-	std::ostringstream out;
-	out << "{ \"type\":\"JPEG\", \"timestamp\":\"" << timestamp << "\", \"size\":\"" << filesize << "\" }#";
-
-	// Sending the answer and the JPEG encoded picture
-	std::string tmpStr = out.str();
-	const char* tmpPtr = tmpStr.c_str();
-
-	int n = send(sock,tmpPtr,strlen(tmpPtr),0);
-	if (n < 0)
-	{
-		Logger::getInstance()->Log(Logger::LOGLEVEL_ERROR,"CamClient","Error on writing answer to socket.\n");
-	}
-
-	n = send(sock,(const char*)(buff.data()),buff.size(),0);
-	if (n < 0)
-	{
-		Logger::getInstance()->Log(Logger::LOGLEVEL_ERROR,"CamClient","Error on writing answer to socket.\n");
-	}
-	timeMeasurement.finish(CamClient::TimeMeasurementCodeDefs::AnsweringTakePicture);
-
-	// Showing the image after sending it, so that it causes smaller delay...
-	if (configManager.showImage)
-	{
-		timeMeasurement.start(CamClient::TimeMeasurementCodeDefs::ShowImage);
-		Mat show = imdecode(Mat(buff),CV_LOAD_IMAGE_COLOR); 
-		imshow(imageWindowName,show);
-		int key = waitKey(25);	// TODO: needs some kind of delay to show!!!
-		timeMeasurement.finish(CamClient::TimeMeasurementCodeDefs::ShowImage);
-	}
-
-	imageNumber++;
-}
-
-void handleSendlog(SendlogMessage *msg, SOCKET sock)
-{
-	timeMeasurement.start(CamClient::TimeMeasurementCodeDefs::AnsweringSendlog);
-
-	// Create the log
-	std::ostringstream measurementLog;
-	// Write results to the results file
-	time_t t = time(0);   // get time now
-    struct tm * now = localtime( & t );
-	measurementLog << "--- New results at " << (now->tm_year + 1900) << "-" << (now->tm_mon + 1) << "-" << now->tm_mday
-		<< " " << now->tm_hour << ":" << now->tm_min << ":" << now->tm_sec << ":" << endl;
-	measurementLog << "Ini file: " << inifilename << endl;
-	measurementLog << "Log file: " << configManager.logFileName << endl;
-	measurementLog << "--- Main loop time measurement results:" << endl;
-	timeMeasurement.showresults(&measurementLog);
-	measurementLog << "--- Further details:" << endl;
-	measurementLog << "max fps: " << timeMeasurement.getmaxfps(CamClient::TimeMeasurementCodeDefs::FrameAll) << endl;
-	measurementLog << "Number of captured images: " << imageNumber << endl;
-	measurementLog << "--- End of results" << endl;
-	std::string measurementLogString = measurementLog.str();
-
-	// TODO: timestamp
-	long long timestamp = timeMeasurement.getTimeStamp();
-	long filesize = measurementLogString.length();
-	std::ostringstream answer;
-	answer << "{ \"type\":\"measurementlog\", \"timestamp\": \"" << timestamp << "\", \"size\": \"" << filesize << "\" }#";
-	answer << measurementLogString;
-
-	// Sending the answer and the JPEG encoded picture
-	std::string tmpStr = answer.str();
-	const char* tmpPtr = tmpStr.c_str();
-
-	int n = send(sock,tmpPtr,strlen(tmpPtr),0);
-	if (n < 0)
-	{
-		Logger::getInstance()->Log(Logger::LOGLEVEL_ERROR,"CamClient","Error on writing answer to socket.\n");
-	}
-	timeMeasurement.finish(CamClient::TimeMeasurementCodeDefs::AnsweringSendlog);
-}
-
-
-
-void handleJSON(char *json, SOCKET sock)
-{
-	JsonMessage *msg = JsonMessage::parse(json);
-
-	Logger::getInstance()->Log(Logger::LOGLEVEL_INFO,"CamClient","Received command:\n");
-	msg->log();
-
-	switch(msg->getMessageType())
-	{
-	case Default:
-		Logger::getInstance()->Log(Logger::LOGLEVEL_WARNING,"CamClient","Handling default message, nothing to do.\n");
-		break;
-	case Ping:
-		handlePing((PingMessage*)msg,sock);
-		break;
-	case TakePicture:
-		handleTakePicture((TakePictureMessage*)msg,sock);
-		break;
-	case Sendlog:
-		handleSendlog((SendlogMessage*)msg,sock);
-		break;
-	default:
-		Logger::getInstance()->Log(Logger::LOGLEVEL_WARNING,"CamClient","Unknown message type!\n");
-	}
-
-	Logger::getInstance()->Log(Logger::LOGLEVEL_INFO,"CamClient","Command handled\n");
-	return;
-}
-
 
 
 int main(int argc, char *argv[])

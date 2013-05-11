@@ -16,7 +16,7 @@ namespace M2
 
 		static void setnames(TimeMeasurement *measurement)
 		{
-			measurement->setMeasurementName("Main loop");
+			measurement->setMeasurementName("M2Host main loop");
 
 			measurement->setname(FrameAll,"FrameAll");
 			measurement->setname(Send,"Send");

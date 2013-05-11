@@ -42,11 +42,10 @@ void handlePing(PingMessage *msg, SOCKET sock)
 
 void handleTakePicture(TakePictureMessage *msg, SOCKET sock)
 {
-	// TODO wait for desired timestamp if defined
+	timeMeasurement.start(CamClient::TimeMeasurementCodeDefs::WaitForTimestamp);
 	if (msg->desiredtimestamp > 0)
 	{
 		long long currentTimeStamp = timeMeasurement.getTimeStamp();
-		// TODO: if desiredtimestamp is far away, sleep this thread...
 		while( currentTimeStamp < msg->desiredtimestamp )
 		{
 			// Sleep length: calculated time minus 50ms for safety...
@@ -55,7 +54,7 @@ void handleTakePicture(TakePictureMessage *msg, SOCKET sock)
 			if (sleepMilliSec > 0)
 			{
 #ifdef WIN32
-				Sleep(sleepMilliSec);	// Wait 100 ms under Windows
+				Sleep(sleepMilliSec);
 #else
 #error TODO: Sleep not implemented for non-Win32.
 #endif
@@ -64,6 +63,7 @@ void handleTakePicture(TakePictureMessage *msg, SOCKET sock)
 		}
 	}
 	Logger::getInstance()->Log(Logger::LOGLEVEL_VERBOSE,"CamClient","Now taking picture...\n");
+	timeMeasurement.finish(CamClient::TimeMeasurementCodeDefs::WaitForTimestamp);
 
 	// Taking a picture
 	timeMeasurement.start(CamClient::TimeMeasurementCodeDefs::Capture);
@@ -127,13 +127,12 @@ void handleSendlog(SendlogMessage *msg, SOCKET sock)
 	time_t t = time(0);   // get time now
     struct tm * now = localtime( & t );
 	measurementLog << "--- New results at " << (now->tm_year + 1900) << "-" << (now->tm_mon + 1) << "-" << now->tm_mday
-		<< " " << now->tm_hour << ":" << now->tm_min << ":" << now->tm_sec << ":" << endl;
+		<< " " << now->tm_hour << ":" << now->tm_min << ":" << now->tm_sec << endl;
 	measurementLog << "Ini file: " << inifilename << endl;
 	measurementLog << "Log file: " << configManager.logFileName << endl;
 	measurementLog << "--- Main loop time measurement results:" << endl;
 	timeMeasurement.showresults(&measurementLog);
 	measurementLog << "--- Further details:" << endl;
-	measurementLog << "max fps: " << timeMeasurement.getmaxfps(CamClient::TimeMeasurementCodeDefs::FrameAll) << endl;
 	measurementLog << "Number of captured images: " << imageNumber << endl;
 	measurementLog << "--- End of results" << endl;
 	std::string measurementLogString = measurementLog.str();
@@ -142,7 +141,7 @@ void handleSendlog(SendlogMessage *msg, SOCKET sock)
 	long long timestamp = timeMeasurement.getTimeStamp();
 	long filesize = measurementLogString.length();
 	std::ostringstream answer;
-	answer << "{ \"type\":\"measurementlog\", \"timestamp\": \"" << timestamp << "\", \"size\": \"" << filesize << "\" }#";
+	answer << "{ \"type\":\"measurementlog\", \"timestamp\":\"" << timestamp << "\", \"size\":\"" << filesize << "\" }#";
 	answer << measurementLogString;
 
 	// Sending the answer and the JPEG encoded picture
@@ -159,7 +158,9 @@ void handleSendlog(SendlogMessage *msg, SOCKET sock)
 
 void handleJSON(char *json, SOCKET sock)
 {
+	timeMeasurement.start(CamClient::TimeMeasurementCodeDefs::ReadJson);
 	JsonMessage *msg = JsonMessage::parse(json);
+	timeMeasurement.finish(CamClient::TimeMeasurementCodeDefs::ReadJson);
 
 	Logger::getInstance()->Log(Logger::LOGLEVEL_INFO,"CamClient","Received command:\n");
 	msg->log();
@@ -173,7 +174,9 @@ void handleJSON(char *json, SOCKET sock)
 		handlePing((PingMessage*)msg,sock);
 		break;
 	case TakePicture:
+		timeMeasurement.start(CamClient::TimeMeasurementCodeDefs::HandleTakePicture);
 		handleTakePicture((TakePictureMessage*)msg,sock);
+		timeMeasurement.finish(CamClient::TimeMeasurementCodeDefs::HandleTakePicture);
 		break;
 	case Sendlog:
 		handleSendlog((SendlogMessage*)msg,sock);

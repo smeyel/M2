@@ -116,8 +116,8 @@ void init(char *inifilename)
 
 	// Init logger (singleton)
 	Logger *logger = new StdoutLogger();
-	logger->SetLogLevel(Logger::LOGLEVEL_INFO);
-	//logger->SetLogLevel(Logger::LOGLEVEL_ERROR);
+	//logger->SetLogLevel(Logger::LOGLEVEL_INFO);
+	logger->SetLogLevel(Logger::LOGLEVEL_ERROR);
 	Logger::getInstance()->Log(Logger::LOGLEVEL_VERBOSE,"CamClient","CamClient started\n");
     time_t t = time(0);   // get time now
     struct tm * now = localtime( & t );
@@ -183,6 +183,7 @@ int main(int argc, char *argv[])
 	{
 		// Wait for connection
 		Logger::getInstance()->Log(Logger::LOGLEVEL_INFO,"CamClient","Waiting for connection\n");
+		cout << "Waiting for connection." << endl;
 		struct sockaddr_in addr;
 		SOCKET sock = accept(serversock, (struct sockaddr *) &addr, NULL);
 		if (sock < 0)
@@ -195,6 +196,7 @@ int main(int argc, char *argv[])
 		char ipAddressStr[INET_ADDRSTRLEN];
 		inet_ntop( AF_INET, &addr.sin_addr, ipAddressStr, INET_ADDRSTRLEN );
 		Logger::getInstance()->Log(Logger::LOGLEVEL_INFO,"CamClient","Connection received from %s\n",ipAddressStr);
+		cout << "Connected." << endl;
 
 		// TODO: while socket is not closed by remote size, repeat waiting for commands and execute them...
 		bool connectionOpen = true;
@@ -205,6 +207,7 @@ int main(int argc, char *argv[])
 			memset(buffer,0,4096);
 
 			// TODO: wait for the whole message
+			timeMeasurement.start(CamClient::TimeMeasurementCodeDefs::ReceiveCommand);
 			int n = 0;
 			while (n<=0)
 			{
@@ -220,7 +223,7 @@ int main(int argc, char *argv[])
 			{
 				break;
 			}
-			printf("Here is the message: %s\n",buffer);
+			//printf("Here is the message: %s\n",buffer);
 
 			// Find begin and end of JSON: first '{' and last '}' before first '\0'
 			char *start = strstr(buffer,"{");
@@ -233,10 +236,13 @@ int main(int argc, char *argv[])
 			char json[4096];
 			memset(json,0,4096);
 			memcpy(json,start,finish-start+1);
-			printf("JSON: %s\n",json);
+			//printf("JSON: %s\n",json);
+			timeMeasurement.finish(CamClient::TimeMeasurementCodeDefs::ReceiveCommand);
 
 			// ---------- Message received, now handle it
+			timeMeasurement.start(CamClient::TimeMeasurementCodeDefs::HandleJson);
 			handleJSON(json, sock);
+			timeMeasurement.finish(CamClient::TimeMeasurementCodeDefs::HandleJson);
 		}
 
 		// Close connection

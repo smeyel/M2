@@ -1,7 +1,7 @@
 #include <iostream>
 //#include <sstream>
 //#include <time.h>
-//#include <fstream>	// For marker data export into file...
+#include <fstream>	// For marker data export into file...
 
 //#include <windows.h>	// for sleep
 
@@ -58,6 +58,15 @@ int main(int argc, char *argv[])
 	timeMeasurement.init();
 	M2::TimeMeasurementCodeDefs::setnames(&timeMeasurement);
 
+	// Waiting a little to allow other processes to init...
+	// Useful if started together with CamClient which needs to start its server.
+	cout << "Waiting 3s..." << endl;
+#ifdef WIN32
+	Sleep(3000);
+#else
+#error TODO: Sleep not implemented for non-Win32.
+#endif
+
 	timeMeasurement.start(M2::TimeMeasurementCodeDefs::FullExecution);
 	bool running=true;
 	int frameIdx = 0;
@@ -80,7 +89,7 @@ int main(int argc, char *argv[])
 		_int64 last2PictureTimeStamp = 0;	// Timestamp before the last one
 		_int64 interPictureTime = 0;
 
-		for(int i=0; i<55; i++)	// First 2 photos do not have desired timestamp...
+		for(int i=0; i<100; i++)	// First 2 photos do not have desired timestamp...
 		{
 			// Calculate desiredTimeStamp
 			if (interPictureTime==0 && last2PictureTimeStamp>0)
@@ -89,9 +98,10 @@ int main(int argc, char *argv[])
 				interPictureTime = last1PictureTimeStamp - last2PictureTimeStamp;
 			}
 
-			if (interPictureTime==0)
+			if (interPictureTime==0 || !configManager.useDesiredTimestamp)
 			{
 				// Unknown inter-picture time (we do not know the frequency of the timestamp!!!)
+				//	(...or usage of this function is disabled from configuration.)
 				desiredTimeStamp = 0;
 			}
 			else
@@ -102,20 +112,19 @@ int main(int argc, char *argv[])
 			// Asking for a picture
 			timeMeasurement.start(M2::TimeMeasurementCodeDefs::FrameAll);
 			cout << "Capture No " << i << "..." << endl;
-			cout << "Requesing photo..." << endl;
 			timeMeasurement.start(M2::TimeMeasurementCodeDefs::Send);
 			proxy.RequestPhoto(desiredTimeStamp);
 			timeMeasurement.finish(M2::TimeMeasurementCodeDefs::Send);
-			cout << "Receiving photo..." << endl;
 			timeMeasurement.start(M2::TimeMeasurementCodeDefs::WaitAndReceive);
-			proxy.Receive("d:\\temp\\image1.jpg");
-			//proxy.ReceiveDebug();
+			proxy.Receive(NULL);	// No need to save the file...
 			timeMeasurement.finish(M2::TimeMeasurementCodeDefs::WaitAndReceive);
 			last2PictureTimeStamp = last1PictureTimeStamp;
 			last1PictureTimeStamp = proxy.lastReceivedTimeStamp;
 			timeMeasurement.finish(M2::TimeMeasurementCodeDefs::FrameAll);
-			Sleep(500);
 		}
+		cout << "Necessary pictures taken. Receiving measurement log..." << endl;
+		proxy.RequestLog();
+		proxy.Receive("measurementlog.txt");
 
 		cout << "Disconnecting..." << endl;
 		proxy.Disconnect();
@@ -127,16 +136,20 @@ int main(int argc, char *argv[])
 		frameIdx++;
 	}
 	timeMeasurement.finish(M2::TimeMeasurementCodeDefs::FullExecution);
-/*	Logger::getInstance()->Log(Logger::LOGLEVEL_VERBOSE,"M2Host","Current time\n"
-	log << "--- Main loop time measurement results:" << endl;
-	timeMeasurement.showresults(&log);
 
-	log << "--- Further details:" << endl;
-	log << "max fps: " << timeMeasurement.getmaxfps(M2::TimeMeasurementCodeDefs::FrameAll) << endl;
-	log << "Number of processed frames: " << frameIdx << endl;
-
-	log.flush();
-	log.close();*/
+	ofstream resultFile;
+	resultFile.open(configManager.resultFilename, ofstream::binary);
+	t = time(0);   // get time now
+    now = localtime( & t );
+	resultFile << "--- New results at " << (now->tm_year + 1900) << "-" << (now->tm_mon + 1) << "-" << now->tm_mday
+		<< " " << now->tm_hour << ":" << now->tm_min << ":" << now->tm_sec << endl;
+	resultFile << "--- Main loop time measurement results:" << endl;
+	timeMeasurement.showresults(&resultFile);
+	resultFile << "--- Further details:" << endl;
+	resultFile << "max fps: " << timeMeasurement.getmaxfps(M2::TimeMeasurementCodeDefs::FrameAll) << endl;
+	resultFile << "Number of processed frames: " << frameIdx << endl;
+	resultFile.flush();
+	resultFile.close();
 
 	cout << "Done." << endl;
 }

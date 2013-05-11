@@ -61,28 +61,19 @@ int main(int argc, char *argv[])
 	timeMeasurement.start(M2::TimeMeasurementCodeDefs::FullExecution);
 	bool running=true;
 	int frameIdx = 0;
+
+	char ip[20];
+	strcpy(ip,configManager.phoneIpAddress.c_str());
+	int port = configManager.phonePort;
+	PhoneProxy proxy;
+	cout << "Connecting..." << endl;
+	proxy.Connect(ip,port);
+
 	while(running)
 	{
-
 		// Request image from the phone
 
-		//char *ip = "152.66.173.130";
-		char ip[20];
-		strcpy(ip,configManager.phoneIpAddress.c_str());
-		int port = configManager.phonePort;
-		PhoneProxy proxy;
-
 		char tmpBuff[100];
-		/*cout << "Press enter to start connecting..." << endl;
-		cin >> tmpBuff;*/
-
-/*		proxy.Connect(ip,port);
-		proxy.RequestPing();
-		proxy.ReceiveDebug();
-		//proxy.Receive("d:\\temp\\nothing.txt");
-		proxy.Disconnect();
-
-		continue;	// WARNING, function bypass! */
 
 		_int64 desiredTimeStamp = 0;
 		_int64 last1PictureTimeStamp = 0;	// Last timestamp
@@ -111,8 +102,6 @@ int main(int argc, char *argv[])
 			// Asking for a picture
 			timeMeasurement.start(M2::TimeMeasurementCodeDefs::FrameAll);
 			cout << "Capture No " << i << "..." << endl;
-			cout << "Connecting..." << endl;
-			proxy.Connect(ip,port);
 			cout << "Requesing photo..." << endl;
 			timeMeasurement.start(M2::TimeMeasurementCodeDefs::Send);
 			proxy.RequestPhoto(desiredTimeStamp);
@@ -124,24 +113,12 @@ int main(int argc, char *argv[])
 			timeMeasurement.finish(M2::TimeMeasurementCodeDefs::WaitAndReceive);
 			last2PictureTimeStamp = last1PictureTimeStamp;
 			last1PictureTimeStamp = proxy.lastReceivedTimeStamp;
-			cout << "Disconnecting..." << endl;
-			proxy.Disconnect();
 			timeMeasurement.finish(M2::TimeMeasurementCodeDefs::FrameAll);
 			Sleep(500);
 		}
 
-		/*cout << "Connecting..." << endl;
-		proxy.Connect(ip,port);
-		cout << "Requesing photo..." << endl;
-		timeMeasurement.start(M2::TimeMeasurementCodeDefs::Send);
-		proxy.RequestPhoto(0);
-		timeMeasurement.finish(M2::TimeMeasurementCodeDefs::Send);
-		cout << "Receiving photo..." << endl;
-		timeMeasurement.start(M2::TimeMeasurementCodeDefs::WaitAndReceive);
-		proxy.Receive("d:\\temp\\image2.jpg");
-		timeMeasurement.finish(M2::TimeMeasurementCodeDefs::WaitAndReceive);
 		cout << "Disconnecting..." << endl;
-		proxy.Disconnect();*/
+		proxy.Disconnect();
 
 		cout << "Done..." << endl;
 

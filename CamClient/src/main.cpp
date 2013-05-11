@@ -117,6 +117,7 @@ void init(char *inifilename)
 	// Init logger (singleton)
 	Logger *logger = new StdoutLogger();
 	logger->SetLogLevel(Logger::LOGLEVEL_INFO);
+	//logger->SetLogLevel(Logger::LOGLEVEL_ERROR);
 	Logger::getInstance()->Log(Logger::LOGLEVEL_VERBOSE,"CamClient","CamClient started\n");
     time_t t = time(0);   // get time now
     struct tm * now = localtime( & t );
@@ -196,34 +197,47 @@ int main(int argc, char *argv[])
 		Logger::getInstance()->Log(Logger::LOGLEVEL_INFO,"CamClient","Connection received from %s\n",ipAddressStr);
 
 		// TODO: while socket is not closed by remote size, repeat waiting for commands and execute them...
-
-		// Handle connection
-		char buffer[4096];	// Data receive buffer
-		memset(buffer,0,4096);
-
-		// TODO: wait for the whole message
-		int n = recv(sock,buffer,4096,0);
-		if (n < 0)
+		bool connectionOpen = true;
+		while(connectionOpen)
 		{
-			Logger::getInstance()->Log(Logger::LOGLEVEL_ERROR,"CamClient","Error on reading from socket.\n");
-		}
-		printf("Here is the message: %s\n",buffer);
+			// Handle connection
+			char buffer[4096];	// Data receive buffer
+			memset(buffer,0,4096);
 
-		// Find begin and end of JSON: first '{' and last '}' before first '\0'
-		char *start = strstr(buffer,"{");
-		char *finish = strstr(buffer,"}");
-		char *p;
-		while((p = strstr(finish+1,"}")) != NULL)
-		{
-			finish = p;
-		}
-		char json[4096];
-		memset(json,0,4096);
-		memcpy(json,start,finish-start+1);
-		printf("JSON: %s\n",json);
+			// TODO: wait for the whole message
+			int n = 0;
+			while (n<=0)
+			{
+				n = recv(sock,buffer,4096,0);
+				if (n < 0)
+				{
+					Logger::getInstance()->Log(Logger::LOGLEVEL_ERROR,"CamClient","Error on reading from socket. Closing connection.\n");
+					connectionOpen=false;
+					break;
+				}
+			}
+			if (!connectionOpen)
+			{
+				break;
+			}
+			printf("Here is the message: %s\n",buffer);
 
-		// ---------- Message received, now handle it
-		handleJSON(json, sock);
+			// Find begin and end of JSON: first '{' and last '}' before first '\0'
+			char *start = strstr(buffer,"{");
+			char *finish = strstr(buffer,"}");
+			char *p;
+			while((p = strstr(finish+1,"}")) != NULL)
+			{
+				finish = p;
+			}
+			char json[4096];
+			memset(json,0,4096);
+			memcpy(json,start,finish-start+1);
+			printf("JSON: %s\n",json);
+
+			// ---------- Message received, now handle it
+			handleJSON(json, sock);
+		}
 
 		// Close connection
 		closesocket(sock); 

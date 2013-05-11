@@ -51,6 +51,7 @@ void handleTakePicture(TakePictureMessage *msg, SOCKET sock)
 		{
 			// Sleep length: calculated time minus 50ms for safety...
 			long sleepMilliSec = (msg->desiredtimestamp - currentTimeStamp) / 1000 - 50;
+			Logger::getInstance()->Log(Logger::LOGLEVEL_VERBOSE,"CamClient","Waiting, sleepMilliSec = %Ld\n",sleepMilliSec);
 			if (sleepMilliSec > 0)
 			{
 #ifdef WIN32
@@ -62,6 +63,7 @@ void handleTakePicture(TakePictureMessage *msg, SOCKET sock)
 			currentTimeStamp = timeMeasurement.getTimeStamp();
 		}
 	}
+	Logger::getInstance()->Log(Logger::LOGLEVEL_VERBOSE,"CamClient","Now taking picture...\n");
 
 	// Taking a picture
 	timeMeasurement.start(CamClient::TimeMeasurementCodeDefs::Capture);

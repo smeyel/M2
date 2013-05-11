@@ -116,7 +116,7 @@ int main(int argc, char *argv[])
 			proxy.RequestPhoto(desiredTimeStamp);
 			timeMeasurement.finish(M2::TimeMeasurementCodeDefs::Send);
 			timeMeasurement.start(M2::TimeMeasurementCodeDefs::WaitAndReceive);
-			proxy.Receive(NULL);	// No need to save the file...
+			proxy.Receive((ostream*)NULL);	// No need to save the file...
 			timeMeasurement.finish(M2::TimeMeasurementCodeDefs::WaitAndReceive);
 			last2PictureTimeStamp = last1PictureTimeStamp;
 			last1PictureTimeStamp = proxy.lastReceivedTimeStamp;

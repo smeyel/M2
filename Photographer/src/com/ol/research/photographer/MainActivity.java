@@ -37,23 +37,26 @@ import android.widget.Toast;
 import com.ol.research.measurement.*;
 
 /**
- * @author Milan Tenk
- * MainActivity of the application (UI thread)
- * It starts the CommsThread, and if picture was taken, the SendImageService
  * 
- * Callbacks:
- * PictureCallback: if the taken photo is ready, here will be the SendImageService started, the picture can be saved to SD card
- * ShutterCallback: right after taking photo
- * BaseLoaderCallback: needed for OpenCV initialization
- * 
- * Handler: handles the messages, that is written to the screen
- * 
- * Methods:
- * onCreate: Will be called at the start of the activity, Commsthread will be started
- * onResume: Called, when the user is interfacing with the application. Contains the initialization of OpenCV
- * onStop: Called, when the activity is stopped
- * getLocalIpAddress: The IP address of the Phone can be determined
- * httpReg: Registration of the phone on the Server
+ * MainActivity of the application (UI thread). <br>
+ * It starts the CommsThread, and if picture was taken, the SendImageService is started from here.<br>
+ * Contains the time measurement points.<br>
+ * <br>
+ * @author Milan Tenk <br>
+ * <br>
+ * Callbacks:<br>
+ * PictureCallback: If the taken photo is ready, here will be the SendImageService started, the picture can be saved to SD card.<br>
+ * ShutterCallback: Called right after taking photo.<br>
+ * BaseLoaderCallback: Needed for OpenCV initialization.<br>
+ * <br>
+ * Handler: Handles the messages, that are written to the screen.<br>
+ * <br>
+ * Methods:<br>
+ * onCreate: Will be called at the start of the activity, Commsthread will be started.<br>
+ * onResume: Called, when the user is interfacing with the application. Contains the initialization of OpenCV.<br>
+ * onStop: Called, when the activity is stopped.<br>
+ * getLocalIpAddress: Determines the IP address of the Phone.<br>
+ * httpReg: Registrates the phone on the specified Server.<br>
  */
 
 public class MainActivity extends Activity {
@@ -213,7 +216,7 @@ public class MainActivity extends Activity {
 	}
 	
     @Override
-    public void onResume()
+    protected void onResume()
     {
         super.onResume();
         OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION_2_4_3, this, mLoaderCallback);
@@ -238,8 +241,7 @@ public class MainActivity extends Activity {
 		}*/
 	}
 	
-	
-	public String getLocalIpAddress() {
+	private String getLocalIpAddress() {
 		try {
 			for (Enumeration en = NetworkInterface.getNetworkInterfaces(); en.hasMoreElements();) {
 				NetworkInterface intf = (NetworkInterface) en.nextElement();

@@ -20,7 +20,18 @@ import android.util.Log;
 
 import com.ol.research.measurement.*;
 
-
+/**
+ * The thread of the communication. Contains time measurement points. <br>
+ * The thread waits for connection, when the client is connected, he waits for command.<br>
+ * <br>
+ * Handles following commands:<br>
+ * Ping: The application replies with pong.<br>
+ * Takepicture: A photo is taken and sent to the computer.<br>
+ * Sendlog: Time measurement results will be sent. <br>
+ * <br>
+ * Important: <br>
+ * The received JSON command must end with # character.<br>
+ * */
 class CommsThread implements Runnable {
 	
 	Handler handler;
@@ -223,6 +234,7 @@ class CommsThread implements Runnable {
 	              // 	ActualResult.WriteLog();
 	            }
 	            ss.close(); 
+	            s.close();
 			}
     	} catch (JSONException e) {
             Log.e("JSON Parser", "Error parsing data " + e.toString());

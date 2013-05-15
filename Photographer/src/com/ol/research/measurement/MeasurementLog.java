@@ -2,7 +2,6 @@ package com.ol.research.measurement;
 
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.util.Iterator;
 import java.util.Vector;
@@ -10,7 +9,11 @@ import java.util.Vector;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import android.util.Log;
 
+/**
+ * Logs the results of the measurements. With WriteJSON() will be the log serialized and sent through the given stream.
+ * */
 public class MeasurementLog {
 	
 	Vector<MeasurementResult> ResultVector;
@@ -28,6 +31,7 @@ public class MeasurementLog {
 		ResultVector.clear();
 	}
 	
+	/**Sends the log.*/
 	public void WriteJSON(OutputStream os)
 	{
 		try {
@@ -53,8 +57,7 @@ public class MeasurementLog {
             ResultVector.clear(); //TODO necessarily?
 						
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			 Log.e("JSON Parser", "Error parsing data " + e.toString());
 		}
 	}
 }

@@ -13,6 +13,7 @@ import com.ol.research.measurement.*;
 
 /** Intent service to send an image using the SMEyeL JSON data format.
  *	It notifies the CommThread.s socket after the send is complete.
+ *	Contains time measurement points.
  *	TODO: Strange: socket of service is in a different object and thread? (Intent parameter?)   
  */
 public class SendImageService extends IntentService{

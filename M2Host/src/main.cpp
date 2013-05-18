@@ -143,6 +143,8 @@ int main(int argc, char *argv[])
 				Logger::getInstance()->Log(Logger::LOGLEVEL_ERROR,"M2Host","Received something else than JPEG image:\n");
 				msg->log();
 			}
+			delete msg;
+			msg = NULL;
 
 			// Showing the picture
 			if (configManager.showImage)

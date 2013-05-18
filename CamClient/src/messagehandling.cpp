@@ -11,6 +11,7 @@
 #include "TimeMeasurementCodeDefines.h"
 #include "TimeMeasurement.h"
 #include "JsonMessage.h"
+#include "JpegMessage.h"
 #include "PingMessage.h"
 #include "SendlogMessage.h"
 #include "TakePictureMessage.h"

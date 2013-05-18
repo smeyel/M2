@@ -11,6 +11,8 @@
 
 #include "../include/PhoneProxy.h"
 
+#include "JpegMessage.h"
+
 #include "myconfigmanager.h"
 
 //#include "VideoInputFactory.h"
@@ -125,8 +127,21 @@ int main(int argc, char *argv[])
 			// Receiving picture
 			timeMeasurement.start(M2::TimeMeasurementCodeDefs::WaitAndReceive);
 
+			JsonMessage *msg = NULL;
+			JpegMessage *jpegMsg = NULL;
 			Mat img;
-			proxy.ReceiveJpeg(&img);
+			msg = proxy.ReceiveNew();
+			if (msg->getMessageType() == Jpeg)
+			{
+				jpegMsg = (JpegMessage *)msg;
+				jpegMsg->Decode(&img);
+			}
+			else
+			{
+				cout << "Error... received something else than JPEG... see the log for details!" << endl;
+				Logger::getInstance()->Log(Logger::LOGLEVEL_ERROR,"M2Host","Received something else than JPEG image:\n");
+				msg->log();
+			}
 
 			// Showing the picture
 			if (configManager.showImage)

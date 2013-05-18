@@ -28,6 +28,8 @@ using namespace std;
 MyConfigManager configManager;
 char *configfilename = "m2_default.ini";	// 1st command line parameter overrides it (if exists)
 
+const char *imageWindowName = "Received JPEG";
+
 /** Implementation of M2 scenario
 */
 int main(int argc, char *argv[])
@@ -52,6 +54,10 @@ int main(int argc, char *argv[])
     struct tm * now = localtime( & t );
 	Logger::getInstance()->Log(Logger::LOGLEVEL_VERBOSE,"M2Host","Current time: %d-%d-%d, %d:%d:%d\n",
 		(now->tm_year + 1900),(now->tm_mon + 1),now->tm_mday,now->tm_hour,now->tm_min,now->tm_sec );
+
+	Logger::getInstance()->Log(Logger::LOGLEVEL_VERBOSE,"M2Host","Configuration: %s\n",configfilename);
+	Logger::getInstance()->Log(Logger::LOGLEVEL_VERBOSE,"M2Host","Local measurement log: %s\nRemote measurement log: %s\n",
+		configManager.localMLogFilename.c_str(), configManager.remoteMLogFilename.c_str());
 
 	// Setup time management
 	LogConfigTime::TimeMeasurement timeMeasurement;
@@ -115,16 +121,49 @@ int main(int argc, char *argv[])
 			timeMeasurement.start(M2::TimeMeasurementCodeDefs::Send);
 			proxy.RequestPhoto(desiredTimeStamp);
 			timeMeasurement.finish(M2::TimeMeasurementCodeDefs::Send);
+
+			// Receiving picture
 			timeMeasurement.start(M2::TimeMeasurementCodeDefs::WaitAndReceive);
-			proxy.Receive((ostream*)NULL);	// No need to save the file...
+			stringstream ss;
+			proxy.Receive(&ss);
+
+			// Decoding JPEG
+			ss.seekp(0, ios::end);
+			stringstream::pos_type jpegSize = ss.tellp();
+			ss.seekg(0, ios::beg);
+			//cout << "JPEG size:" << jpegSize << endl;
+
+			vector<uchar> jpeg;
+			for(int i=0; i<jpegSize; i++)
+			{
+				char ch;
+				ss.read(&ch,1);
+				jpeg.push_back(ch);
+			}
+			Mat img = imdecode(Mat(jpeg),CV_LOAD_IMAGE_COLOR); 
+
+			// Showing the picture
+			if (configManager.showImage)
+			{
+				imshow(imageWindowName,img);
+			}
+
+			// Timestamp related administrative things
+
 			timeMeasurement.finish(M2::TimeMeasurementCodeDefs::WaitAndReceive);
 			last2PictureTimeStamp = last1PictureTimeStamp;
 			last1PictureTimeStamp = proxy.lastReceivedTimeStamp;
 			timeMeasurement.finish(M2::TimeMeasurementCodeDefs::FrameAll);
+
+			if (configManager.showImage)
+			{
+				// If the images are shown, have to wait to allow it to display...
+				waitKey(25);
+			}
 		}
 		cout << "Necessary pictures taken. Receiving measurement log..." << endl;
 		proxy.RequestLog();
-		proxy.Receive("measurementlog.txt");
+		proxy.Receive((char*)(configManager.remoteMLogFilename.c_str()));
 
 		cout << "Disconnecting..." << endl;
 		proxy.Disconnect();
@@ -138,7 +177,7 @@ int main(int argc, char *argv[])
 	timeMeasurement.finish(M2::TimeMeasurementCodeDefs::FullExecution);
 
 	ofstream resultFile;
-	resultFile.open(configManager.resultFilename, ofstream::binary);
+	resultFile.open(configManager.localMLogFilename, ofstream::binary);
 	t = time(0);   // get time now
     now = localtime( & t );
 	resultFile << "--- New results at " << (now->tm_year + 1900) << "-" << (now->tm_mon + 1) << "-" << now->tm_mday

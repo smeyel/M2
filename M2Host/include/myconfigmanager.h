@@ -16,8 +16,9 @@ class MyConfigManager
 		phoneIpAddress = reader->getStringValue("main","phoneIpAddress");
 		phonePort = reader->getIntValue("main","phonePort");
 		useDesiredTimestamp = reader->getBoolValue("main","useDesiredTimestamp");
-		resultFilename = reader->getStringValue("main","resultFilename");
-
+		remoteMLogFilename = reader->getStringValue("main","remoteMLogFilename");
+		localMLogFilename = reader->getStringValue("main","localMLogFilename");
+		showImage = reader->getBoolValue("main","showImage");
 		return true;
 	}
 
@@ -28,12 +29,13 @@ public:
 	}
 
 	// --- Settings
+	bool showImage;
 	bool useDesiredTimestamp;
 	std::string logFileName;
 	std::string phoneIpAddress;
 	int phonePort;
-	std::string resultFilename;
+	std::string localMLogFilename;
+	std::string remoteMLogFilename;
 };
 
 #endif
-

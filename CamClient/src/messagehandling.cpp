@@ -17,6 +17,8 @@
 #include "TakePictureMessage.h"
 #include "VideoInputFactory.h"
 #include "MeasurementLogMessage.h"
+#include "MatImageMessage.h"
+
 
 #include "PhoneServer.h"
 
@@ -63,34 +65,54 @@ void handleTakePicture(TakePictureMessage *msg, PhoneServer *server)
 	Logger::getInstance()->Log(Logger::LOGLEVEL_VERBOSE,"CamClient","Now taking picture...\n");
 	timeMeasurement.finish(CamClient::TimeMeasurementCodeDefs::WaitForTimestamp);
 
-	JpegMessage jpegMsg;
 	// Taking a picture
 	timeMeasurement.start(CamClient::TimeMeasurementCodeDefs::Capture);
-	jpegMsg.timestamp = timeMeasurement.getTimeStamp();
+	long long timestamp = timeMeasurement.getTimeStamp();
 	videoInput->captureFrame(*frameCaptured);
 	timeMeasurement.finish(CamClient::TimeMeasurementCodeDefs::Capture);
 
-	// JPEG compression
-	timeMeasurement.start(CamClient::TimeMeasurementCodeDefs::JpegCompression);
-	jpegMsg.Encode(frameCaptured);
-	timeMeasurement.finish(CamClient::TimeMeasurementCodeDefs::JpegCompression);
-
-	// Assembly of the answer
-	timeMeasurement.start(CamClient::TimeMeasurementCodeDefs::AnsweringTakePicture);
-	cout << "{ \"type\":\"JPEG\", \"timestamp\":\"" << jpegMsg.timestamp << "\", \"size\":\"" << jpegMsg.size << "\" }#" << endl;
-
-	// Sending the answer and the JPEG encoded picture
-	server->Send(&jpegMsg);
-	timeMeasurement.finish(CamClient::TimeMeasurementCodeDefs::AnsweringTakePicture);
-
-	// Showing the image after sending it, so that it causes smaller delay...
-	if (configManager.showImage)
+	if (configManager.sendMatImage)
 	{
-		timeMeasurement.start(CamClient::TimeMeasurementCodeDefs::ShowImage);
-		Mat show = imdecode(Mat(*jpegMsg.data),CV_LOAD_IMAGE_COLOR); 
-		imshow(imageWindowName,show);
-		int key = waitKey(25);	// TODO: needs some kind of delay to show!!!
-		timeMeasurement.finish(CamClient::TimeMeasurementCodeDefs::ShowImage);
+		// Sending images in openCV Mat format
+		MatImageMessage ans;
+		ans.timestamp = timestamp;
+		ans.Encode(frameCaptured);
+
+		ans.log();
+		cout << "{ \"type\":\"MatImage\", \"timestamp\":\"" << ans.timestamp << "\", \"size\":\"" << ans.size << "\" }#" << endl;
+
+		// Sending the answer and the JPEG encoded picture
+		timeMeasurement.start(CamClient::TimeMeasurementCodeDefs::AnsweringTakePicture);
+		server->Send(&ans);
+		timeMeasurement.finish(CamClient::TimeMeasurementCodeDefs::AnsweringTakePicture);
+	}
+	else	// Sending JPEG compressed images
+	{
+		JpegMessage jpegMsg;
+		jpegMsg.timestamp = timestamp;
+
+		// JPEG compression
+		timeMeasurement.start(CamClient::TimeMeasurementCodeDefs::JpegCompression);
+		jpegMsg.Encode(frameCaptured);
+		timeMeasurement.finish(CamClient::TimeMeasurementCodeDefs::JpegCompression);
+
+		// Assembly of the answer
+		timeMeasurement.start(CamClient::TimeMeasurementCodeDefs::AnsweringTakePicture);
+		cout << "{ \"type\":\"JPEG\", \"timestamp\":\"" << jpegMsg.timestamp << "\", \"size\":\"" << jpegMsg.size << "\" }#" << endl;
+
+		// Sending the answer and the JPEG encoded picture
+		server->Send(&jpegMsg);
+		timeMeasurement.finish(CamClient::TimeMeasurementCodeDefs::AnsweringTakePicture);
+
+		// Showing the image after sending it, so that it causes smaller delay...
+		if (configManager.showImage)
+		{
+			timeMeasurement.start(CamClient::TimeMeasurementCodeDefs::ShowImage);
+			Mat show = imdecode(Mat(jpegMsg.data),CV_LOAD_IMAGE_COLOR); 
+			imshow(imageWindowName,show);
+			int key = waitKey(25);	// TODO: needs some kind of delay to show!!!
+			timeMeasurement.finish(CamClient::TimeMeasurementCodeDefs::ShowImage);
+		}
 	}
 
 	imageNumber++;
@@ -119,11 +141,10 @@ void handleSendlog(SendlogMessage *msg, PhoneServer *server)
 	// Send
 	answerMsg.timestamp = timeMeasurement.getTimeStamp();
 	answerMsg.size = measurementLogString.length();
-	answerMsg.data = new std::vector<uchar>();
 	const char *ptr = measurementLogString.c_str();
 	for(int i=0; i<answerMsg.size; i++)
 	{
-		answerMsg.data->push_back(ptr[i]);
+		answerMsg.data.push_back(ptr[i]);
 	}
 	server->Send(&answerMsg);
 	timeMeasurement.finish(CamClient::TimeMeasurementCodeDefs::AnsweringSendlog);

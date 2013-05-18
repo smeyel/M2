@@ -12,6 +12,7 @@
 #include "../include/PhoneProxy.h"
 
 #include "JpegMessage.h"
+#include "MatImageMessage.h"
 #include "MeasurementLogMessage.h"
 
 #include "myconfigmanager.h"
@@ -129,13 +130,26 @@ int main(int argc, char *argv[])
 			timeMeasurement.start(M2::TimeMeasurementCodeDefs::WaitAndReceive);
 
 			JsonMessage *msg = NULL;
-			JpegMessage *jpegMsg = NULL;
 			Mat img;
+			bool isImgValid = false;
 			msg = proxy.ReceiveNew();
 			if (msg->getMessageType() == Jpeg)
 			{
+				JpegMessage *jpegMsg = NULL;
 				jpegMsg = (JpegMessage *)msg;
 				jpegMsg->Decode(&img);
+				isImgValid = true;
+			}
+			else if (msg->getMessageType() == MatImage)
+			{
+				MatImageMessage *matimgMsg = NULL;
+				matimgMsg = (MatImageMessage *)msg;
+				if (matimgMsg->size != 0)
+				{
+					matimgMsg->Decode();
+					matimgMsg->getMat()->copyTo(img);	// TODO: avoid this copy...
+					isImgValid = true;
+				}
 			}
 			else
 			{
@@ -149,7 +163,10 @@ int main(int argc, char *argv[])
 			// Showing the picture
 			if (configManager.showImage)
 			{
-				imshow(imageWindowName,img);
+				if (isImgValid)
+					imshow(imageWindowName,img);
+				else
+					cout << "M2Host main loop: img is not valid." << endl;
 			}
 
 			// Timestamp related administrative things

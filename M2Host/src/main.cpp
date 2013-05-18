@@ -12,6 +12,7 @@
 #include "../include/PhoneProxy.h"
 
 #include "JpegMessage.h"
+#include "MeasurementLogMessage.h"
 
 #include "myconfigmanager.h"
 
@@ -97,7 +98,7 @@ int main(int argc, char *argv[])
 		_int64 last2PictureTimeStamp = 0;	// Timestamp before the last one
 		_int64 interPictureTime = 0;
 
-		for(int i=0; i<100; i++)	// First 2 photos do not have desired timestamp...
+		for(int i=0; i<20; i++)	// First 2 photos do not have desired timestamp...
 		{
 			// Calculate desiredTimeStamp
 			if (interPictureTime==0 && last2PictureTimeStamp>0)
@@ -164,7 +165,22 @@ int main(int argc, char *argv[])
 		}
 		cout << "Necessary pictures taken. Receiving measurement log..." << endl;
 		proxy.RequestLog();
-		proxy.Receive((char*)(configManager.remoteMLogFilename.c_str()));
+
+		JsonMessage *msg = NULL;
+		MeasurementLogMessage *logMsg = NULL;
+		Mat img;
+		msg = proxy.ReceiveNew();
+		if (msg->getMessageType() == MeasurementLog)
+		{
+			logMsg = (MeasurementLogMessage *)msg;
+			logMsg->writeAuxFile((char*)(configManager.remoteMLogFilename.c_str()));
+		}
+		else
+		{
+			cout << "Error... received something else than JPEG... see the log for details!" << endl;
+			Logger::getInstance()->Log(Logger::LOGLEVEL_ERROR,"M2Host","Received something else than JPEG image:\n");
+			msg->log();
+		}
 
 		cout << "Disconnecting..." << endl;
 		proxy.Disconnect();

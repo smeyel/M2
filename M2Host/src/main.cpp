@@ -159,6 +159,7 @@ int main(int argc, char *argv[])
 			}
 			delete msg;
 			msg = NULL;
+			timeMeasurement.finish(M2::TimeMeasurementCodeDefs::WaitAndReceive);
 
 			// Showing the picture
 			if (configManager.showImage)
@@ -170,8 +171,6 @@ int main(int argc, char *argv[])
 			}
 
 			// Timestamp related administrative things
-
-			timeMeasurement.finish(M2::TimeMeasurementCodeDefs::WaitAndReceive);
 			last2PictureTimeStamp = last1PictureTimeStamp;
 			last1PictureTimeStamp = proxy.lastReceivedTimeStamp;
 			timeMeasurement.finish(M2::TimeMeasurementCodeDefs::FrameAll);
@@ -223,6 +222,10 @@ int main(int argc, char *argv[])
 	resultFile << "--- Further details:" << endl;
 	resultFile << "max fps: " << timeMeasurement.getmaxfps(M2::TimeMeasurementCodeDefs::FrameAll) << endl;
 	resultFile << "Number of processed frames: " << frameIdx << endl;
+	resultFile << "--- PhoneProxy time measurement results:" << endl;
+	proxy.timeMeasurement.showresults(&resultFile);
+
+
 	resultFile.flush();
 	resultFile.close();
 

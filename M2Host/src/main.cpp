@@ -124,23 +124,9 @@ int main(int argc, char *argv[])
 
 			// Receiving picture
 			timeMeasurement.start(M2::TimeMeasurementCodeDefs::WaitAndReceive);
-			stringstream ss;
-			proxy.Receive(&ss);
 
-			// Decoding JPEG
-			ss.seekp(0, ios::end);
-			stringstream::pos_type jpegSize = ss.tellp();
-			ss.seekg(0, ios::beg);
-			//cout << "JPEG size:" << jpegSize << endl;
-
-			vector<uchar> jpeg;
-			for(int i=0; i<jpegSize; i++)
-			{
-				char ch;
-				ss.read(&ch,1);
-				jpeg.push_back(ch);
-			}
-			Mat img = imdecode(Mat(jpeg),CV_LOAD_IMAGE_COLOR); 
+			Mat img;
+			proxy.ReceiveJpeg(&img);
 
 			// Showing the picture
 			if (configManager.showImage)

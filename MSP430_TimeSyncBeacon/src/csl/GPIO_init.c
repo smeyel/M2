@@ -16,6 +16,9 @@ void GPIO_init(void)
     /* Port 1 Output Register */
     P1OUT = 0;
 
+    /* Port 1 Port Select Register */
+    P1SEL = BIT5 + BIT6;
+
     /* Port 1 Direction Register */
     P1DIR = BIT0 + BIT6;
 

@@ -9,8 +9,10 @@
 #define LED1_ON()		P1OUT |= BIT0
 #define LED1_OFF()		P1OUT &= ~BIT0
 
+#if !TLC5916_USE_SPI
 #define LED2_ON()		P1OUT |= BIT6
 #define LED2_OFF()		P1OUT &= ~BIT6
+#endif
 
 static int initReady = 0;
 
@@ -65,11 +67,9 @@ void TIMER_interrupt(void){
 
 		if((time % 1000) == 0){
 			LED1_ON();
-			LED2_OFF();
 		}
 		else if((time % 500) == 0){
 			LED1_OFF();
-			LED2_ON();
 		}
 
 	}

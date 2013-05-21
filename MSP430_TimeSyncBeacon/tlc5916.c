@@ -18,11 +18,13 @@
 #define SET_LE()		P2OUT |= BIT1
 #define CLR_LE()		P2OUT &= ~BIT1
 
+#if !TLC5916_USE_SPI
 #define SET_SCK()		P2OUT |= BIT2
 #define CLR_SCK()		P2OUT &= ~BIT2
 
 #define SET_SDI()		P2OUT |= BIT3
 #define CLR_SDI()		P2OUT &= ~BIT3
+#endif	//TLC5916_USE_SPI
 
 
 //LED adatok, ebbe rakjuk össze amit ki fogunk küldeni
@@ -129,10 +131,16 @@ static void gpio_init(void){
 	//jó lenne, ha már Grace alapállapotba tenné a lábakat
 	SET_nOE();
 	CLR_LE();
+#if !TLC5916_USE_SPI
 	CLR_SCK();
 	CLR_SDI();
+#endif	//TLC5916_USE_SPI
 	
 }
+
+
+
+#if !TLC5916_USE_SPI
 
 //egy bitet kiküld a ledmeghajtó SDI lábára
 //b=0: low
@@ -160,6 +168,31 @@ static void send(void){
 			//send_one_bit(data[i] & BIT(j));
 
 }
+
+#else	//TLC5916_USE_SPI
+
+//egy bájtot kiküld a ledmeghajtó SDI lábára
+//MSB megy ki elõször
+static void send_one_byte(uint8_t byte){
+
+	USISRL = byte;				// Load shift register with data byte to be TXed
+	USICNT = 8;					// Load bit-counter to send/receive data byte
+	while(!(USIIFG & USICTL1));	// Loop until data byte transmitted
+	byte = USISRL;				// Read out the received data
+
+}
+
+//kiküldi a data-ban tárolt összes bitet
+static void send(void){
+
+	int i;
+
+	for(i=DRIVER_COUNT ; i-- > 0 ; )
+		send_one_byte(data[i]);
+
+}
+
+#endif	//TLC5916_USE_SPI
 
 //latch impulzust ad
 static void latch(void){

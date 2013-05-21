@@ -6,8 +6,9 @@
 /* external peripheral initialization functions */
 extern void GPIO_init(void);
 extern void BCSplus_init(void);
-extern void Timer0_A3_init(void);
+extern void USI_init(void);
 extern void System_init(void);
+extern void Timer0_A3_init(void);
 extern void WDTplus_init(void);
 
 #include <msp430.h>
@@ -27,11 +28,14 @@ void CSL_init(void)
     /* initialize Config for the MSP430 2xx family clock systems (BCS) */
     BCSplus_init();
 
-    /* initialize Config for the MSP430 A3 Timer0 */
-    Timer0_A3_init();
+    /* initialize Config for the MSP430 USI */
+    USI_init();
 
     /* initialize Config for the MSP430 System Registers */
     System_init();
+
+    /* initialize Config for the MSP430 A3 Timer0 */
+    Timer0_A3_init();
 
     /* initialize Config for the MSP430 WDT+ */
     WDTplus_init();

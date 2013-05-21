@@ -12,7 +12,7 @@
 #define LED2_ON()		P1OUT |= BIT6
 #define LED2_OFF()		P1OUT &= ~BIT6
 
-static int run = 0;
+static int initReady = 0;
 
 int main(int argc, char *argv[]){
 
@@ -20,7 +20,7 @@ int main(int argc, char *argv[]){
 
 	tlc5916_init();
 
-	#if 1
+	#if 0
 	tlc5916_write_led(0, 1);
 	tlc5916_write_led(2, 1);
 	tlc5916_write_led(4, 1);
@@ -28,17 +28,18 @@ int main(int argc, char *argv[]){
 	tlc5916_latch();
 	#endif
 	
+
+	initReady = 1;
 	while(1){
-		run = 1;
 	}
 
 }
 
-static void calc(uint32_t time_ms){
+static void calc(uint32_t time){
 
 	const int threshold = 32;
-	uint32_t low = time_ms % threshold;
-	uint32_t high = time_ms / threshold;
+	uint32_t low = time % threshold;
+	uint32_t high = time / threshold;
 
 	uint32_t run = low;
 	uint32_t gray = binaryToGray(high);
@@ -52,18 +53,21 @@ static void calc(uint32_t time_ms){
 
 void TIMER_interrupt(void){
 
-	static uint32_t cnt = 0;
+	static uint32_t time = 0;
 
-	if(run){
+	if(initReady){
 
-		cnt++;
+		tlc5916_latch();
 
-		if(cnt == 500){
+		time++;
+
+		calc(time);
+
+		if((time % 1000) == 0){
 			LED1_ON();
 			LED2_OFF();
 		}
-		else if(cnt == 1000){
-			cnt = 0;
+		else if((time % 500) == 0){
 			LED1_OFF();
 			LED2_ON();
 		}

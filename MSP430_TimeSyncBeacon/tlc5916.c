@@ -1,5 +1,6 @@
 
 #include "tlc5916.h"
+#include <msp430.h>
 
 #include <stdint.h>
 
@@ -11,33 +12,17 @@
 
 //GPIO kezelés
 //TODO: megírni
-#define SET_nOE()		do{}while(0)
-#define CLR_nOE()		do{}while(0)
-#define INIT_nOE()		do{\
-							;\
-							SET_nOE();\
-						}while(0)
+#define SET_nOE()		P2OUT |= BIT0
+#define CLR_nOE()		P2OUT &= ~BIT0
 
-#define SET_LE()		do{}while(0)
-#define CLR_LE()		do{}while(0)
-#define INIT_LE()		do{\
-							;\
-							CLR_LE();\
-						}while(0)
+#define SET_LE()		P2OUT |= BIT1
+#define CLR_LE()		P2OUT &= ~BIT1
 
-#define SET_SCK()		do{}while(0)
-#define CLR_SCK()		do{}while(0)
-#define INIT_SCK()		do{\
-							;\
-							CLR_SCK();\
-						}while(0)
+#define SET_SCK()		P2OUT |= BIT2
+#define CLR_SCK()		P2OUT &= ~BIT2
 
-#define SET_SDI()		do{}while(0)
-#define CLR_SDI()		do{}while(0)
-#define INIT_SDI()		do{\
-							;\
-							CLR_SDI();\
-						}while(0)
+#define SET_SDI()		P2OUT |= BIT3
+#define CLR_SDI()		P2OUT &= ~BIT3
 
 
 //LED adatok, ebbe rakjuk össze amit ki fogunk küldeni
@@ -139,10 +124,13 @@ static const swap_t swap[] = {
 //GPIO lábakat init-eli
 static void gpio_init(void){
 
-	INIT_nOE();
-	INIT_LE();
-	INIT_SCK();
-	INIT_SDI();
+	//Grace inicializálja a lábakat
+	//itt csak alapállapotba állítjuk a lábakat
+	//jó lenne, ha már Grace alapállapotba tenné a lábakat
+	SET_nOE();
+	CLR_LE();
+	CLR_SCK();
+	CLR_SDI();
 	
 }
 

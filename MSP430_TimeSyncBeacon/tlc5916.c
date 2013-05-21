@@ -238,7 +238,9 @@ static void write_leds(void* states, int from_led, int led_count){
 	//led: from_led + b
 	//on_off: st által mutatott terület (b/size)-adik bájtjának (b%size)-adik bitje
 	for(b=0 ; b < led_count ; b++)
-		write_led(from_led + b, (*(st+(b/size))) & bit_table[b%size]);
+		//write_led(from_led + b, (*(st+(b/size))) & bit_table[b%size]);
+		//size=8, így shiftelésre és maszkolásra cserélhetjük, mert a fordító nem veszi észre...
+		write_led(from_led + b, (*(st+(b>>3))) & bit_table[b&0x07]);
 
 }
 

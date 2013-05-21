@@ -207,16 +207,16 @@ static void latch(void){
 //on_off=0: off => 1
 static void write_led(int led, int on_off){
 
-	int driver;
-	int bit;
+	uint8_t driver;
+	uint8_t bit;
 
 	if((0 <= led) && (led < LED_COUNT)){
 
 		driver = swap[led].driver;
 		bit = swap[led].bit;
 
-		if(on_off)	data[driver] &= ~bit;
-		else		data[driver] |= bit;
+		if(on_off)	data[driver] |= bit;
+		else		data[driver] &= ~bit;
 
 	}
 
@@ -249,7 +249,7 @@ static void init(void){
 	
 	gpio_init();
 
-	for(i=DRIVER_COUNT ; i-- > 0 ; i++)
+	for(i=DRIVER_COUNT ; i-- > 0 ; )
 		data[i] = 0;
 	send();
 

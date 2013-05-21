@@ -14,9 +14,11 @@
 #define LED2_OFF()		P1OUT &= ~BIT6
 #endif
 
-static int initReady = 0;
+static int initReady;
 
 int main(int argc, char *argv[]){
+
+	initReady = 0;
 
 	CSL_init();	// Activate Grace-generated configuration
 
@@ -46,6 +48,7 @@ static void calc(uint32_t time){
 	uint32_t run = low;
 	uint32_t gray = binaryToGray(high);
 
+	tlc5916_write_led((run>0)?(run-1):(threshold-1), 0);
 	tlc5916_write_led(0 + run, 1);
 	tlc5916_write_leds(&gray, 32, 32);
 

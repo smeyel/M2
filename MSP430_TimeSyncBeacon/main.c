@@ -60,6 +60,8 @@ void TIMER_interrupt(void){
 
 	static uint32_t time = 0;
 
+	LED1_ON();
+
 	if(initReady){
 
 		tlc5916_latch();
@@ -68,13 +70,8 @@ void TIMER_interrupt(void){
 
 		calc(time);
 
-		if((time % 1000) == 0){
-			LED1_ON();
-		}
-		else if((time % 500) == 0){
-			LED1_OFF();
-		}
-
 	}
+
+	LED1_OFF();
 
 }

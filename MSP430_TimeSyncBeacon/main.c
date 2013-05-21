@@ -1,22 +1,24 @@
+/*
+ * ======== Standard MSP430 includes ========
+ */
+#include <msp430.h>
 
-#include "tlc5916.h"
-#include "time.h"
+/*
+ * ======== Grace related includes ========
+ */
+#include <ti/mcu/msp430/Grace.h>
 
-int main(void){
+/*
+ *  ======== main ========
+ */
+int main(void)
+{
+    Grace_init();                   // Activate Grace-generated configuration
+    
+    /* Start Timer_A */
+    TA0CTL |= MC_1; /* Start timer in up mode */
 
-	tlc5916_init();
-	time_init();
+/*    P1OUT &= ~ BIT0;*/
 
-	#if 1
-	tlc5916_write_led(0, 1);
-	tlc5916_write_led(2, 1);
-	tlc5916_write_led(4, 1);
-	tlc5916_send();
-	tlc5916_latch();
-	#endif
-	
-	while(1);
-
-	return 0;
-
+    return (0);
 }

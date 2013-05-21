@@ -53,43 +53,38 @@ MEMORY
 
 SECTIONS
 {
-    .bss        : {} > RAM                /* GLOBAL & STATIC VARS              */
-    .data       : {} > RAM                /* GLOBAL & STATIC VARS              */
-    .sysmem     : {} > RAM                /* DYNAMIC MEMORY ALLOCATION AREA    */
-    .stack      : {} > RAM (HIGH)         /* SOFTWARE SYSTEM STACK             */
+    .bss       : {} > RAM                /* GLOBAL & STATIC VARS              */
+    .sysmem    : {} > RAM                /* DYNAMIC MEMORY ALLOCATION AREA    */
+    .stack     : {} > RAM (HIGH)         /* SOFTWARE SYSTEM STACK             */
 
-    .text       : {} > FLASH              /* CODE                              */
-    .cinit      : {} > FLASH              /* INITIALIZATION TABLES             */
-    .const      : {} > FLASH              /* CONSTANT DATA                     */
-    .cio        : {} > RAM                /* C I/O BUFFER                      */
+    .text      : {} > FLASH              /* CODE                              */
+    .cinit     : {} > FLASH              /* INITIALIZATION TABLES             */
+    .const     : {} > FLASH              /* CONSTANT DATA                     */
+    .cio       : {} > RAM                /* C I/O BUFFER                      */
 
-    .pinit      : {} > FLASH              /* C++ CONSTRUCTOR TABLES            */
-    .init_array : {} > FLASH              /* C++ CONSTRUCTOR TABLES            */
-    .mspabi.exidx : {} > FLASH            /* C++ CONSTRUCTOR TABLES            */
-    .mspabi.extab : {} > FLASH            /* C++ CONSTRUCTOR TABLES            */
+    .pinit     : {} > FLASH              /* C++ CONSTRUCTOR TABLES            */
 
     .infoA     : {} > INFOA              /* MSP430 INFO FLASH MEMORY SEGMENTS */
     .infoB     : {} > INFOB
     .infoC     : {} > INFOC
     .infoD     : {} > INFOD
 
-    /* MSP430 INTERRUPT VECTORS          */
-    .int00       : {}               > INT00
-    .int01       : {}               > INT01
-    PORT1        : { * ( .int02 ) } > INT02 type = VECT_INIT
-    PORT2        : { * ( .int03 ) } > INT03 type = VECT_INIT
-    USI          : { * ( .int04 ) } > INT04 type = VECT_INIT
-    ADC10        : { * ( .int05 ) } > INT05 type = VECT_INIT
-    .int06       : {}               > INT06
-    .int07       : {}               > INT07
-    TIMER0_A1    : { * ( .int08 ) } > INT08 type = VECT_INIT
-    TIMER0_A0    : { * ( .int09 ) } > INT09 type = VECT_INIT
-    WDT          : { * ( .int10 ) } > INT10 type = VECT_INIT
-    COMPARATORA   : { * ( .int11 ) } > INT11 type = VECT_INIT
-    .int12       : {}               > INT12
-    .int13       : {}               > INT13
-    NMI          : { * ( .int14 ) } > INT14 type = VECT_INIT
-    .reset       : {}               > RESET  /* MSP430 RESET VECTOR         */ 
+    .int00   : {} > INT00                /* MSP430 INTERRUPT VECTORS          */
+    .int01   : {} > INT01
+    .int02   : {} > INT02
+    .int03   : {} > INT03
+    .int04   : {} > INT04
+    .int05   : {} > INT05
+    .int06   : {} > INT06
+    .int07   : {} > INT07
+    .int08   : {} > INT08
+    .int09   : {} > INT09
+    .int10   : {} > INT10
+    .int11   : {} > INT11
+    .int12   : {} > INT12
+    .int13   : {} > INT13
+    .int14   : {} > INT14
+    .reset   : {} > RESET              /* MSP430 RESET VECTOR               */ 
 }
 
 /****************************************************************************/

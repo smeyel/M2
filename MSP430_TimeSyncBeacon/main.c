@@ -1,17 +1,14 @@
 
 
 #include <msp430.h>
-#include <ti/mcu/msp430/Grace.h>
+#include <ti/mcu/msp430/csl/CSL.h>
 
 #include "tlc5916.h"
 #include "gray.h"
 
-int main(void){
+int main(int argc, char *argv[]){
 
-	Grace_init();	// Activate Grace-generated configuration
-
-	/* Start Timer_A */
-	TA0CTL |= MC_1;	/* Start timer in up mode */
+	CSL_init();	// Activate Grace-generated configuration
 
 	tlc5916_init();
 
@@ -26,6 +23,10 @@ int main(void){
 	while(1){
 
 	}
+
+}
+
+void TIMER_interrupt(void){
 
 }
 

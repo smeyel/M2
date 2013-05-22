@@ -1,0 +1,440 @@
+EESchema Schematic File Version 2  date 2013. máj.  2., csütörtök, 10.45.31 CEST
+LIBS:power
+LIBS:device
+LIBS:transistors
+LIBS:conn
+LIBS:linear
+LIBS:regul
+LIBS:74xx
+LIBS:cmos4000
+LIBS:adc-dac
+LIBS:memory
+LIBS:xilinx
+LIBS:special
+LIBS:microcontrollers
+LIBS:dsp
+LIBS:microchip
+LIBS:analog_switches
+LIBS:motorola
+LIBS:texas
+LIBS:intel
+LIBS:audio
+LIBS:interface
+LIBS:digital-audio
+LIBS:philips
+LIBS:display
+LIBS:cypress
+LIBS:siliconi
+LIBS:opto
+LIBS:atmel
+LIBS:contrib
+LIBS:valves
+EELAYER 43  0
+EELAYER END
+$Descr A4 11700 8267
+encoding utf-8
+Sheet 9 9
+Title "Time Sync"
+Date "2 may 2013"
+Rev ""
+Comp "BME-AAIT"
+Comment1 "Koszó Norbert"
+Comment2 "SMEyeL"
+Comment3 ""
+Comment4 ""
+$EndDescr
+Wire Wire Line
+	5500 3150 5400 3150
+Connection ~ 6700 3350
+Wire Wire Line
+	6700 3350 6050 3350
+Wire Wire Line
+	5400 3450 5950 3450
+Connection ~ 6700 3550
+Wire Wire Line
+	6050 3550 6700 3550
+Wire Wire Line
+	5400 3650 5950 3650
+Wire Wire Line
+	3950 3550 4200 3550
+Wire Wire Line
+	3950 3350 4200 3350
+Connection ~ 3000 3450
+Wire Wire Line
+	3000 3450 3200 3450
+Wire Wire Line
+	3200 3650 3000 3650
+Wire Wire Line
+	3000 3650 3000 2850
+Wire Wire Line
+	4100 3250 4200 3250
+Wire Wire Line
+	4100 3150 4200 3150
+Wire Wire Line
+	5000 2250 5100 2250
+Wire Wire Line
+	5550 2850 5550 2950
+Wire Wire Line
+	5550 2950 5400 2950
+Wire Wire Line
+	2750 3850 2750 2950
+Wire Wire Line
+	2750 2950 4200 2950
+Wire Wire Line
+	4500 2050 4500 2250
+Wire Wire Line
+	4500 2250 4600 2250
+Wire Wire Line
+	5100 2250 5100 2350
+Wire Wire Line
+	4100 3050 4200 3050
+Wire Wire Line
+	5500 3250 5400 3250
+Wire Wire Line
+	5400 3050 5700 3050
+Wire Wire Line
+	5700 3050 5700 2950
+Wire Wire Line
+	5700 2950 5900 2950
+Wire Wire Line
+	6500 3100 6500 2950
+Wire Wire Line
+	6500 2950 6400 2950
+Wire Wire Line
+	3550 3550 3000 3550
+Connection ~ 3000 3550
+Wire Wire Line
+	3550 3350 3000 3350
+Connection ~ 3000 3350
+Wire Wire Line
+	4200 3450 3600 3450
+Wire Wire Line
+	4200 3650 3600 3650
+Wire Wire Line
+	6350 3650 6700 3650
+Wire Wire Line
+	6700 3650 6700 3100
+Wire Wire Line
+	5650 3550 5400 3550
+Wire Wire Line
+	6350 3450 6700 3450
+Connection ~ 6700 3450
+Wire Wire Line
+	5650 3350 5400 3350
+Text HLabel 5500 3150 2    60   Input ~ 0
+MISO
+Text HLabel 5500 3250 2    60   Input ~ 0
+OE
+Text HLabel 4100 3250 0    60   Input ~ 0
+LE
+Text HLabel 4100 3150 0    60   Input ~ 0
+CLK
+Text HLabel 4100 3050 0    60   Input ~ 0
+MOSI
+$Comp
+L +5V #PWR070
+U 1 1 517FD1E6
+P 6700 3100
+AR Path="/517FCEA9/517FD1E6" Ref="#PWR070"  Part="1" 
+AR Path="/517FD3B4/517FD1E6" Ref="#PWR021"  Part="1" 
+AR Path="/517FD3B3/517FD1E6" Ref="#PWR028"  Part="1" 
+AR Path="/517FD3B2/517FD1E6" Ref="#PWR035"  Part="1" 
+AR Path="/517FD3B1/517FD1E6" Ref="#PWR042"  Part="1" 
+AR Path="/517FD3AB/517FD1E6" Ref="#PWR049"  Part="1" 
+AR Path="/517FD3AA/517FD1E6" Ref="#PWR056"  Part="1" 
+AR Path="/517FD393/517FD1E6" Ref="#PWR063"  Part="1" 
+F 0 "#PWR070" H 6700 3190 20  0001 C CNN
+F 1 "+5V" H 6700 3190 30  0000 C CNN
+	1    6700 3100
+	1    0    0    -1  
+$EndComp
+$Comp
+L LED D67
+U 1 1 517FD1E0
+P 6150 3650
+AR Path="/517FCEA9/517FD1E0" Ref="D67"  Part="1" 
+AR Path="/517FD3B4/517FD1E0" Ref="D11"  Part="1" 
+AR Path="/517FD3B3/517FD1E0" Ref="D19"  Part="1" 
+AR Path="/517FD3B2/517FD1E0" Ref="D27"  Part="1" 
+AR Path="/517FD3B1/517FD1E0" Ref="D35"  Part="1" 
+AR Path="/517FD3AB/517FD1E0" Ref="D43"  Part="1" 
+AR Path="/517FD3AA/517FD1E0" Ref="D51"  Part="1" 
+AR Path="/517FD393/517FD1E0" Ref="D59"  Part="1" 
+F 0 "D67" H 6150 3750 50  0000 C CNN
+F 1 "LED" H 6150 3550 50  0000 C CNN
+	1    6150 3650
+	-1   0    0    1   
+$EndComp
+$Comp
+L LED D65
+U 1 1 517FD1DD
+P 5850 3550
+AR Path="/517FCEA9/517FD1DD" Ref="D65"  Part="1" 
+AR Path="/517FD3B4/517FD1DD" Ref="D9"  Part="1" 
+AR Path="/517FD3B3/517FD1DD" Ref="D17"  Part="1" 
+AR Path="/517FD3B2/517FD1DD" Ref="D25"  Part="1" 
+AR Path="/517FD3B1/517FD1DD" Ref="D33"  Part="1" 
+AR Path="/517FD3AB/517FD1DD" Ref="D41"  Part="1" 
+AR Path="/517FD3AA/517FD1DD" Ref="D49"  Part="1" 
+AR Path="/517FD393/517FD1DD" Ref="D57"  Part="1" 
+F 0 "D65" H 5850 3650 50  0000 C CNN
+F 1 "LED" H 5850 3450 50  0000 C CNN
+	1    5850 3550
+	-1   0    0    1   
+$EndComp
+$Comp
+L LED D66
+U 1 1 517FD1D9
+P 6150 3450
+AR Path="/517FCEA9/517FD1D9" Ref="D66"  Part="1" 
+AR Path="/517FD3B4/517FD1D9" Ref="D10"  Part="1" 
+AR Path="/517FD3B3/517FD1D9" Ref="D18"  Part="1" 
+AR Path="/517FD3B2/517FD1D9" Ref="D26"  Part="1" 
+AR Path="/517FD3B1/517FD1D9" Ref="D34"  Part="1" 
+AR Path="/517FD3AB/517FD1D9" Ref="D42"  Part="1" 
+AR Path="/517FD3AA/517FD1D9" Ref="D50"  Part="1" 
+AR Path="/517FD393/517FD1D9" Ref="D58"  Part="1" 
+F 0 "D66" H 6150 3550 50  0000 C CNN
+F 1 "LED" H 6150 3350 50  0000 C CNN
+	1    6150 3450
+	-1   0    0    1   
+$EndComp
+$Comp
+L LED D64
+U 1 1 517FD1D3
+P 5850 3350
+AR Path="/517FCEA9/517FD1D3" Ref="D64"  Part="1" 
+AR Path="/517FD3B4/517FD1D3" Ref="D8"  Part="1" 
+AR Path="/517FD3B3/517FD1D3" Ref="D16"  Part="1" 
+AR Path="/517FD3B2/517FD1D3" Ref="D24"  Part="1" 
+AR Path="/517FD3B1/517FD1D3" Ref="D32"  Part="1" 
+AR Path="/517FD3AB/517FD1D3" Ref="D40"  Part="1" 
+AR Path="/517FD3AA/517FD1D3" Ref="D48"  Part="1" 
+AR Path="/517FD393/517FD1D3" Ref="D56"  Part="1" 
+F 0 "D64" H 5850 3450 50  0000 C CNN
+F 1 "LED" H 5850 3250 50  0000 C CNN
+	1    5850 3350
+	-1   0    0    1   
+$EndComp
+$Comp
+L +5V #PWR071
+U 1 1 517FD1B8
+P 3000 2850
+AR Path="/517FCEA9/517FD1B8" Ref="#PWR071"  Part="1" 
+AR Path="/517FD3B4/517FD1B8" Ref="#PWR022"  Part="1" 
+AR Path="/517FD3B3/517FD1B8" Ref="#PWR029"  Part="1" 
+AR Path="/517FD3B2/517FD1B8" Ref="#PWR036"  Part="1" 
+AR Path="/517FD3B1/517FD1B8" Ref="#PWR043"  Part="1" 
+AR Path="/517FD3AB/517FD1B8" Ref="#PWR050"  Part="1" 
+AR Path="/517FD3AA/517FD1B8" Ref="#PWR057"  Part="1" 
+AR Path="/517FD393/517FD1B8" Ref="#PWR064"  Part="1" 
+F 0 "#PWR071" H 3000 2940 20  0001 C CNN
+F 1 "+5V" H 3000 2940 30  0000 C CNN
+	1    3000 2850
+	1    0    0    -1  
+$EndComp
+$Comp
+L LED D61
+U 1 1 517FD1A2
+P 3400 3650
+AR Path="/517FCEA9/517FD1A2" Ref="D61"  Part="1" 
+AR Path="/517FD3B4/517FD1A2" Ref="D5"  Part="1" 
+AR Path="/517FD3B3/517FD1A2" Ref="D13"  Part="1" 
+AR Path="/517FD3B2/517FD1A2" Ref="D21"  Part="1" 
+AR Path="/517FD3B1/517FD1A2" Ref="D29"  Part="1" 
+AR Path="/517FD3AB/517FD1A2" Ref="D37"  Part="1" 
+AR Path="/517FD3AA/517FD1A2" Ref="D45"  Part="1" 
+AR Path="/517FD393/517FD1A2" Ref="D53"  Part="1" 
+F 0 "D61" H 3400 3750 50  0000 C CNN
+F 1 "LED" H 3400 3550 50  0000 C CNN
+	1    3400 3650
+	1    0    0    -1  
+$EndComp
+$Comp
+L LED D63
+U 1 1 517FD19E
+P 3750 3550
+AR Path="/517FCEA9/517FD19E" Ref="D63"  Part="1" 
+AR Path="/517FD3B4/517FD19E" Ref="D7"  Part="1" 
+AR Path="/517FD3B3/517FD19E" Ref="D15"  Part="1" 
+AR Path="/517FD3B2/517FD19E" Ref="D23"  Part="1" 
+AR Path="/517FD3B1/517FD19E" Ref="D31"  Part="1" 
+AR Path="/517FD3AB/517FD19E" Ref="D39"  Part="1" 
+AR Path="/517FD3AA/517FD19E" Ref="D47"  Part="1" 
+AR Path="/517FD393/517FD19E" Ref="D55"  Part="1" 
+F 0 "D63" H 3750 3650 50  0000 C CNN
+F 1 "LED" H 3750 3450 50  0000 C CNN
+	1    3750 3550
+	1    0    0    -1  
+$EndComp
+$Comp
+L LED D60
+U 1 1 517FD198
+P 3400 3450
+AR Path="/517FCEA9/517FD198" Ref="D60"  Part="1" 
+AR Path="/517FD3B4/517FD198" Ref="D4"  Part="1" 
+AR Path="/517FD3B3/517FD198" Ref="D12"  Part="1" 
+AR Path="/517FD3B2/517FD198" Ref="D20"  Part="1" 
+AR Path="/517FD3B1/517FD198" Ref="D28"  Part="1" 
+AR Path="/517FD3AB/517FD198" Ref="D36"  Part="1" 
+AR Path="/517FD3AA/517FD198" Ref="D44"  Part="1" 
+AR Path="/517FD393/517FD198" Ref="D52"  Part="1" 
+F 0 "D60" H 3400 3550 50  0000 C CNN
+F 1 "LED" H 3400 3350 50  0000 C CNN
+	1    3400 3450
+	1    0    0    -1  
+$EndComp
+$Comp
+L LED D62
+U 1 1 517FD187
+P 3750 3350
+AR Path="/517FCEA9/517FD187" Ref="D62"  Part="1" 
+AR Path="/517FD3B4/517FD187" Ref="D6"  Part="1" 
+AR Path="/517FD3B3/517FD187" Ref="D14"  Part="1" 
+AR Path="/517FD3B2/517FD187" Ref="D22"  Part="1" 
+AR Path="/517FD3B1/517FD187" Ref="D30"  Part="1" 
+AR Path="/517FD3AB/517FD187" Ref="D38"  Part="1" 
+AR Path="/517FD3AA/517FD187" Ref="D46"  Part="1" 
+AR Path="/517FD393/517FD187" Ref="D54"  Part="1" 
+F 0 "D62" H 3750 3450 50  0000 C CNN
+F 1 "LED" H 3750 3250 50  0000 C CNN
+	1    3750 3350
+	1    0    0    -1  
+$EndComp
+$Comp
+L DGND #PWR072
+U 1 1 517FD132
+P 6500 3100
+AR Path="/517FCEA9/517FD132" Ref="#PWR072"  Part="1" 
+AR Path="/517FD3B4/517FD132" Ref="#PWR023"  Part="1" 
+AR Path="/517FD3B3/517FD132" Ref="#PWR030"  Part="1" 
+AR Path="/517FD3B2/517FD132" Ref="#PWR037"  Part="1" 
+AR Path="/517FD3B1/517FD132" Ref="#PWR044"  Part="1" 
+AR Path="/517FD3AB/517FD132" Ref="#PWR051"  Part="1" 
+AR Path="/517FD3AA/517FD132" Ref="#PWR058"  Part="1" 
+AR Path="/517FD393/517FD132" Ref="#PWR065"  Part="1" 
+F 0 "#PWR072" H 6500 3100 40  0001 C CNN
+F 1 "DGND" H 6500 3030 40  0000 C CNN
+	1    6500 3100
+	1    0    0    -1  
+$EndComp
+$Comp
+L R R15
+U 1 1 517FD121
+P 6150 2950
+AR Path="/517FCEA9/517FD121" Ref="R15"  Part="1" 
+AR Path="/517FD3B4/517FD121" Ref="R8"  Part="1" 
+AR Path="/517FD3B3/517FD121" Ref="R9"  Part="1" 
+AR Path="/517FD3B2/517FD121" Ref="R10"  Part="1" 
+AR Path="/517FD3B1/517FD121" Ref="R11"  Part="1" 
+AR Path="/517FD3AB/517FD121" Ref="R12"  Part="1" 
+AR Path="/517FD3AA/517FD121" Ref="R13"  Part="1" 
+AR Path="/517FD393/517FD121" Ref="R14"  Part="1" 
+F 0 "R15" V 6230 2950 50  0000 C CNN
+F 1 "R" V 6150 2950 50  0000 C CNN
+	1    6150 2950
+	0    -1   -1   0   
+$EndComp
+$Comp
+L +3.3V #PWR073
+U 1 1 517FCEFD
+P 4500 2050
+AR Path="/517FCEA9/517FCEFD" Ref="#PWR073"  Part="1" 
+AR Path="/517FD3B4/517FCEFD" Ref="#PWR024"  Part="1" 
+AR Path="/517FD3B3/517FCEFD" Ref="#PWR031"  Part="1" 
+AR Path="/517FD3B2/517FCEFD" Ref="#PWR038"  Part="1" 
+AR Path="/517FD3B1/517FCEFD" Ref="#PWR045"  Part="1" 
+AR Path="/517FD3AB/517FCEFD" Ref="#PWR052"  Part="1" 
+AR Path="/517FD3AA/517FCEFD" Ref="#PWR059"  Part="1" 
+AR Path="/517FD393/517FCEFD" Ref="#PWR066"  Part="1" 
+F 0 "#PWR073" H 4500 2010 30  0001 C CNN
+F 1 "+3.3V" H 4500 2160 30  0000 C CNN
+	1    4500 2050
+	1    0    0    -1  
+$EndComp
+$Comp
+L DGND #PWR074
+U 1 1 517FCEF9
+P 5100 2350
+AR Path="/517FCEA9/517FCEF9" Ref="#PWR074"  Part="1" 
+AR Path="/517FD3B4/517FCEF9" Ref="#PWR025"  Part="1" 
+AR Path="/517FD3B3/517FCEF9" Ref="#PWR032"  Part="1" 
+AR Path="/517FD3B2/517FCEF9" Ref="#PWR039"  Part="1" 
+AR Path="/517FD3B1/517FCEF9" Ref="#PWR046"  Part="1" 
+AR Path="/517FD3AB/517FCEF9" Ref="#PWR053"  Part="1" 
+AR Path="/517FD3AA/517FCEF9" Ref="#PWR060"  Part="1" 
+AR Path="/517FD393/517FCEF9" Ref="#PWR067"  Part="1" 
+F 0 "#PWR074" H 5100 2350 40  0001 C CNN
+F 1 "DGND" H 5100 2280 40  0000 C CNN
+	1    5100 2350
+	1    0    0    -1  
+$EndComp
+$Comp
+L C C13
+U 1 1 517FCEF0
+P 4800 2250
+AR Path="/517FCEA9/517FCEF0" Ref="C13"  Part="1" 
+AR Path="/517FD3B4/517FCEF0" Ref="C6"  Part="1" 
+AR Path="/517FD3B3/517FCEF0" Ref="C7"  Part="1" 
+AR Path="/517FD3B2/517FCEF0" Ref="C8"  Part="1" 
+AR Path="/517FD3B1/517FCEF0" Ref="C9"  Part="1" 
+AR Path="/517FD3AB/517FCEF0" Ref="C10"  Part="1" 
+AR Path="/517FD3AA/517FCEF0" Ref="C11"  Part="1" 
+AR Path="/517FD393/517FCEF0" Ref="C12"  Part="1" 
+F 0 "C13" H 4850 2350 50  0000 L CNN
+F 1 "100n" H 4850 2150 50  0000 L CNN
+	1    4800 2250
+	0    -1   -1   0   
+$EndComp
+$Comp
+L +3.3V #PWR075
+U 1 1 517FCEDD
+P 5550 2850
+AR Path="/517FCEA9/517FCEDD" Ref="#PWR075"  Part="1" 
+AR Path="/517FD3B4/517FCEDD" Ref="#PWR026"  Part="1" 
+AR Path="/517FD3B3/517FCEDD" Ref="#PWR033"  Part="1" 
+AR Path="/517FD3B2/517FCEDD" Ref="#PWR040"  Part="1" 
+AR Path="/517FD3B1/517FCEDD" Ref="#PWR047"  Part="1" 
+AR Path="/517FD3AB/517FCEDD" Ref="#PWR054"  Part="1" 
+AR Path="/517FD3AA/517FCEDD" Ref="#PWR061"  Part="1" 
+AR Path="/517FD393/517FCEDD" Ref="#PWR068"  Part="1" 
+F 0 "#PWR075" H 5550 2810 30  0001 C CNN
+F 1 "+3.3V" H 5550 2960 30  0000 C CNN
+	1    5550 2850
+	1    0    0    -1  
+$EndComp
+$Comp
+L DGND #PWR076
+U 1 1 517FCEC5
+P 2750 3850
+AR Path="/517FCEA9/517FCEC5" Ref="#PWR076"  Part="1" 
+AR Path="/517FD3B4/517FCEC5" Ref="#PWR027"  Part="1" 
+AR Path="/517FD3B3/517FCEC5" Ref="#PWR034"  Part="1" 
+AR Path="/517FD3B2/517FCEC5" Ref="#PWR041"  Part="1" 
+AR Path="/517FD3B1/517FCEC5" Ref="#PWR048"  Part="1" 
+AR Path="/517FD3AB/517FCEC5" Ref="#PWR055"  Part="1" 
+AR Path="/517FD3AA/517FCEC5" Ref="#PWR062"  Part="1" 
+AR Path="/517FD393/517FCEC5" Ref="#PWR069"  Part="1" 
+F 0 "#PWR076" H 2750 3850 40  0001 C CNN
+F 1 "DGND" H 2750 3780 40  0000 C CNN
+	1    2750 3850
+	1    0    0    -1  
+$EndComp
+$Comp
+L TLC5916 U10
+U 1 1 517FCEC1
+P 4800 3300
+AR Path="/517FCEA9/517FCEC1" Ref="U10"  Part="1" 
+AR Path="/517FD3B4/517FCEC1" Ref="U3"  Part="1" 
+AR Path="/517FD3B3/517FCEC1" Ref="U4"  Part="1" 
+AR Path="/517FD3B2/517FCEC1" Ref="U5"  Part="1" 
+AR Path="/517FD3B1/517FCEC1" Ref="U6"  Part="1" 
+AR Path="/517FD3AB/517FCEC1" Ref="U7"  Part="1" 
+AR Path="/517FD3AA/517FCEC1" Ref="U8"  Part="1" 
+AR Path="/517FD393/517FCEC1" Ref="U9"  Part="1" 
+F 0 "U10" H 4800 3750 60  0000 C CNN
+F 1 "TLC5916" H 4800 2850 60  0000 C CNN
+	1    4800 3300
+	1    0    0    -1  
+$EndComp
+$EndSCHEMATC

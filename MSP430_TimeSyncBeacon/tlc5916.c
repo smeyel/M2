@@ -1,4 +1,5 @@
 
+#include "config.h"
 #include "tlc5916.h"
 #include <msp430.h>
 
@@ -11,7 +12,23 @@
 
 
 //GPIO kezelés
-//TODO: megírni
+#if !TEST_ON_LAUNCHPAD
+#define SET_nOE()		P1OUT |= BIT3
+#define CLR_nOE()		P1OUT &= ~BIT3
+
+#define SET_LE()		P1OUT |= BIT4
+#define CLR_LE()		P1OUT &= ~BIT4
+
+#if !TLC5916_USE_SPI
+#define SET_SCK()		P1OUT |= BIT5
+#define CLR_SCK()		P1OUT &= ~BIT5
+
+#define SET_SDI()		P1OUT |= BIT6
+#define CLR_SDI()		P1OUT &= ~BIT6
+#endif	//!TLC5916_USE_SPI
+
+#else	//TEST_ON_LAUNCHPAD
+
 #define SET_nOE()		P2OUT |= BIT0
 #define CLR_nOE()		P2OUT &= ~BIT0
 
@@ -24,7 +41,9 @@
 
 #define SET_SDI()		P2OUT |= BIT3
 #define CLR_SDI()		P2OUT &= ~BIT3
-#endif	//TLC5916_USE_SPI
+#endif	//!TLC5916_USE_SPI
+
+#endif	//TEST_ON_LAUNCHPAD
 
 
 //LED adatok, ebbe rakjuk össze amit ki fogunk küldeni
@@ -133,7 +152,7 @@ static void gpio_init(void){
 #if !TLC5916_USE_SPI
 	CLR_SCK();
 	CLR_SDI();
-#endif	//TLC5916_USE_SPI
+#endif	//!TLC5916_USE_SPI
 	
 }
 

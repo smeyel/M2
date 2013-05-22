@@ -3,16 +3,17 @@
 #include <msp430.h>
 #include <ti/mcu/msp430/csl/CSL.h>
 
+#include "config.h"
 #include "tlc5916.h"
 #include "gray.h"
 
 #define LED1_ON()		P1OUT |= BIT0
 #define LED1_OFF()		P1OUT &= ~BIT0
 
-#if !TLC5916_USE_SPI
+#if(TEST_ON_LAUNCHPAD && !TLC5916_USE_SPI)
 #define LED2_ON()		P1OUT |= BIT6
 #define LED2_OFF()		P1OUT &= ~BIT6
-#endif
+#endif	//(TEST_ON_LAUNCHPAD && !TLC5916_USE_SPI)
 
 static int initReady;
 

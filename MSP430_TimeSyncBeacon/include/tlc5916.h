@@ -1,8 +1,6 @@
 #ifndef TLC5916_H_
 #define TLC5916_H_
 
-#define TLC5916_USE_SPI						1
-
 void tlc5916_send(void);
 void tlc5916_latch(void);
 void tlc5916_write_led(int led, int on_off);

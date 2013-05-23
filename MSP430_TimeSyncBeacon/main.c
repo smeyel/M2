@@ -24,14 +24,6 @@ int main(int argc, char *argv[]){
 	CSL_init();	// Activate Grace-generated configuration
 
 	tlc5916_init();
-
-	#if 0
-	tlc5916_write_led(0, 1);
-	tlc5916_write_led(2, 1);
-	tlc5916_write_led(4, 1);
-	tlc5916_send();
-	tlc5916_latch();
-	#endif
 	
 
 	initReady = 1;
@@ -53,13 +45,84 @@ static void calc(uint32_t time){
 	tlc5916_write_led(0 + run, 1);
 	tlc5916_write_leds(&gray, 32, 32);
 
-	tlc5916_send();
+}
+
+static void run_pattern(uint32_t time){
+
+	uint32_t zero = 0;
+	uint32_t pattern = 0x1f;
+	const int threshold = 64;
+	const int period = 200;
+	uint32_t run;
+
+	if(time%period == 0){
+
+		run = time / period % threshold;
+
+		tlc5916_write_leds(&zero, 0, 32);
+		tlc5916_write_leds(&zero, 32, 32);
+		tlc5916_write_leds(&pattern, run, 32);
+
+	}
+
+}
+
+static int boot_up(uint32_t time){
+
+	static uint16_t pattern = 0;
+	const int count = 16;
+	const int period = 30;
+
+	if(time%period == 0){
+
+		pattern <<= 1;
+		pattern |= 0x0001;
+
+		tlc5916_write_leds(&pattern, 0, 16);
+		tlc5916_write_leds(&pattern, 16, 16);
+		tlc5916_write_leds(&pattern, 32, 16);
+		tlc5916_write_leds(&pattern, 48, 16);
+
+		if(time == period*(count-1))
+			return 1;
+
+	}
+
+	return 0;
+
+}
+
+static int boot_down(uint32_t time){
+
+	static uint16_t pattern = 0xffff;
+	const int count = 16;
+	const int period = 30;
+
+	if(time%period == 0){
+
+		pattern >>= 1;
+
+		tlc5916_write_leds(&pattern, 16, 16);
+		tlc5916_write_leds(&pattern, 32, 16);
+
+		//pattern |= 0x8001;
+		tlc5916_write_leds(&pattern, 0, 16);
+		tlc5916_write_leds(&pattern, 48, 16);
+		//pattern &= 0x7fff;
+
+		if(time == period*(count-1))
+			return 1;
+
+	}
+
+	return 0;
 
 }
 
 void TIMER_interrupt(void){
 
 	static uint32_t time = 0;
+	static int state = 0;
 
 	LED1_ON();
 
@@ -67,9 +130,31 @@ void TIMER_interrupt(void){
 
 		tlc5916_latch();
 
-		time++;
+		switch(state){
+			case 0:
+				if(boot_up(time)){
+					state++;
+					time = 0;
+				}
+				break;
+			case 1:
+				if(boot_down(time)){
+					state++;
+					time = 0;
+				}
+				break;
+			case 2:
+			default:
+				calc(time);
+				break;
+			case 3:
+				run_pattern(time);
+				break;
+		}
 
-		calc(time);
+		tlc5916_send();
+
+		time++;
 
 	}
 

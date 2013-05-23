@@ -240,10 +240,10 @@ static void write_led(int led, int on_off){
 
 }
 
-static void write_leds(void* states, int from_led, int led_count){
+static void write_leds(const void* states, int from_led, int led_count){
 
 	const int size = 8;
-	uint8_t* st = (uint8_t*)states;
+	const uint8_t* st = (const uint8_t*)states;
 	
 	int b;
 
@@ -287,7 +287,7 @@ void tlc5916_latch(void){
 void tlc5916_write_led(int led, int on_off){
 	write_led(led, on_off);
 }
-void tlc5916_write_leds(void* states, int from_led, int led_count){
+void tlc5916_write_leds(const void* states, int from_led, int led_count){
 	write_leds(states, from_led, led_count);
 }
 void tlc5916_init(void){

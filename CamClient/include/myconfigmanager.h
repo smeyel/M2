@@ -15,7 +15,7 @@ class MyConfigManager
 
 		showImage = reader->getBoolValue("main","showImage");
 		serverPort = reader->getIntValue("main","serverPort");
-		camSourceFilename = reader->getBoolValue("main","camSourceFilename");
+		camSourceFilename = reader->getStringValue("main","camSourceFilename");
 		logFileName = reader->getStringValue("main","logFileName");
 		usePs3eye = reader->getBoolValue("main","usePs3eye");
 		sendMatImage = reader->getBoolValue("main","sendMatImage");

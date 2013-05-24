@@ -124,9 +124,10 @@ int main(int argc, char *argv[])
 	}
 	init(inifilename);
 
-	// TODO: allow automatic camera parameter setting
-
-	// TODO: Register the node
+	if (server.RegisterNode("avalon.aut.bme.hu","~kristof/smeyel/smeyel_reg.php?IP=127.0.0.1:6000"))	// TODO: do not hardwire the port!
+	{
+		cout << "Error: could not register the node..." << endl;
+	}
 
 	server.ListenServerSocket();
 

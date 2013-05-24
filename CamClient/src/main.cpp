@@ -97,6 +97,11 @@ void init(char *inifilename)
 		videoInput->init(configManager.camSourceFilename.data());
 	}
 
+	// Set auto gain, exposure and white balance
+	videoInput->SetNormalizedGain(-1);
+	videoInput->SetNormalizedExposure(-1);
+	videoInput->SetNormalizedWhiteBalance(-1,-1,-1);
+
 	if (configManager.showImage)
 	{
 		namedWindow(imageWindowName, CV_WINDOW_AUTOSIZE);

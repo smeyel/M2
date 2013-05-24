@@ -34,16 +34,22 @@ int main(int argc, char *argv[]){
 
 static void calc(uint32_t time){
 
-	const int threshold = 32;
+	const int threshold = 30;
 	uint32_t low = time % threshold;
 	uint32_t high = time / threshold;
 
-	uint32_t run = low;
+	static int run_pre = -1;
+	int run = (low<14) ? (low+1) : (low+2);
 	uint32_t gray = binaryToGray(high);
+	uint16_t gray_low = gray & 0x0000ffff;
+	uint16_t gray_high = gray & 0xffff0000;
 
-	tlc5916_write_led((run>0)?(run-1):(threshold-1), 0);
-	tlc5916_write_led(0 + run, 1);
-	tlc5916_write_leds(&gray, 32, 32);
+	tlc5916_write_led(run_pre, 0);
+	tlc5916_write_led(run, 1);
+	tlc5916_write_leds(&gray_low, 32, 16);
+	tlc5916_write_leds(&gray_high, 49, 14);
+
+	run_pre = run;
 
 }
 
@@ -105,10 +111,10 @@ static int boot_down(uint32_t time){
 		tlc5916_write_leds(&pattern, 16, 16);
 		tlc5916_write_leds(&pattern, 32, 16);
 
-		//pattern |= 0x8001;
+		pattern |= 0x8001;
 		tlc5916_write_leds(&pattern, 0, 16);
 		tlc5916_write_leds(&pattern, 48, 16);
-		//pattern &= 0x7fff;
+		pattern &= 0x7fff;
 
 		if(time == period*(count-1))
 			return 1;

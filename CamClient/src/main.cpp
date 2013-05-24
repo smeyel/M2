@@ -138,7 +138,7 @@ int main(int argc, char *argv[])
 		Logger::getInstance()->Log(Logger::LOGLEVEL_INFO,"CamClient","Waiting for connection\n");
 		cout << "Waiting for connection." << endl;
 		struct sockaddr_in addr;
-		SOCKET sock = accept(server.serversock, (struct sockaddr *) &addr, NULL);
+		SOCKET sock = accept(server.GetServerSocket(), (struct sockaddr *) &addr, NULL);
 		if (sock < 0 || sock == INVALID_SOCKET)
 		{
 //			WSAGetLastError

@@ -18,6 +18,7 @@ class MyConfigManager
 		camSourceFilename = reader->getBoolValue("main","camSourceFilename");
 		logFileName = reader->getStringValue("main","logFileName");
 		usePs3eye = reader->getBoolValue("main","usePs3eye");
+		sendMatImage = reader->getBoolValue("main","sendMatImage");
 		camID = reader->getIntValue("main","camID");
 
 		return true;
@@ -31,6 +32,7 @@ public:
 
 	// --- Settings
 	bool showImage;
+	bool sendMatImage;
 	bool usePs3eye;
 	int camID;	// ID of camera, of <0 for filename
 	std::string camSourceFilename;	// If !usePs3eye, may be filename

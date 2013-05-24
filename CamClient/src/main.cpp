@@ -29,7 +29,7 @@
 
 //#include "picojson.h"
 #include "messagehandling.h"
-
+#include "PhoneServer.h"
 
 using namespace cv;
 using namespace std;
@@ -45,7 +45,8 @@ Mat *frameCaptured;
 VideoInput *videoInput;
 int imageNumber=0;	// Counts the number of images taken
 bool running=true;	// Used to finish the main loop...
-SOCKET serversock;
+
+PhoneServer server;
 
 bool takePicture(VideoInput *videoInput, Mat *frameCaptured)
 {
@@ -58,57 +59,6 @@ bool takePicture(VideoInput *videoInput, Mat *frameCaptured)
 	return true;
 }
 
-void initServerSocket(int port)
-{
-	struct sockaddr_in server;
-    struct hostent *host_info;
-    unsigned long addr;
-	int iResult;
-
-    WORD wVersionRequested;
-    WSADATA wsaData;
-    wVersionRequested = MAKEWORD (1, 1);
-    if (WSAStartup (wVersionRequested, &wsaData) != 0)
-	{
-		Logger::getInstance()->Log(Logger::LOGLEVEL_ERROR,"CamClient","Error: Cannot initialize winsock!\n");
-		exit(1);
-	}
-
-    serversock = socket( AF_INET, SOCK_STREAM, 0 );
-    if (serversock < 0)
-	{
-		Logger::getInstance()->Log(Logger::LOGLEVEL_ERROR,"CamClient","Error: Cannot create server socket!\n");
-		exit(2);
-	}
-
-    memset( &server, 0, sizeof (server));
-	server.sin_family = AF_INET;
-	server.sin_addr.s_addr = INADDR_ANY;
-	server.sin_port = htons(port);
-
-	// Binding the socket
-	if (bind(serversock, (struct sockaddr *) &server, sizeof(server)) < 0)
-	{
-		Logger::getInstance()->Log(Logger::LOGLEVEL_ERROR,"CamClient","Error: Cannot bind server socket!\n");
-		exit(3);
-	}
-	Logger::getInstance()->Log(Logger::LOGLEVEL_INFO,"CamClient","Server socket initialized on port %d\n",port);
-
-}
-
-void openServerSocket()
-{
-	listen(serversock,5);
-	Logger::getInstance()->Log(Logger::LOGLEVEL_INFO,"CamClient","Server socket now listening.\n");
-}
-
-void closeServerSocket()
-{
-	closesocket(serversock);
-	WSACleanup();
-	serversock = -1;
-}
-
 void init(char *inifilename)
 {
 	// Init config
@@ -116,8 +66,8 @@ void init(char *inifilename)
 
 	// Init logger (singleton)
 	Logger *logger = new StdoutLogger();
-	logger->SetLogLevel(Logger::LOGLEVEL_INFO);
-	//logger->SetLogLevel(Logger::LOGLEVEL_ERROR);
+	//logger->SetLogLevel(Logger::LOGLEVEL_INFO);
+	logger->SetLogLevel(Logger::LOGLEVEL_ERROR);
 	Logger::getInstance()->Log(Logger::LOGLEVEL_VERBOSE,"CamClient","CamClient started\n");
     time_t t = time(0);   // get time now
     struct tm * now = localtime( & t );
@@ -147,6 +97,11 @@ void init(char *inifilename)
 		videoInput->init(configManager.camSourceFilename.data());
 	}
 
+	// Set auto gain, exposure and white balance
+	videoInput->SetNormalizedGain(-1);
+	videoInput->SetNormalizedExposure(-1);
+	videoInput->SetNormalizedWhiteBalance(-1,-1,-1);
+
 	if (configManager.showImage)
 	{
 		namedWindow(imageWindowName, CV_WINDOW_AUTOSIZE);
@@ -156,7 +111,7 @@ void init(char *inifilename)
 	frameCaptured = new Mat(480,640,CV_8UC4);	// Warning: this assumes the resolution and 4 channel color depth
 
 	// Initialize socket communication and server socket
-	initServerSocket(configManager.serverPort);
+	server.InitServer(configManager.serverPort);
 }
 
 
@@ -169,82 +124,67 @@ int main(int argc, char *argv[])
 	}
 	init(inifilename);
 
-	// TODO: measure times
-	// TODO: allow using continuous open socket
-	// TODO: allow shutting down or otherwise save the time measurement results into configManager.resultFileName
-	// TODO: allow automatic camera parameter setting
+	if (server.RegisterNode("avalon.aut.bme.hu","~kristof/smeyel/smeyel_reg.php?IP=127.0.0.1:6000"))	// TODO: do not hardwire the port!
+	{
+		cout << "Error: could not register the node..." << endl;
+	}
 
-	// TODO: Register the node
-
-	openServerSocket();
+	server.ListenServerSocket();
 
 	// Enter main loop: wait for commands and execute them.
 	while(running)
 	{
 		// Wait for connection
 		Logger::getInstance()->Log(Logger::LOGLEVEL_INFO,"CamClient","Waiting for connection\n");
+		cout << "Waiting for connection." << endl;
 		struct sockaddr_in addr;
-		SOCKET sock = accept(serversock, (struct sockaddr *) &addr, NULL);
-		if (sock < 0)
+		SOCKET sock = accept(server.GetServerSocket(), (struct sockaddr *) &addr, NULL);
+		if (sock < 0 || sock == INVALID_SOCKET)
 		{
+//			WSAGetLastError
 			Logger::getInstance()->Log(Logger::LOGLEVEL_ERROR,"CamClient","Error on accept()\n");
-			closeServerSocket();
-			exit(3);
+			server.DisconnectServer();
+			exit(1);
 		}
 		// Convert IP address to string
 		char ipAddressStr[INET_ADDRSTRLEN];
 		inet_ntop( AF_INET, &addr.sin_addr, ipAddressStr, INET_ADDRSTRLEN );
 		Logger::getInstance()->Log(Logger::LOGLEVEL_INFO,"CamClient","Connection received from %s\n",ipAddressStr);
+		cout << "Connected." << endl;
 
 		// TODO: while socket is not closed by remote size, repeat waiting for commands and execute them...
 		bool connectionOpen = true;
 		while(connectionOpen)
 		{
 			// Handle connection
-			char buffer[4096];	// Data receive buffer
-			memset(buffer,0,4096);
 
 			// TODO: wait for the whole message
-			int n = 0;
-			while (n<=0)
+			timeMeasurement.start(CamClient::TimeMeasurementCodeDefs::ReceiveCommand);
+			server.SetSock(sock);
+			JsonMessage *msg = server.ReceiveNew();
+			timeMeasurement.finish(CamClient::TimeMeasurementCodeDefs::ReceiveCommand);
+			
+			if (!msg)
 			{
-				n = recv(sock,buffer,4096,0);
-				if (n < 0)
-				{
-					Logger::getInstance()->Log(Logger::LOGLEVEL_ERROR,"CamClient","Error on reading from socket. Closing connection.\n");
-					connectionOpen=false;
-					break;
-				}
-			}
-			if (!connectionOpen)
-			{
+				// The connection was closed from the remote side.
+				// (Or a malformed JSON was received...)
+				Logger::getInstance()->Log(Logger::LOGLEVEL_ERROR,"CamClient","Error on reading from socket. Closing connection.\n");
+				connectionOpen=false;
 				break;
 			}
-			printf("Here is the message: %s\n",buffer);
-
-			// Find begin and end of JSON: first '{' and last '}' before first '\0'
-			char *start = strstr(buffer,"{");
-			char *finish = strstr(buffer,"}");
-			char *p;
-			while((p = strstr(finish+1,"}")) != NULL)
-			{
-				finish = p;
-			}
-			char json[4096];
-			memset(json,0,4096);
-			memcpy(json,start,finish-start+1);
-			printf("JSON: %s\n",json);
 
 			// ---------- Message received, now handle it
-			handleJSON(json, sock);
+			timeMeasurement.start(CamClient::TimeMeasurementCodeDefs::HandleJson);
+			handleJSON(msg, &server);
+			timeMeasurement.finish(CamClient::TimeMeasurementCodeDefs::HandleJson);
 		}
 
 		// Close connection
-		closesocket(sock); 
+		server.Disconnect();
 		Logger::getInstance()->Log(Logger::LOGLEVEL_INFO,"CamClient","Connection closed\n");
 	}
 
-	closeServerSocket();
+	server.DisconnectServer();
 
 	return 0;
 }

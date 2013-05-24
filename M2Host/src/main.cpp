@@ -1,7 +1,7 @@
 #include <iostream>
 //#include <sstream>
 //#include <time.h>
-//#include <fstream>	// For marker data export into file...
+#include <fstream>	// For marker data export into file...
 
 //#include <windows.h>	// for sleep
 
@@ -10,6 +10,10 @@
 #include <opencv2/highgui/highgui.hpp>
 
 #include "../include/PhoneProxy.h"
+
+#include "JpegMessage.h"
+#include "MatImageMessage.h"
+#include "MeasurementLogMessage.h"
 
 #include "myconfigmanager.h"
 
@@ -27,6 +31,8 @@ using namespace std;
 
 MyConfigManager configManager;
 char *configfilename = "m2_default.ini";	// 1st command line parameter overrides it (if exists)
+
+const char *imageWindowName = "Received JPEG";
 
 /** Implementation of M2 scenario
 */
@@ -53,10 +59,23 @@ int main(int argc, char *argv[])
 	Logger::getInstance()->Log(Logger::LOGLEVEL_VERBOSE,"M2Host","Current time: %d-%d-%d, %d:%d:%d\n",
 		(now->tm_year + 1900),(now->tm_mon + 1),now->tm_mday,now->tm_hour,now->tm_min,now->tm_sec );
 
+	Logger::getInstance()->Log(Logger::LOGLEVEL_VERBOSE,"M2Host","Configuration: %s\n",configfilename);
+	Logger::getInstance()->Log(Logger::LOGLEVEL_VERBOSE,"M2Host","Local measurement log: %s\nRemote measurement log: %s\n",
+		configManager.localMLogFilename.c_str(), configManager.remoteMLogFilename.c_str());
+
 	// Setup time management
 	LogConfigTime::TimeMeasurement timeMeasurement;
 	timeMeasurement.init();
 	M2::TimeMeasurementCodeDefs::setnames(&timeMeasurement);
+
+	// Waiting a little to allow other processes to init...
+	// Useful if started together with CamClient which needs to start its server.
+	cout << "Waiting 3s..." << endl;
+#ifdef WIN32
+	Sleep(3000);
+#else
+#error TODO: Sleep not implemented for non-Win32.
+#endif
 
 	timeMeasurement.start(M2::TimeMeasurementCodeDefs::FullExecution);
 	bool running=true;
@@ -80,7 +99,7 @@ int main(int argc, char *argv[])
 		_int64 last2PictureTimeStamp = 0;	// Timestamp before the last one
 		_int64 interPictureTime = 0;
 
-		for(int i=0; i<55; i++)	// First 2 photos do not have desired timestamp...
+		for(int i=0; i<20; i++)	// First 2 photos do not have desired timestamp...
 		{
 			// Calculate desiredTimeStamp
 			if (interPictureTime==0 && last2PictureTimeStamp>0)
@@ -89,9 +108,10 @@ int main(int argc, char *argv[])
 				interPictureTime = last1PictureTimeStamp - last2PictureTimeStamp;
 			}
 
-			if (interPictureTime==0)
+			if (interPictureTime==0 || !configManager.useDesiredTimestamp)
 			{
 				// Unknown inter-picture time (we do not know the frequency of the timestamp!!!)
+				//	(...or usage of this function is disabled from configuration.)
 				desiredTimeStamp = 0;
 			}
 			else
@@ -102,19 +122,82 @@ int main(int argc, char *argv[])
 			// Asking for a picture
 			timeMeasurement.start(M2::TimeMeasurementCodeDefs::FrameAll);
 			cout << "Capture No " << i << "..." << endl;
-			cout << "Requesing photo..." << endl;
 			timeMeasurement.start(M2::TimeMeasurementCodeDefs::Send);
 			proxy.RequestPhoto(desiredTimeStamp);
 			timeMeasurement.finish(M2::TimeMeasurementCodeDefs::Send);
-			cout << "Receiving photo..." << endl;
+
+			// Receiving picture
 			timeMeasurement.start(M2::TimeMeasurementCodeDefs::WaitAndReceive);
-			proxy.Receive("d:\\temp\\image1.jpg");
-			//proxy.ReceiveDebug();
+
+			JsonMessage *msg = NULL;
+			Mat img;
+			bool isImgValid = false;
+			msg = proxy.ReceiveNew();
+			if (msg->getMessageType() == Jpeg)
+			{
+				JpegMessage *jpegMsg = NULL;
+				jpegMsg = (JpegMessage *)msg;
+				jpegMsg->Decode(&img);
+				isImgValid = true;
+			}
+			else if (msg->getMessageType() == MatImage)
+			{
+				MatImageMessage *matimgMsg = NULL;
+				matimgMsg = (MatImageMessage *)msg;
+				if (matimgMsg->size != 0)
+				{
+					matimgMsg->Decode();
+					matimgMsg->getMat()->copyTo(img);	// TODO: avoid this copy...
+					isImgValid = true;
+				}
+			}
+			else
+			{
+				cout << "Error... received something else than JPEG... see the log for details!" << endl;
+				Logger::getInstance()->Log(Logger::LOGLEVEL_ERROR,"M2Host","Received something else than JPEG image:\n");
+				msg->log();
+			}
+			delete msg;
+			msg = NULL;
 			timeMeasurement.finish(M2::TimeMeasurementCodeDefs::WaitAndReceive);
+
+			// Showing the picture
+			if (configManager.showImage)
+			{
+				if (isImgValid)
+					imshow(imageWindowName,img);
+				else
+					cout << "M2Host main loop: img is not valid." << endl;
+			}
+
+			// Timestamp related administrative things
 			last2PictureTimeStamp = last1PictureTimeStamp;
 			last1PictureTimeStamp = proxy.lastReceivedTimeStamp;
 			timeMeasurement.finish(M2::TimeMeasurementCodeDefs::FrameAll);
-			Sleep(500);
+
+			if (configManager.showImage)
+			{
+				// If the images are shown, have to wait to allow it to display...
+				waitKey(25);
+			}
+		}
+		cout << "Necessary pictures taken. Receiving measurement log..." << endl;
+		proxy.RequestLog();
+
+		JsonMessage *msg = NULL;
+		MeasurementLogMessage *logMsg = NULL;
+		Mat img;
+		msg = proxy.ReceiveNew();
+		if (msg->getMessageType() == MeasurementLog)
+		{
+			logMsg = (MeasurementLogMessage *)msg;
+			logMsg->writeAuxFile((char*)(configManager.remoteMLogFilename.c_str()));
+		}
+		else
+		{
+			cout << "Error... received something else than JPEG... see the log for details!" << endl;
+			Logger::getInstance()->Log(Logger::LOGLEVEL_ERROR,"M2Host","Received something else than JPEG image:\n");
+			msg->log();
 		}
 
 		cout << "Disconnecting..." << endl;
@@ -127,16 +210,24 @@ int main(int argc, char *argv[])
 		frameIdx++;
 	}
 	timeMeasurement.finish(M2::TimeMeasurementCodeDefs::FullExecution);
-/*	Logger::getInstance()->Log(Logger::LOGLEVEL_VERBOSE,"M2Host","Current time\n"
-	log << "--- Main loop time measurement results:" << endl;
-	timeMeasurement.showresults(&log);
 
-	log << "--- Further details:" << endl;
-	log << "max fps: " << timeMeasurement.getmaxfps(M2::TimeMeasurementCodeDefs::FrameAll) << endl;
-	log << "Number of processed frames: " << frameIdx << endl;
+	ofstream resultFile;
+	resultFile.open(configManager.localMLogFilename, ofstream::binary);
+	t = time(0);   // get time now
+    now = localtime( & t );
+	resultFile << "--- New results at " << (now->tm_year + 1900) << "-" << (now->tm_mon + 1) << "-" << now->tm_mday
+		<< " " << now->tm_hour << ":" << now->tm_min << ":" << now->tm_sec << endl;
+	resultFile << "--- Main loop time measurement results:" << endl;
+	timeMeasurement.showresults(&resultFile);
+	resultFile << "--- Further details:" << endl;
+	resultFile << "max fps: " << timeMeasurement.getmaxfps(M2::TimeMeasurementCodeDefs::FrameAll) << endl;
+	resultFile << "Number of processed frames: " << frameIdx << endl;
+	resultFile << "--- PhoneProxy time measurement results:" << endl;
+	proxy.timeMeasurement.showresults(&resultFile);
 
-	log.flush();
-	log.close();*/
+
+	resultFile.flush();
+	resultFile.close();
 
 	cout << "Done." << endl;
 }

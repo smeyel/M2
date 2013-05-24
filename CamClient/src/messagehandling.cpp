@@ -11,10 +11,16 @@
 #include "TimeMeasurementCodeDefines.h"
 #include "TimeMeasurement.h"
 #include "JsonMessage.h"
+#include "JpegMessage.h"
 #include "PingMessage.h"
 #include "SendlogMessage.h"
 #include "TakePictureMessage.h"
 #include "VideoInputFactory.h"
+#include "MeasurementLogMessage.h"
+#include "MatImageMessage.h"
+
+
+#include "PhoneServer.h"
 
 #include "myconfigmanager.h"
 #include "globals.h"
@@ -28,25 +34,18 @@ extern VideoInput *videoInput;
 extern int imageNumber;
 extern bool running;
 
-//#include "picojson.h"
-
-void handlePing(PingMessage *msg, SOCKET sock)
+void handlePing(PingMessage *msg, PhoneServer *server)
 {
-	char *response = "{ \"type\"=\"pong\" }";
-	int n = send(sock,response,strlen(response),0);
-	if (n < 0)
-	{
-		Logger::getInstance()->Log(Logger::LOGLEVEL_ERROR,"CamClient","Error on writing answer to socket.\n");
-	}
+	PingMessage ping;
+	server->Send(&ping);
 }
 
-void handleTakePicture(TakePictureMessage *msg, SOCKET sock)
+void handleTakePicture(TakePictureMessage *msg, PhoneServer *server)
 {
-	// TODO wait for desired timestamp if defined
+	timeMeasurement.start(CamClient::TimeMeasurementCodeDefs::WaitForTimestamp);
 	if (msg->desiredtimestamp > 0)
 	{
 		long long currentTimeStamp = timeMeasurement.getTimeStamp();
-		// TODO: if desiredtimestamp is far away, sleep this thread...
 		while( currentTimeStamp < msg->desiredtimestamp )
 		{
 			// Sleep length: calculated time minus 50ms for safety...
@@ -55,7 +54,7 @@ void handleTakePicture(TakePictureMessage *msg, SOCKET sock)
 			if (sleepMilliSec > 0)
 			{
 #ifdef WIN32
-				Sleep(sleepMilliSec);	// Wait 100 ms under Windows
+				Sleep(sleepMilliSec);
 #else
 #error TODO: Sleep not implemented for non-Win32.
 #endif
@@ -64,6 +63,7 @@ void handleTakePicture(TakePictureMessage *msg, SOCKET sock)
 		}
 	}
 	Logger::getInstance()->Log(Logger::LOGLEVEL_VERBOSE,"CamClient","Now taking picture...\n");
+	timeMeasurement.finish(CamClient::TimeMeasurementCodeDefs::WaitForTimestamp);
 
 	// Taking a picture
 	timeMeasurement.start(CamClient::TimeMeasurementCodeDefs::Capture);
@@ -71,96 +71,87 @@ void handleTakePicture(TakePictureMessage *msg, SOCKET sock)
 	videoInput->captureFrame(*frameCaptured);
 	timeMeasurement.finish(CamClient::TimeMeasurementCodeDefs::Capture);
 
-	// JPEG compression
-	timeMeasurement.start(CamClient::TimeMeasurementCodeDefs::JpegCompression);
-	vector<uchar> buff;//buffer for coding
-	vector<int> param = vector<int>(2);
-	param[0]=CV_IMWRITE_JPEG_QUALITY;
-	param[1]=95;//default(95) 0-100
-
-	imencode(".jpg",*frameCaptured,buff,param);
-	timeMeasurement.finish(CamClient::TimeMeasurementCodeDefs::JpegCompression);
-	
-	// Assembly of the answer
-	timeMeasurement.start(CamClient::TimeMeasurementCodeDefs::AnsweringTakePicture);
-	long filesize = buff.size();
-	std::ostringstream out;
-	out << "{ \"type\":\"JPEG\", \"timestamp\":\"" << timestamp << "\", \"size\":\"" << filesize << "\" }#";
-
-	// Sending the answer and the JPEG encoded picture
-	std::string tmpStr = out.str();
-	const char* tmpPtr = tmpStr.c_str();
-
-	int n = send(sock,tmpPtr,strlen(tmpPtr),0);
-	if (n < 0)
+	if (configManager.sendMatImage)
 	{
-		Logger::getInstance()->Log(Logger::LOGLEVEL_ERROR,"CamClient","Error on writing answer to socket.\n");
+		// Sending images in openCV Mat format
+		MatImageMessage ans;
+		ans.timestamp = timestamp;
+		ans.Encode(frameCaptured);
+
+		ans.log();
+		cout << "{ \"type\":\"MatImage\", \"timestamp\":\"" << ans.timestamp << "\", \"size\":\"" << ans.size << "\" }#" << endl;
+
+		// Sending the answer and the JPEG encoded picture
+		timeMeasurement.start(CamClient::TimeMeasurementCodeDefs::AnsweringTakePicture);
+		server->Send(&ans);
+		timeMeasurement.finish(CamClient::TimeMeasurementCodeDefs::AnsweringTakePicture);
 	}
-
-	n = send(sock,(const char*)(buff.data()),buff.size(),0);
-	if (n < 0)
+	else	// Sending JPEG compressed images
 	{
-		Logger::getInstance()->Log(Logger::LOGLEVEL_ERROR,"CamClient","Error on writing answer to socket.\n");
-	}
-	timeMeasurement.finish(CamClient::TimeMeasurementCodeDefs::AnsweringTakePicture);
+		JpegMessage jpegMsg;
+		jpegMsg.timestamp = timestamp;
 
-	// Showing the image after sending it, so that it causes smaller delay...
-	if (configManager.showImage)
-	{
-		timeMeasurement.start(CamClient::TimeMeasurementCodeDefs::ShowImage);
-		Mat show = imdecode(Mat(buff),CV_LOAD_IMAGE_COLOR); 
-		imshow(imageWindowName,show);
-		int key = waitKey(25);	// TODO: needs some kind of delay to show!!!
-		timeMeasurement.finish(CamClient::TimeMeasurementCodeDefs::ShowImage);
+		// JPEG compression
+		timeMeasurement.start(CamClient::TimeMeasurementCodeDefs::JpegCompression);
+		jpegMsg.Encode(frameCaptured);
+		timeMeasurement.finish(CamClient::TimeMeasurementCodeDefs::JpegCompression);
+
+		// Assembly of the answer
+		timeMeasurement.start(CamClient::TimeMeasurementCodeDefs::AnsweringTakePicture);
+		cout << "{ \"type\":\"JPEG\", \"timestamp\":\"" << jpegMsg.timestamp << "\", \"size\":\"" << jpegMsg.size << "\" }#" << endl;
+
+		// Sending the answer and the JPEG encoded picture
+		server->Send(&jpegMsg);
+		timeMeasurement.finish(CamClient::TimeMeasurementCodeDefs::AnsweringTakePicture);
+
+		// Showing the image after sending it, so that it causes smaller delay...
+		if (configManager.showImage)
+		{
+			timeMeasurement.start(CamClient::TimeMeasurementCodeDefs::ShowImage);
+			Mat show = imdecode(Mat(jpegMsg.data),CV_LOAD_IMAGE_COLOR); 
+			imshow(imageWindowName,show);
+			int key = waitKey(25);	// TODO: needs some kind of delay to show!!!
+			timeMeasurement.finish(CamClient::TimeMeasurementCodeDefs::ShowImage);
+		}
 	}
 
 	imageNumber++;
 }
 
-void handleSendlog(SendlogMessage *msg, SOCKET sock)
+void handleSendlog(SendlogMessage *msg, PhoneServer *server)
 {
 	timeMeasurement.start(CamClient::TimeMeasurementCodeDefs::AnsweringSendlog);
+	MeasurementLogMessage answerMsg;
 
 	// Create the log
 	std::ostringstream measurementLog;
-	// Write results to the results file
 	time_t t = time(0);   // get time now
     struct tm * now = localtime( & t );
 	measurementLog << "--- New results at " << (now->tm_year + 1900) << "-" << (now->tm_mon + 1) << "-" << now->tm_mday
-		<< " " << now->tm_hour << ":" << now->tm_min << ":" << now->tm_sec << ":" << endl;
+		<< " " << now->tm_hour << ":" << now->tm_min << ":" << now->tm_sec << endl;
 	measurementLog << "Ini file: " << inifilename << endl;
 	measurementLog << "Log file: " << configManager.logFileName << endl;
 	measurementLog << "--- Main loop time measurement results:" << endl;
 	timeMeasurement.showresults(&measurementLog);
 	measurementLog << "--- Further details:" << endl;
-	measurementLog << "max fps: " << timeMeasurement.getmaxfps(CamClient::TimeMeasurementCodeDefs::FrameAll) << endl;
 	measurementLog << "Number of captured images: " << imageNumber << endl;
 	measurementLog << "--- End of results" << endl;
 	std::string measurementLogString = measurementLog.str();
 
-	// TODO: timestamp
-	long long timestamp = timeMeasurement.getTimeStamp();
-	long filesize = measurementLogString.length();
-	std::ostringstream answer;
-	answer << "{ \"type\":\"measurementlog\", \"timestamp\": \"" << timestamp << "\", \"size\": \"" << filesize << "\" }#";
-	answer << measurementLogString;
-
-	// Sending the answer and the JPEG encoded picture
-	std::string tmpStr = answer.str();
-	const char* tmpPtr = tmpStr.c_str();
-
-	int n = send(sock,tmpPtr,strlen(tmpPtr),0);
-	if (n < 0)
+	// Send
+	answerMsg.timestamp = timeMeasurement.getTimeStamp();
+	answerMsg.size = measurementLogString.length();
+	const char *ptr = measurementLogString.c_str();
+	for(int i=0; i<answerMsg.size; i++)
 	{
-		Logger::getInstance()->Log(Logger::LOGLEVEL_ERROR,"CamClient","Error on writing answer to socket.\n");
+		answerMsg.data.push_back(ptr[i]);
 	}
+	server->Send(&answerMsg);
 	timeMeasurement.finish(CamClient::TimeMeasurementCodeDefs::AnsweringSendlog);
 }
 
-void handleJSON(char *json, SOCKET sock)
+void handleJSON(JsonMessage *msg, PhoneServer *server)
 {
-	JsonMessage *msg = JsonMessage::parse(json);
-
 	Logger::getInstance()->Log(Logger::LOGLEVEL_INFO,"CamClient","Received command:\n");
 	msg->log();
 
@@ -170,13 +161,15 @@ void handleJSON(char *json, SOCKET sock)
 		Logger::getInstance()->Log(Logger::LOGLEVEL_WARNING,"CamClient","Handling default message, nothing to do.\n");
 		break;
 	case Ping:
-		handlePing((PingMessage*)msg,sock);
+		handlePing((PingMessage*)msg,server);
 		break;
 	case TakePicture:
-		handleTakePicture((TakePictureMessage*)msg,sock);
+		timeMeasurement.start(CamClient::TimeMeasurementCodeDefs::HandleTakePicture);
+		handleTakePicture((TakePictureMessage*)msg,server);
+		timeMeasurement.finish(CamClient::TimeMeasurementCodeDefs::HandleTakePicture);
 		break;
 	case Sendlog:
-		handleSendlog((SendlogMessage*)msg,sock);
+		handleSendlog((SendlogMessage*)msg,server);
 		break;
 	default:
 		Logger::getInstance()->Log(Logger::LOGLEVEL_WARNING,"CamClient","Unknown message type!\n");
@@ -185,4 +178,3 @@ void handleJSON(char *json, SOCKET sock)
 	Logger::getInstance()->Log(Logger::LOGLEVEL_INFO,"CamClient","Command handled\n");
 	return;
 }
-

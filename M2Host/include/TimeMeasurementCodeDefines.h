@@ -13,7 +13,9 @@ namespace M2
 		const static int FrameAll			= 0;	// Processing a frame
 		const static int Send				= 1;	// Send image request and wait for reception
 		const static int WaitAndReceive		= 2;	// Receiving the image
-		const static int FullExecution		= 3;	// 
+		const static int Chessboard			= 3;	// Detection of chessboard (not always successful)
+		const static int Tracking			= 4;	// Marker detection
+		const static int FullExecution		= 5;	// Full execution of the program
 
 		static void setnames(TimeMeasurement *measurement)
 		{
@@ -22,6 +24,8 @@ namespace M2
 			measurement->setname(FrameAll,"FrameAll");
 			measurement->setname(Send,"Send");
 			measurement->setname(WaitAndReceive,"WaitAndReceive");
+			measurement->setname(Chessboard,"Chessboard");
+			measurement->setname(Tracking,"Tracking");
 			measurement->setname(FullExecution,"FullExecution");
 		}
 	};

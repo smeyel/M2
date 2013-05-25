@@ -21,15 +21,21 @@ public:
 	PhoneProxy *phoneproxy;
 	Camera *camera;
 	ChessboardDetector *chessboarddetector;
+
 	Mat *lastImageTaken;	// Not thread safe!
+	long long lastImageTakenTimestamp;
 
 	CameraProxy();
 	CameraProxy(PhoneProxy *aPhoneProxy, Camera *aCamera);
 	~CameraProxy();
 
+	// Wrappers for PhoneProxy
+	void Connect(const char *ip, int port);
+	void Disconnect();
+
 	// CaptureImage
-	void CaptureImage(); // calls CaptureImage(lastImageTaken)
-	void CaptureImage(Mat *target);	// Does not use lastImageTaken
+	void CaptureImage(long long desiredTimestamp=0); // calls CaptureImage(lastImageTaken)
+	void CaptureImage(long long desiredTimestamp, Mat *target);	// Does not use lastImageTaken
 
 	bool TryCalibration(bool showResultOnImage=false);	// calls TryCalibration(lastImageTaken,showResultOnImage)
 	bool TryCalibration(Mat *image, bool showResultOnImage=false);	// does not use lastImageTaken

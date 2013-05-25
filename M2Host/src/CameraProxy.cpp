@@ -54,16 +54,27 @@ CameraProxy::~CameraProxy()
 	default_chessboarddetector=NULL;
 }
 
-void CameraProxy::CaptureImage()
+void CameraProxy::Connect(const char *ip, int port)
 {
-	CaptureImage(lastImageTaken);
+	phoneproxy->Connect(ip,port);
+}
+
+void CameraProxy::Disconnect()
+{
+	phoneproxy->Disconnect();
+}
+
+
+void CameraProxy::CaptureImage(long long desiredTimestamp)
+{
+	CaptureImage(desiredTimestamp, lastImageTaken);
 }
 
 // CaptureImage
-void CameraProxy::CaptureImage(Mat *target)
+void CameraProxy::CaptureImage(long long desiredTimestamp, Mat *target)
 {
 	// Request image from the phone
-	phoneproxy->RequestPhoto(0);
+	phoneproxy->RequestPhoto(desiredTimestamp);
 	// Receiving picture
 	JsonMessage *msg = NULL;
 	bool isImgValid = false;
@@ -73,6 +84,9 @@ void CameraProxy::CaptureImage(Mat *target)
 		JpegMessage *jpegMsg = NULL;
 		jpegMsg = (JpegMessage *)msg;
 		jpegMsg->Decode(target);
+
+		if (target==lastImageTaken)
+			lastImageTakenTimestamp = jpegMsg->timestamp;
 			
 		if(target->type()==CV_8UC4)	// Convert frames from CV_8UC4 to CV_8UC3
 			cvtColor(*target,*target,CV_BGRA2BGR);
@@ -87,6 +101,10 @@ void CameraProxy::CaptureImage(Mat *target)
 		{
 			matimgMsg->Decode();
 			matimgMsg->getMat()->copyTo(*target);	// TODO: avoid this copy...
+
+			if (target==lastImageTaken)
+				lastImageTakenTimestamp = matimgMsg->timestamp;
+
 			isImgValid = true;
 		}
 	}
@@ -122,17 +140,21 @@ bool CameraProxy::TryCalibration(Mat *image, bool showResultOnImage)
 		if (showResultOnImage)
 		{
 			drawChessboardCorners(*image,Size(9,6),chessboarddetector->pointBuf,true);
-			char txt[50];
 			Matx44f T = camera->GetT();
 			for(int i=0; i<16; i++)
 			{
+				char txt[50];
 				sprintf(txt, "%4.2lf",T.val[i] );
 				putText( *lastImageTaken, string(txt), cvPoint( 25+(i%4)*75, 20+(i/4)*20 ), FONT_HERSHEY_DUPLEX, 0.5, CV_RGB(255,255,0) );
 			}
 		}
 		return true;
 	}
-	return true;
+	if (showResultOnImage)
+	{
+		putText( *lastImageTaken, string("Cannot find chessboard"), cvPoint( 25, 20 ), FONT_HERSHEY_DUPLEX, 0.5, CV_RGB(255,100,0) );
+	}
+	return false;
 }
 
 

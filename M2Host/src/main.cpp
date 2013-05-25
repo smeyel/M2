@@ -41,8 +41,9 @@ char *configfilename = "m2_default.ini";	// 1st command line parameter overrides
 
 const char *imageWindowName = "Received JPEG";
 
-void M2_SpeedTest(PhoneProxy proxy)
+void M2_SpeedTest(CameraProxy *camProxy)
 {
+	PhoneProxy *proxy = camProxy->phoneproxy;
 	bool running=true;
 
 	while(running)
@@ -81,7 +82,7 @@ void M2_SpeedTest(PhoneProxy proxy)
 			timeMeasurement.start(M2::TimeMeasurementCodeDefs::FrameAll);
 			cout << "Capture No " << i << "..." << endl;
 			timeMeasurement.start(M2::TimeMeasurementCodeDefs::Send);
-			proxy.RequestPhoto(desiredTimeStamp);
+			proxy->RequestPhoto(desiredTimeStamp);
 			timeMeasurement.finish(M2::TimeMeasurementCodeDefs::Send);
 
 			// Receiving picture
@@ -90,7 +91,7 @@ void M2_SpeedTest(PhoneProxy proxy)
 			JsonMessage *msg = NULL;
 			Mat img;
 			bool isImgValid = false;
-			msg = proxy.ReceiveNew();
+			msg = proxy->ReceiveNew();
 			if (msg->getMessageType() == Jpeg)
 			{
 				JpegMessage *jpegMsg = NULL;
@@ -130,7 +131,7 @@ void M2_SpeedTest(PhoneProxy proxy)
 
 			// Timestamp related administrative things
 			last2PictureTimeStamp = last1PictureTimeStamp;
-			last1PictureTimeStamp = proxy.lastReceivedTimeStamp;
+			last1PictureTimeStamp = proxy->lastReceivedTimeStamp;
 			timeMeasurement.finish(M2::TimeMeasurementCodeDefs::FrameAll);
 
 			if (configManager.showImage)
@@ -140,12 +141,12 @@ void M2_SpeedTest(PhoneProxy proxy)
 			}
 		}
 		cout << "Necessary pictures taken. Receiving measurement log..." << endl;
-		proxy.RequestLog();
+		proxy->RequestLog();
 
 		JsonMessage *msg = NULL;
 		MeasurementLogMessage *logMsg = NULL;
 		Mat img;
-		msg = proxy.ReceiveNew();
+		msg = proxy->ReceiveNew();
 		if (msg->getMessageType() == MeasurementLog)
 		{
 			logMsg = (MeasurementLogMessage *)msg;
@@ -162,16 +163,8 @@ void M2_SpeedTest(PhoneProxy proxy)
 	}
 }
 
-void M2_TrackingTest(PhoneProxy proxy)
+void M2_TrackingTest(CameraProxy *camProxy)
 {
-	// Prepare camera and detector objects
-	//ChessboardDetector detector(Size(9,6),36.1);	// Chessboard cell size is 36x36mm, using CameraProxy default
-	CameraProxy *camProxy = new CameraProxy();
-	camProxy->phoneproxy = &proxy;
-	camProxy->camera->cameraID=0;
-	camProxy->camera->isStationary=false;
-	camProxy->camera->loadCalibrationData(configManager.camIntrinsicParamsFileName.data());
-
 	enum _mode
 	{
 		nop,
@@ -179,43 +172,37 @@ void M2_TrackingTest(PhoneProxy proxy)
 		chessboard,
 		tracking
 	} mode = nop;
+
 	while(mode != finished)
 	{
 		timeMeasurement.start(M2::TimeMeasurementCodeDefs::FrameAll);
-
 		camProxy->CaptureImage();
-
 		// Image processing
 		OPENCV_ASSERT(camProxy->lastImageTaken->type()==CV_8UC3,"M2_Tracking","Mat type not CV_8UC3.");
-
 		switch (mode)
 		{
 		case chessboard:
 			// Detect chessboard
 			camProxy->TryCalibration(true);
+			putText( *(camProxy->lastImageTaken), string("CHESSBOARD MODE"), cvPoint( camProxy->lastImageTaken->cols-200, 20 ), FONT_HERSHEY_DUPLEX, 0.5, CV_RGB(255,255,255) );
 
 			break;
 		case tracking:
-			// Detect marker
-
+			// TODO: Detect marker
+			putText( *(camProxy->lastImageTaken), string("TRACKING MODE"), cvPoint( camProxy->lastImageTaken->cols-200, 20 ), FONT_HERSHEY_DUPLEX, 0.5, CV_RGB(255,255,255) );
 
 			break;
 		}
 
-
-
-
 		// Showing the picture results
-		
 		OPENCV_ASSERT(camProxy->lastImageTaken->type()==CV_8UC3,"M2_Tracking","Mat type not CV_8UC3. Was it received successfully?");
 		imshow(imageWindowName,*(camProxy->lastImageTaken));
 
-		// Timestamp related administrative things
 		timeMeasurement.finish(M2::TimeMeasurementCodeDefs::FrameAll);
 
 		// If the images are shown, have to wait to allow it to display...
 		// Process possible keypress
-		char ch = waitKey(25);
+		char ch = waitKey(50);
 		switch (ch)
 		{
 		case -1:	// Nothing pressed
@@ -250,12 +237,12 @@ void M2_TrackingTest(PhoneProxy proxy)
 	}
 
 	cout << "Necessary pictures taken. Receiving measurement log..." << endl;
-	proxy.RequestLog();
+	camProxy->phoneproxy->RequestLog();
 
 	JsonMessage *msg = NULL;
 	MeasurementLogMessage *logMsg = NULL;
 	Mat img;
-	msg = proxy.ReceiveNew();
+	msg = camProxy->phoneproxy->ReceiveNew();
 	if (msg->getMessageType() == MeasurementLog)
 	{
 		logMsg = (MeasurementLogMessage *)msg;
@@ -267,8 +254,6 @@ void M2_TrackingTest(PhoneProxy proxy)
 		Logger::getInstance()->Log(Logger::LOGLEVEL_ERROR,"M2Host","Received something else than JPEG image:\n");
 		msg->log();
 	}
-
-	delete camProxy;
 }
 
 /** Implementation of M2 scenario
@@ -315,21 +300,25 @@ int main(int argc, char *argv[])
 
 	timeMeasurement.start(M2::TimeMeasurementCodeDefs::FullExecution);
 
-	char ip[20];
-	strcpy(ip,configManager.phoneIpAddress.c_str());
-	int port = configManager.phonePort;
-	PhoneProxy proxy;
 	cout << "Connecting..." << endl;
-	proxy.Connect(ip,port);
+	CameraProxy *camProxy = new CameraProxy();
+	// Prepare camera and detector objects
+	//ChessboardDetector detector(Size(9,6),36.1);	// Chessboard cell size is 36x36mm, using CameraProxy default
+	camProxy->camera->cameraID=0;
+	camProxy->camera->isStationary=false;
+	camProxy->camera->loadCalibrationData(configManager.camIntrinsicParamsFileName.data());
+
+	cout << "Connecting..." << endl;
+	camProxy->Connect(configManager.phoneIpAddress.c_str(),configManager.phonePort);
 
 	// --------------------------- Execute main task
 
-	//M2_SpeedTest(proxy);
-	M2_TrackingTest(proxy);
+	M2_SpeedTest(camProxy);
+	M2_TrackingTest(camProxy);
 
 	// --------------------------- Closing...
 	cout << "Disconnecting..." << endl;
-	proxy.Disconnect();
+	camProxy->Disconnect();
 
 	timeMeasurement.finish(M2::TimeMeasurementCodeDefs::FullExecution);
 
@@ -345,12 +334,12 @@ int main(int argc, char *argv[])
 	resultFile << "max fps: " << timeMeasurement.getmaxfps(M2::TimeMeasurementCodeDefs::FrameAll) << endl;
 	resultFile << "Number of processed frames: " << frameIdx << endl;
 	resultFile << "--- PhoneProxy time measurement results:" << endl;
-	proxy.timeMeasurement.showresults(&resultFile);
-
+	camProxy->phoneproxy->timeMeasurement.showresults(&resultFile);
 
 	resultFile.flush();
 	resultFile.close();
 
+	delete camProxy;
 	cout << "Done." << endl;
 
 }

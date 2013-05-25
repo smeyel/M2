@@ -17,6 +17,10 @@
 
 #include "myconfigmanager.h"
 
+#include "chessboarddetector.h"
+#include "camera.h"
+
+
 //#include "VideoInputFactory.h"
 //#include "VideoInputPs3EyeParameters.h"
 
@@ -159,6 +163,13 @@ void M2_SpeedTest(PhoneProxy proxy)
 
 void M2_TrackingTest(PhoneProxy proxy)
 {
+	// Prepare camera and detector objects
+	ChessboardDetector detector(Size(9,6),36.1);	// Chessboard cell size is 36x36mm
+	Camera *cam = new Camera();
+	cam->cameraID=0;
+	cam->isStationary=false;
+	cam->loadCalibrationData(configManager.camIntrinsicParamsFileName.data());
+
 	enum _mode
 	{
 		nop,
@@ -214,6 +225,34 @@ void M2_TrackingTest(PhoneProxy proxy)
 		// Image processing
 		OPENCV_ASSERT(img.type()==CV_8UC3,"M2_Tracking","Mat type not CV_8UC3.");
 
+		switch (mode)
+		{
+		case chessboard:
+			// Detect chessboard
+
+			if (detector.findChessboardInFrame(img))
+			{
+				drawChessboardCorners(img,Size(9,6),detector.pointBuf,true);
+				cam->calculateExtrinsicParams(detector.chessboard.corners,detector.pointBuf);
+				char txt[50];
+				Matx44f T = cam->GetT();
+
+				// Show calibration data on the frame
+				for(int i=0; i<16; i++)
+				{
+					sprintf(txt, "%4.2lf",T.val[i] );
+					putText( img, string(txt), cvPoint( 25+(i%4)*75, 20+(i/4)*20 ), FONT_HERSHEY_DUPLEX, 0.5, CV_RGB(255,255,0) );
+				}
+			}
+
+
+			break;
+		case tracking:
+			// Detect marker
+
+
+			break;
+		}
 
 
 

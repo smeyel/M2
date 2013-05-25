@@ -46,8 +46,13 @@ public:
 	// Ask for images until calibration is successful
 	bool CaptureUntilCalibrated(int maxFrameNum);
 
-	// Return Ray3D for given image coordinates
+	// Camera wrapper: return Ray3D for given image coordinates
+	Ray pointImg2World(Point2f pImg);
 
+	// Image transfer speed test
+	// Use only alone (no prior or later operations) to keep the statistics clean
+	// Use Connect before and Disconnect after calling it.
+	void PerformCaptureSpeedMeasurement_A(int frameNumber=100, const char *resultfilename = NULL);
 };
 
 #endif

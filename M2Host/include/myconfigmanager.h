@@ -18,6 +18,7 @@ class MyConfigManager
 		useDesiredTimestamp = reader->getBoolValue("main","useDesiredTimestamp");
 		remoteMLogFilename = reader->getStringValue("main","remoteMLogFilename");
 		localMLogFilename = reader->getStringValue("main","localMLogFilename");
+		MLogFilename = reader->getStringValue("main","MLogFilename");
 		showImage = reader->getBoolValue("main","showImage");
 		camIntrinsicParamsFileName = reader->getStringValue("main","camIntrinsicParamsFileName");
 		return true;
@@ -37,6 +38,7 @@ public:
 	int phonePort;
 	std::string localMLogFilename;
 	std::string remoteMLogFilename;
+	std::string MLogFilename;
 	std::string camIntrinsicParamsFileName;
 };
 

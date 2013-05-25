@@ -27,6 +27,7 @@
 #include "TimeMeasurement.h"
 //#include "Logger.h"
 #include "FileLogger.h"
+#include "CameraProxy.h"
 
 #include "../include/TimeMeasurementCodeDefines.h"
 
@@ -164,11 +165,12 @@ void M2_SpeedTest(PhoneProxy proxy)
 void M2_TrackingTest(PhoneProxy proxy)
 {
 	// Prepare camera and detector objects
-	ChessboardDetector detector(Size(9,6),36.1);	// Chessboard cell size is 36x36mm
-	Camera *cam = new Camera();
-	cam->cameraID=0;
-	cam->isStationary=false;
-	cam->loadCalibrationData(configManager.camIntrinsicParamsFileName.data());
+	//ChessboardDetector detector(Size(9,6),36.1);	// Chessboard cell size is 36x36mm, using CameraProxy default
+	CameraProxy *camProxy = new CameraProxy();
+	camProxy->phoneproxy = &proxy;
+	camProxy->camera->cameraID=0;
+	camProxy->camera->isStationary=false;
+	camProxy->camera->loadCalibrationData(configManager.camIntrinsicParamsFileName.data());
 
 	enum _mode
 	{
@@ -179,72 +181,18 @@ void M2_TrackingTest(PhoneProxy proxy)
 	} mode = nop;
 	while(mode != finished)
 	{
-		// Request image from the phone
 		timeMeasurement.start(M2::TimeMeasurementCodeDefs::FrameAll);
-		timeMeasurement.start(M2::TimeMeasurementCodeDefs::Send);
-		proxy.RequestPhoto(0);
-		timeMeasurement.finish(M2::TimeMeasurementCodeDefs::Send);
-		// Receiving picture
-		timeMeasurement.start(M2::TimeMeasurementCodeDefs::WaitAndReceive);
-		JsonMessage *msg = NULL;
-		Mat img;
-		bool isImgValid = false;
-		msg = proxy.ReceiveNew();
-		if (msg->getMessageType() == Jpeg)
-		{
-			JpegMessage *jpegMsg = NULL;
-			jpegMsg = (JpegMessage *)msg;
-			jpegMsg->Decode(&img);
-			
-			if(img.type()==CV_8UC4)	// Convert frames from CV_8UC4 to CV_8UC3
-				cvtColor(img,img,CV_BGRA2BGR);
 
-			isImgValid = true;
-		}
-		else if (msg->getMessageType() == MatImage)
-		{
-			MatImageMessage *matimgMsg = NULL;
-			matimgMsg = (MatImageMessage *)msg;
-			if (matimgMsg->size != 0)
-			{
-				matimgMsg->Decode();
-				matimgMsg->getMat()->copyTo(img);	// TODO: avoid this copy...
-				isImgValid = true;
-			}
-		}
-		else
-		{
-			cout << "Error... received something else than JPEG... see the log for details!" << endl;
-			Logger::getInstance()->Log(Logger::LOGLEVEL_ERROR,"M2Host","Received something else than JPEG image:\n");
-			msg->log();
-		}
-		delete msg;
-		msg = NULL;
-		timeMeasurement.finish(M2::TimeMeasurementCodeDefs::WaitAndReceive);
+		camProxy->CaptureImage();
 
 		// Image processing
-		OPENCV_ASSERT(img.type()==CV_8UC3,"M2_Tracking","Mat type not CV_8UC3.");
+		OPENCV_ASSERT(camProxy->lastImageTaken->type()==CV_8UC3,"M2_Tracking","Mat type not CV_8UC3.");
 
 		switch (mode)
 		{
 		case chessboard:
 			// Detect chessboard
-
-			if (detector.findChessboardInFrame(img))
-			{
-				drawChessboardCorners(img,Size(9,6),detector.pointBuf,true);
-				cam->calculateExtrinsicParams(detector.chessboard.corners,detector.pointBuf);
-				char txt[50];
-				Matx44f T = cam->GetT();
-
-				// Show calibration data on the frame
-				for(int i=0; i<16; i++)
-				{
-					sprintf(txt, "%4.2lf",T.val[i] );
-					putText( img, string(txt), cvPoint( 25+(i%4)*75, 20+(i/4)*20 ), FONT_HERSHEY_DUPLEX, 0.5, CV_RGB(255,255,0) );
-				}
-			}
-
+			camProxy->TryCalibration(true);
 
 			break;
 		case tracking:
@@ -258,8 +206,9 @@ void M2_TrackingTest(PhoneProxy proxy)
 
 
 		// Showing the picture results
-		if (isImgValid)
-			imshow(imageWindowName,img);
+		
+		OPENCV_ASSERT(camProxy->lastImageTaken->type()==CV_8UC3,"M2_Tracking","Mat type not CV_8UC3. Was it received successfully?");
+		imshow(imageWindowName,*(camProxy->lastImageTaken));
 
 		// Timestamp related administrative things
 		timeMeasurement.finish(M2::TimeMeasurementCodeDefs::FrameAll);
@@ -271,10 +220,8 @@ void M2_TrackingTest(PhoneProxy proxy)
 		{
 		case -1:	// Nothing pressed
 			break;
-		case 'f':
+		case 27:	// Escape
 		case 'x':
-		case 'q':
-		case 's':
 			mode = finished;
 			cout << "Mode: finished" << endl;
 			break;
@@ -292,7 +239,8 @@ void M2_TrackingTest(PhoneProxy proxy)
 			break;
 		default:
 			cout << "Keys:" << endl
-				<< "q	quit" << endl
+				<< "Esc	quit" << endl
+				<< "x	quit" << endl
 				<< "n	no operation" << endl
 				<< "c	chessboard detection" << endl
 				<< "t	tracking the marker" << endl;
@@ -320,6 +268,7 @@ void M2_TrackingTest(PhoneProxy proxy)
 		msg->log();
 	}
 
+	delete camProxy;
 }
 
 /** Implementation of M2 scenario

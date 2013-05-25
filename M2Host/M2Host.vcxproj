@@ -82,9 +82,11 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\CameraProxy.cpp" />
     <ClCompile Include="src\main.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="include\CameraProxy.h" />
     <ClInclude Include="include\myconfigmanager.h" />
     <ClInclude Include="include\TimeMeasurementCodeDefines.h" />
   </ItemGroup>

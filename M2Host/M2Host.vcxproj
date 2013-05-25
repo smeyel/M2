@@ -52,7 +52,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(OPENCV_DIR)\include;%(AdditionalIncludeDirectories);include;$(SolutionDir)Framework\libLogConfigTime\include;$(SolutionDir)Framework\libCommunication/include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(OPENCV_DIR)\include;%(AdditionalIncludeDirectories);include;$(SolutionDir)Framework\libLogConfigTime\include;$(SolutionDir)Framework\libCommunication/include;$(SolutionDir)ImageProcessing/libTwoColorCircleMarker/include;$(SolutionDir)Tracking/lib3dWorld/include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -71,7 +71,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(OPENCV_DIR)\include;%(AdditionalIncludeDirectories);include;$(SolutionDir)Framework\libLogConfigTime\include;$(SolutionDir)Framework\libCommunication/include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(OPENCV_DIR)\include;%(AdditionalIncludeDirectories);include;$(SolutionDir)Framework\libLogConfigTime\include;$(SolutionDir)Framework\libCommunication/include;$(SolutionDir)ImageProcessing/libTwoColorCircleMarker/include;$(SolutionDir)Tracking/lib3dWorld/include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -94,6 +94,12 @@
     </ProjectReference>
     <ProjectReference Include="..\Framework\libLogConfigTime\libLogConfigTime.vcxproj">
       <Project>{8927a516-de0f-4550-ae3f-14876252f716}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\ImageProcessing\libTwoColorCircleMarker\libTwoColorCircleMarker.vcxproj">
+      <Project>{e9e73514-1e7d-4ea4-9fe7-fe83f887d38c}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\Tracking\lib3dWorld\lib3dWorld.vcxproj">
+      <Project>{f0b1d97e-ec76-4eb1-8421-f73cf5881a69}</Project>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

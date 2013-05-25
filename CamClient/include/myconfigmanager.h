@@ -20,6 +20,7 @@ class MyConfigManager
 		usePs3eye = reader->getBoolValue("main","usePs3eye");
 		sendMatImage = reader->getBoolValue("main","sendMatImage");
 		camID = reader->getIntValue("main","camID");
+		showResponseOnCout = reader->getBoolValue("main","showResponseOnCout");
 
 		return true;
 	}
@@ -38,6 +39,7 @@ public:
 	std::string camSourceFilename;	// If !usePs3eye, may be filename
 	std::string logFileName;
 	int serverPort;
+	bool showResponseOnCout;
 };
 
 #endif

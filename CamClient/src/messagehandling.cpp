@@ -79,7 +79,8 @@ void handleTakePicture(TakePictureMessage *msg, PhoneServer *server)
 		ans.Encode(frameCaptured);
 
 		ans.log();
-		cout << "{ \"type\":\"MatImage\", \"timestamp\":\"" << ans.timestamp << "\", \"size\":\"" << ans.size << "\" }#" << endl;
+		if (configManager.showResponseOnCout)
+			cout << "{ \"type\":\"MatImage\", \"timestamp\":\"" << ans.timestamp << "\", \"size\":\"" << ans.size << "\" }#" << endl;
 
 		// Sending the answer and the JPEG encoded picture
 		timeMeasurement.start(CamClient::TimeMeasurementCodeDefs::AnsweringTakePicture);
@@ -98,7 +99,8 @@ void handleTakePicture(TakePictureMessage *msg, PhoneServer *server)
 
 		// Assembly of the answer
 		timeMeasurement.start(CamClient::TimeMeasurementCodeDefs::AnsweringTakePicture);
-		cout << "{ \"type\":\"JPEG\", \"timestamp\":\"" << jpegMsg.timestamp << "\", \"size\":\"" << jpegMsg.size << "\" }#" << endl;
+		if (configManager.showResponseOnCout)
+			cout << "{ \"type\":\"JPEG\", \"timestamp\":\"" << jpegMsg.timestamp << "\", \"size\":\"" << jpegMsg.size << "\" }#" << endl;
 
 		// Sending the answer and the JPEG encoded picture
 		server->Send(&jpegMsg);

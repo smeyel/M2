@@ -43,15 +43,26 @@ class DetectionCollector : public TwoColorCircleMarker::DetectionResultExporterB
 {
 	Vector<Point2d> pointVect;
 public:
+	// Allows retrieval of current timestamp and
+	//	camera transformations
+	// Warning! Uses default lastImageTakenTimestamp
+	CameraProxy *cameraProxy;
+
 	virtual void writeResult(TwoColorCircleMarker::MarkerBase *marker)
 	{
+		Ray ray = cameraProxy->pointImg2World(marker->center);
+		long long timestamp = cameraProxy->lastImageTakenTimestamp;
 		// Write results to stdout
-		cout << "New marker at " << marker->center.x << "/" << marker->center.y << endl;
+		cout << "-- New marker" << endl
+			 << "- Image coordinates: " << marker->center.x << "/" << marker->center.y << endl
+			 << "- Ray: " << ray << endl
+			 << "- Timestamp: " << timestamp << endl
+			 << "- IsCenterValid: " << marker->isCenterValid << endl;
 		pointVect.push_back(cv::Point2d(marker->center.x,marker->center.y));
 	}
 	void ShowLocations(Mat *frame)
 	{
-		for(int i=0; i<pointVect.size(); i++)
+		for(unsigned int i=0; i<pointVect.size(); i++)
 		{
 			Point2d p = pointVect[i];
 			circle(*frame,p,3,Scalar(255,255,255));
@@ -71,6 +82,8 @@ void M2_TrackingTest(CameraProxy *camProxy)
 	tracker->setResultExporter(&detectionCollector);
 	tracker->init(configfilename,true,dsize.width,dsize.height);
 
+	detectionCollector.cameraProxy = camProxy;	// Now it can get current timestamp and camera transformations
+
 	enum _mode
 	{
 		nop,
@@ -89,9 +102,7 @@ void M2_TrackingTest(CameraProxy *camProxy)
 		{
 		case chessboard:
 			// Detect chessboard
-//			timeMeasurement.start(M2::TimeMeasurementCodeDefs::Chessboard);
 			camProxy->TryCalibration(true);
-//			timeMeasurement.finish(M2::TimeMeasurementCodeDefs::Chessboard);
 			putText( *(camProxy->lastImageTaken), string("CHESSBOARD MODE"), cvPoint( camProxy->lastImageTaken->cols-200, 20 ), FONT_HERSHEY_DUPLEX, 0.5, CV_RGB(255,255,255) );
 
 			break;
@@ -99,15 +110,10 @@ void M2_TrackingTest(CameraProxy *camProxy)
 			// TODO: Detect marker
 
 			// Track marker on both frames
-//			timeMeasurement.start(M1::TimeMeasurementCodeDefs::Tracking);
-			tracker->processFrame(*(camProxy->lastImageTaken),camProxy->camera->cameraID,frameIdx);
+			tracker->processFrame(*(camProxy->lastImageTaken),camProxy->camera->cameraID,(float)frameIdx);
 	
 			// Display rays in both cameras
 			detectionCollector.ShowLocations(camProxy->lastImageTaken);
-//			timeMeasurement.finish(M1::TimeMeasurementCodeDefs::Tracking);
-
-
-
 
 			putText( *(camProxy->lastImageTaken), string("TRACKING MODE"), cvPoint( camProxy->lastImageTaken->cols-200, 20 ), FONT_HERSHEY_DUPLEX, 0.5, CV_RGB(255,255,255) );
 
@@ -203,8 +209,6 @@ void M2_TimeSyncTest(CameraProxy *camProxy, int captureNum)
 	Mat *image = camProxy->lastImageTaken;
 	long long startTimeStampUs = camProxy->lastImageTakenTimestamp;
 	long long startBeaconTimeMs = 0;//readTimeStampBeaconMsecFromImage(camProxy->lastImageTaken);	// Returns in msec
-
-	// BeaconTime = 
 
 	mlog << "M2_TimeSyncTest measurement result" << endl
 		 << "desiredBeaconTimeMs;lastBeaconTimeMs;desiredTimeStampUs;lastTimeStampUs" << endl;

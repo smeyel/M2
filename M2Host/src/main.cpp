@@ -176,6 +176,63 @@ void M2_TrackingTest(CameraProxy *camProxy)
 	}
 }
 
+/** TimeSyncBeacon time synchronization test
+	- Asks the camera to take a picture, retrieves image and timestamp
+	- Reads the TymeSyncBeacon time (Beacon Time) from the image
+	- repeat many times:
+		- Chooses a DesiredBeaconTime not too far away
+		- Calculates the DesiredTimeStamp corresponding to the Beacon Time
+		- Asks the camera to take a picture in the given DesiredTimeStamp
+		- Retrieves the image and its timestamp
+		- Calculates timing error and writes it to the log
+
+	Calculated results:
+	- "ImageBeaconTime - DesiredBeaconTime"
+		- difference
+		- its standard deviation
+		- dependency from the camera settings (various exposure times)
+*/
+void M2_TimeSyncTest(CameraProxy *camProxy, int captureNum)
+{
+	// Open measurement results file
+	std::ofstream mlog;
+	mlog.open(configManager.remoteMLogFilename.c_str(),std::ofstream::binary);
+
+	// Take initial picture as soon as possible
+	camProxy->CaptureImage(0);
+	Mat *image = camProxy->lastImageTaken;
+	long long startTimeStampUs = camProxy->lastImageTakenTimestamp;
+	long long startBeaconTimeMs = 0;//readTimeStampBeaconMsecFromImage(camProxy->lastImageTaken);	// Returns in msec
+
+	// BeaconTime = 
+
+	mlog << "M2_TimeSyncTest measurement result" << endl
+		 << "desiredBeaconTimeMs;lastBeaconTimeMs;desiredTimeStampUs;lastTimeStampUs" << endl;
+	cout << "desiredBeaconTimeMs - lastBeaconTimeMs" << endl;
+	long long lastBeaconTimeMs = startBeaconTimeMs;	// Beacon time of the last image
+	while (frameIdx < captureNum)
+	{
+		// Choose DesiredBeaconTime (+2 seconds)
+		long long desiredBeaconTimeMs = lastBeaconTimeMs + 2000;
+		// Calculate DesiredTimeStamp
+		long long desiredTimeStampUs = ((desiredBeaconTimeMs - startBeaconTimeMs) * 1000) + startTimeStampUs;
+		// Take picture at desiredTimeStamp
+		camProxy->CaptureImage(desiredTimeStampUs);
+		// Save image timestamp
+		long long lastTimeStampUs = camProxy->lastImageTakenTimestamp;
+		// Read image BeaconTime
+		long long lastBeaconTimeMs = 0;//readTimeStampBeaconMsecFromImage(camProxy->lastImageTaken);
+
+		mlog << desiredBeaconTimeMs << ";" << lastBeaconTimeMs << ";" << desiredTimeStampUs << ";" << lastTimeStampUs << endl;
+		cout << "desired-last BeaconTime: " << (desiredBeaconTimeMs - lastBeaconTimeMs) << " ms" << endl;
+
+		frameIdx++;
+	}
+
+	mlog.flush();
+	mlog.close();
+}
+
 /** Implementation of M2 scenario
 */
 int main(int argc, char *argv[])
@@ -229,7 +286,8 @@ int main(int argc, char *argv[])
 	cout << "Main task started" << endl;
 
 	//camProxy->PerformCaptureSpeedMeasurement_A(100,configManager.MLogFilename.c_str());
-	M2_TrackingTest(camProxy);
+	//M2_TrackingTest(camProxy);
+	M2_TimeSyncTest(camProxy,10);
 
 	cout << "Main task finished" << endl;
 	// --------------------------- Closing...

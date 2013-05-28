@@ -142,9 +142,18 @@ int main(int argc, char *argv[])
 		if (sock < 0 || sock == INVALID_SOCKET)
 		{
 //			WSAGetLastError
-			Logger::getInstance()->Log(Logger::LOGLEVEL_ERROR,"CamClient","Error on accept()\n");
+			Logger::getInstance()->Log(Logger::LOGLEVEL_ERROR,"CamClient","Error on accept(), trying to re-initialize server.\n");
 			server.DisconnectServer();
-			exit(1);
+			server.InitServer(configManager.serverPort);
+			server.ListenServerSocket();
+			cout << "Server rebinded, waiting for connection." << endl;
+			sock = accept(server.GetServerSocket(), (struct sockaddr *) &addr, NULL);
+			if (sock < 0 || sock == INVALID_SOCKET)
+			{
+				Logger::getInstance()->Log(Logger::LOGLEVEL_ERROR,"CamClient","Error on accept(), 2nd try failed, exiting.\n");
+				server.DisconnectServer();
+				exit(1);
+			}
 		}
 		// Convert IP address to string
 		char ipAddressStr[INET_ADDRSTRLEN];
@@ -154,13 +163,13 @@ int main(int argc, char *argv[])
 
 		// TODO: while socket is not closed by remote size, repeat waiting for commands and execute them...
 		bool connectionOpen = true;
+		server.SetSock(sock);
 		while(connectionOpen)
 		{
 			// Handle connection
 
 			// TODO: wait for the whole message
 			timeMeasurement.start(CamClient::TimeMeasurementCodeDefs::ReceiveCommand);
-			server.SetSock(sock);
 			JsonMessage *msg = server.ReceiveNew();
 			timeMeasurement.finish(CamClient::TimeMeasurementCodeDefs::ReceiveCommand);
 			

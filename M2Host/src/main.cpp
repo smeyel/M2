@@ -289,9 +289,13 @@ int main(int argc, char *argv[])
 	// --------------------------- Execute main task
 	cout << "Main task started" << endl;
 
-	//camProxy->PerformCaptureSpeedMeasurement_A(100,configManager.MLogFilename.c_str());
+	// ---Currently, multiple possible measurements are supported.
+	// - Original "capture 100 frames and report capture times" measurement
+	camProxy->PerformCaptureSpeedMeasurement_A(100,configManager.MLogFilename.c_str());
+	// - Chessboard detection and marker tracking, interactive
 	//M2_TrackingTest(camProxy);
-	M2_TimeSyncTest(camProxy,10);
+	// - Reading TimeSyncBeacon measurement
+	//M2_TimeSyncTest(camProxy,10);
 
 	cout << "Main task finished" << endl;
 	// --------------------------- Closing...

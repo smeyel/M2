@@ -4,6 +4,9 @@
 #include <opencv2/core/core.hpp>        // Basic OpenCV structures (cv::Mat)
 #include <opencv2/highgui/highgui.hpp>  // Video write
 
+#include "CameraRemoteProxy.h"
+#include "CameraLocalProxy.h"
+
 using namespace std;
 using namespace cv;
 
@@ -16,42 +19,33 @@ void help()
 		<< endl;
 }
 
-// Means to record video from multiple cameras. Later, should be able to use CameraProxy and save images with timestamp for proper re-playing.
+// Meant to record video from multiple cameras. Later, should be able to use CameraProxy and save images with timestamp for proper re-playing.
+// Will support even multiple local and/or multiple remote cameras.
+// Later todo: make a component like logging where the measurement host can push the just retrieved images and their timestamps.
+// Record to multiple files by first capturing into memory and then saving into AVI at once. (Pre-allocate many buffer Mat-s)
 int main(int argc, char *argv[], char *window_name)
 {
-	//help();
-	/*if (argc != 5)
-	{
-		cout << "Parameters: input file, output file, first frame, last frame" << endl;
-		return -1;
-	}*/
+	CameraProxy *camProxy0 = new CameraLocalProxy(VIDEOINPUTTYPE_PS3EYE,0);
+	CameraProxy *camProxy1 = new CameraLocalProxy(VIDEOINPUTTYPE_PS3EYE,1);
+
+/*	cout << "Waiting 3s..." << endl;
+#ifdef WIN32
+	Sleep(3000);
+#else
+#error TODO: Sleep not implemented for non-Win32.
+#endif*/
+
+	/*CameraRemoteProxy *camProxy0 = new CameraRemoteProxy();
+	camProxy0->Connect("127.0.0.1",6000);*/
+	/*CameraRemoteProxy *camProxy1 = new CameraRemoteProxy();
+	camProxy1->Connect("127.0.0.1",6001);*/
+
+	/*Size S = Size((int) inputVideo.get(CV_CAP_PROP_FRAME_WIDTH),    //Acquire input size
+				  (int) inputVideo.get(CV_CAP_PROP_FRAME_HEIGHT));*/
+	Size S = Size(640,480);
 
 	const string target = "test.avi";//argv[2];            // the target file name
-
-/*	const string source = "d:\\SMEyeL\\inputmedia\\MultiViewVideo1\\2011-10-01-017.mp4";
-	const string target = "d:\\SMEyeL\\inputmedia\\MultiViewVideo1\\part_2011-10-01-017.avi";
-	int firstframe = 200;
-	int lastframe = 500;*/
-
-	//cout << "Copy video" << endl << "   " << source << endl << "to" << endl << "   " << target << endl << " from frame " << firstframe << " until frame " << lastframe << endl;
-
-	VideoCapture inputVideo(0);        // Open input
-	if ( !inputVideo.isOpened())
-	{
-		cout  << "Could not open the input video source." << endl;
-		return -1;
-	}
-
-	//int ex = static_cast<int>(inputVideo.get(CV_CAP_PROP_FOURCC));     // Get Codec Type- Int form
-
-	// Transform from int to char via Bitwise operators
-	//char EXT[] = {ex & 0XFF , (ex & 0XFF00) >> 8,(ex & 0XFF0000) >> 16,(ex & 0XFF000000) >> 24, 0};
-
-	Size S = Size((int) inputVideo.get(CV_CAP_PROP_FRAME_WIDTH),    //Acquire input size
-				  (int) inputVideo.get(CV_CAP_PROP_FRAME_HEIGHT));
-
 	VideoWriter outputVideo;                                        // Open the output
-	//outputVideo.open(string(target), CV_FOURCC('M','J','P','G'), inputVideo.get(CV_CAP_PROP_FPS),S, true);
 	outputVideo.open(string(target), CV_FOURCC('M','J','P','G'), 25.0 ,S, true);
 
 	if (!outputVideo.isOpened())
@@ -60,30 +54,28 @@ int main(int argc, char *argv[], char *window_name)
 		return -1;
 	}
 
-	union { int v; char c[5];} uEx ;
-	//uEx.v = ex;                              // From Int to char via union
-	//uEx.c[4]='\0';
+//	union { int v; char c[5];} uEx ;
 
-	cout << "Input frame resolution: Width=" << S.width << "  Height=" << S.height
-		<< " of nr#: " << inputVideo.get(CV_CAP_PROP_FRAME_COUNT) << endl;
-	//cout << "Input codec type: " << EXT << endl;
+/*	cout << "Input frame resolution: Width=" << S.width << "  Height=" << S.height
+		<< " of nr#: " << inputVideo.get(CV_CAP_PROP_FRAME_COUNT) << endl;*/
 
-	//namedWindow("Video", CV_WINDOW_AUTOSIZE);
+	namedWindow("Video 0", CV_WINDOW_AUTOSIZE);
+	//namedWindow("Video 1", CV_WINDOW_AUTOSIZE);
 
-	Mat src;
+	Mat src0(480,640,CV_8UC4);
+	Mat src1(480,640,CV_8UC4);
 	int framecounter = 0;	// 0-based frame counter
 	while(true) //Show the image captured in the window and repeat
 	{
-		inputVideo >> src;              // read
-		if( src.empty()) 
-		{
-			cout << "No more input frames..." << endl;
-		}
-		imshow("Video",src);
-		cout << "Frame " << framecounter;
+		camProxy0->CaptureImage(0,&src0);
+		camProxy1->CaptureImage(0,&src1);
 
+		imshow("Video 0",src0);
+		imshow("Video 1",src1);
 
-		outputVideo << src;
+		cout << "Frame " << framecounter << endl;
+
+		//outputVideo << src;
 
 		framecounter++;
 
@@ -93,6 +85,8 @@ int main(int argc, char *argv[], char *window_name)
 			break;
 		}
 	}
+
+	//camProxy1->Disconnect();
 
 	cout << endl << "Capture complete." << endl;
 	return 0;

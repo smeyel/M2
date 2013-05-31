@@ -14,7 +14,7 @@
 #include "JpegMessage.h"
 #include "MatImageMessage.h"
 #include "MeasurementLogMessage.h"
-#include "CameraProxy.h"
+#include "CameraRemoteProxy.h"
 
 // Configuration, log, time measurement
 #include "myconfigmanager.h"
@@ -72,7 +72,7 @@ public:
 
 
 
-void M2_TrackingTest(CameraProxy *camProxy)
+void M2_TrackingTest(CameraRemoteProxy *camProxy)
 {
 	// Init image processing (marker detection)
 	const Size dsize(640,480);	// TODO: should always correspond to the real frame size!
@@ -95,7 +95,7 @@ void M2_TrackingTest(CameraProxy *camProxy)
 	frameIdx=0;
 	while(mode != finished)
 	{
-		camProxy->CaptureImage();
+		camProxy->CaptureImage(0);
 		// Image processing
 		OPENCV_ASSERT(camProxy->lastImageTaken->type()==CV_8UC3,"M2_Tracking","Mat type not CV_8UC3.");
 		switch (mode)
@@ -221,7 +221,7 @@ int main(int argc, char *argv[])
 #error TODO: Sleep not implemented for non-Win32.
 #endif
 
-	CameraProxy *camProxy = new CameraProxy();
+	CameraRemoteProxy *camProxy = new CameraRemoteProxy();
 	// Prepare camera and detector objects
 	//ChessboardDetector detector(Size(9,6),36.1);	// Chessboard cell size is 36x36mm, using CameraProxy default
 	camProxy->camera->cameraID=0;

@@ -59,10 +59,10 @@ bool takePicture(VideoInput *videoInput, Mat *frameCaptured)
 	return true;
 }
 
-void init(char *inifilename)
+void init(char *inifilename, int argc, char **argv)
 {
-	// Init config
-	configManager.init(inifilename);
+	// Init config, allows overrides (including the ini file name)
+	configManager.init(inifilename, argc, argv);
 
 	// Init logger (singleton)
 	Logger *logger = new StdoutLogger();
@@ -117,12 +117,7 @@ void init(char *inifilename)
 
 int main(int argc, char *argv[])
 {
-	if (argc>=2)
-	{
-		// INI file is given as command line parameter
-		inifilename = argv[1];
-	}
-	init(inifilename);
+	init(inifilename,argc,argv);
 
 	if (server.RegisterNode("avalon.aut.bme.hu","~kristof/smeyel/smeyel_reg.php?IP=127.0.0.1:6000"))	// TODO: do not hardwire the port!
 	{

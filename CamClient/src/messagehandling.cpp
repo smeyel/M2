@@ -49,7 +49,7 @@ void handleTakePicture(TakePictureMessage *msg, PhoneServer *server)
 		while( currentTimeStamp < msg->desiredtimestamp )
 		{
 			// Sleep length: calculated time minus 50ms for safety...
-			long sleepMilliSec = (msg->desiredtimestamp - currentTimeStamp) / 1000 - 50;
+			long sleepMilliSec = (long)((msg->desiredtimestamp - currentTimeStamp) / 1000 - 50);
 			Logger::getInstance()->Log(Logger::LOGLEVEL_VERBOSE,"CamClient","Waiting, sleepMilliSec = %Ld\n",sleepMilliSec);
 			if (sleepMilliSec > 0)
 			{

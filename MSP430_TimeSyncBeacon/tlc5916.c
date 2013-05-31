@@ -11,7 +11,7 @@
 #define LED_COUNT					(LED_PER_DRIVER * DRIVER_COUNT)
 
 
-//GPIO kezelés
+//GPIO set/clear commands
 #if !TEST_ON_LAUNCHPAD
 #define SET_nOE()		P1OUT |= BIT3
 #define CLR_nOE()		P1OUT &= ~BIT3
@@ -46,12 +46,12 @@
 #endif	//TEST_ON_LAUNCHPAD
 
 
-//LED adatok, ebbe rakjuk össze amit ki fogunk küldeni
+//LED data, this will be sent bit by bit to the drivers
 static uint8_t data[DRIVER_COUNT];
 
 
-//bit maszkok, hogy ne kelljen shiftelgetni, csak innen kiindexelni
-//b-edik bit 1-es (b=0..7), maszk
+//bit masks, we don't need to shift for masking, only get the mask from the array
+//the bit on position b is 1 (b=0..7), mask
 #define BIT(b)		(0x01 << (b))
 static const uint8_t bit_table[] = {
 	BIT(0),
@@ -65,13 +65,13 @@ static const uint8_t bit_table[] = {
 };
 
 
-//swap típus, mert a LED-ek összevissza lesznek bekötve
+//swap type, because the LEDs are connected to the drivers unsettled
 typedef struct{
-	uint8_t driver;	//driver indexe
-	uint8_t bit;	//bit maszk
+	uint8_t driver;	//driver index
+	uint8_t bit;	//bit mask
 }swap_t;
 
-//melyik LED melyik driver hányas bit-jénél van
+//which LED belongs to which bit from which driver
 #define DRIVER(d)			(d)
 #define BIT_FROM_PIN(p)			BIT((p)-5)
 static const swap_t swap[] = {
@@ -141,12 +141,12 @@ static const swap_t swap[] = {
 	/* LED63 */	{DRIVER(7), BIT_FROM_PIN(11)},
 };
 
-//GPIO lábakat init-eli
+//GPIO pin init
 static void gpio_init(void){
 
-	//Grace inicializálja a lábakat
-	//itt csak alapállapotba állítjuk a lábakat
-	//jó lenne, ha már Grace alapállapotba tenné a lábakat
+	//Grace initializates the pins
+	//here are only init states assigned,
+	//if Grace wouldn't do that
 	SET_nOE();
 	CLR_LE();
 #if !TLC5916_USE_SPI
@@ -160,7 +160,7 @@ static void gpio_init(void){
 
 #if !TLC5916_USE_SPI
 
-//egy bitet kiküld a ledmeghajtó SDI lábára
+//send one bit to the SDI pin of the driver
 //b=0: low
 //b!=0: high
 static void send_one_bit(int b){
@@ -173,7 +173,7 @@ static void send_one_bit(int b){
 
 }
 
-//kiküldi a data-ban tárolt összes bitet
+//send all the bits of the data array to the drivers
 static void send(void){
 
 	int i;
@@ -181,7 +181,7 @@ static void send(void){
 
 	for(i=DRIVER_COUNT ; i-- > 0 ; )
 		for(j=LED_PER_DRIVER ; j-- > 0 ; )
-			//nem shiftelünk, csak kinézzük a táblázatból
+			//no shift is required for generating bit mask, only get it from the array
 			send_one_bit(data[i] & bit_table[j]);
 			//send_one_bit(data[i] & BIT(j));
 
@@ -189,8 +189,8 @@ static void send(void){
 
 #else	//TLC5916_USE_SPI
 
-//egy bájtot kiküld a ledmeghajtó SDI lábára
-//MSB megy ki elõször
+//send one byte to the SDI pin of the driver via SPI
+//MSB first
 static void send_one_byte(uint8_t byte){
 
 	USISRL = byte;				// Load shift register with data byte to be TXed
@@ -200,7 +200,7 @@ static void send_one_byte(uint8_t byte){
 
 }
 
-//kiküldi a data-ban tárolt összes bitet
+//send all the bits of the data array to the drivers
 static void send(void){
 
 	int i;
@@ -212,7 +212,7 @@ static void send(void){
 
 #endif	//TLC5916_USE_SPI
 
-//latch impulzust ad
+//generate the latch impulse
 static void latch(void){
 	
 	SET_LE();
@@ -220,7 +220,9 @@ static void latch(void){
 
 }
 
-//egy LED kívánt állapotának megfelelõen beállítja a data[] tömb megfelelõ elemének egy bitjét
+//the appropriate bit of the appropriate element in the data[] array is setted/cleared,
+//according to the required state of the LED
+//the swap[] table is used
 //on_off!=0: on => 0
 //on_off=0: off => 1
 static void write_led(int led, int on_off){
@@ -240,6 +242,8 @@ static void write_led(int led, int on_off){
 
 }
 
+//more LED states are setted/cleared,
+//according to the bits in the bytes pointed by the pointer
 static void write_leds(const void* states, int from_led, int led_count){
 
 	const int size = 8;
@@ -254,15 +258,15 @@ static void write_leds(const void* states, int from_led, int led_count){
 		led_count = LED_COUNT - from_led;
 
 	//led: from_led + b
-	//on_off: st által mutatott terület (b/size)-adik bájtjának (b%size)-adik bitje
+	//on_off: the bit on position (b%size) in the byte on position (b/size) in the bytes pointed by st
 	for(b=0 ; b < led_count ; b++)
 		//write_led(from_led + b, (*(st+(b/size))) & bit_table[b%size]);
-		//size=8, így shiftelésre és maszkolásra cserélhetjük, mert a fordító nem veszi észre...
+		//size=8, so the division and remainder generation can be raplaced by shifting and masking (the compiler does not realize)
 		write_led(from_led + b, (*(st+(b>>3))) & bit_table[b&0x07]);
 
 }
 
-//init-eli a változókat, a GPIO-kat, kikapcsolja az összes LED-et, majd engedélyezi a meghajtást
+//initialization of the variables, GPIO pins, switching off all the LEDs, enabling the outputs
 static void init(void){
 
 	int i;

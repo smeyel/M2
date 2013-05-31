@@ -15,6 +15,8 @@
 #include "MatImageMessage.h"
 #include "MeasurementLogMessage.h"
 #include "CameraRemoteProxy.h"
+#include "CameraLocalProxy.h"
+#include "VideoInputFactory.h"
 
 // Configuration, log, time measurement
 #include "myconfigmanager.h"
@@ -55,16 +57,16 @@ char *configfilename = "m2_default.ini";	// 1st command line parameter overrides
 		- its standard deviation
 		- dependency from the camera settings (various exposure times)
 */
-void M2_TimeSyncTest(CameraRemoteProxy *camRemoteProxy, int captureNum)
+void M2_TimeSyncTest(CameraProxy *camProxy, int captureNum)
 {
 	// Open measurement results file
 	std::ofstream mlog;
 	mlog.open(configManager.remoteMLogFilename.c_str(),std::ofstream::binary);
 
 	// Take initial picture as soon as possible
-	camRemoteProxy->CaptureImage(0);
-	Mat *image = camRemoteProxy->lastImageTaken;
-	long long startTimeStampUs = camRemoteProxy->lastImageTakenTimestamp;
+	camProxy->CaptureImage(0);
+	Mat *image = camProxy->lastImageTaken;
+	long long startTimeStampUs = camProxy->lastImageTakenTimestamp;
 	long long startBeaconTimeMs = 0;//readTimeStampBeaconMsecFromImage(camProxy->lastImageTaken);	// Returns in msec
 
 	mlog << "M2_TimeSyncTest measurement result" << endl
@@ -78,9 +80,9 @@ void M2_TimeSyncTest(CameraRemoteProxy *camRemoteProxy, int captureNum)
 		// Calculate DesiredTimeStamp
 		long long desiredTimeStampUs = ((desiredBeaconTimeMs - startBeaconTimeMs) * 1000) + startTimeStampUs;
 		// Take picture at desiredTimeStamp
-		camRemoteProxy->CaptureImage(desiredTimeStampUs);
+		camProxy->CaptureImage(desiredTimeStampUs);
 		// Save image timestamp
-		long long lastTimeStampUs = camRemoteProxy->lastImageTakenTimestamp;
+		long long lastTimeStampUs = camProxy->lastImageTakenTimestamp;
 		// Read image BeaconTime
 		long long lastBeaconTimeMs = 0;//readTimeStampBeaconMsecFromImage(camProxy->lastImageTaken);
 
@@ -133,30 +135,49 @@ int main(int argc, char *argv[])
 #error TODO: Sleep not implemented for non-Win32.
 #endif
 
-	CameraRemoteProxy *camRemoteProxy = new CameraRemoteProxy();
+	const bool useLocalCamera=false;
+
+	CameraProxy *camProxy = NULL;
+	CameraRemoteProxy *camRemoteProxy = NULL;
+	CameraLocalProxy *camLocalProxy = NULL;
+	if (useLocalCamera)
+	{
+		camProxy = camLocalProxy = new CameraLocalProxy(VIDEOINPUTTYPE_PS3EYE,0);
+	}
+	else
+	{
+		camProxy = camRemoteProxy = new CameraRemoteProxy();
+	}
+
 	// Prepare camera and detector objects
 	//ChessboardDetector detector(Size(9,6),36.1);	// Chessboard cell size is 36x36mm, using CameraProxy default
-	camRemoteProxy->camera->cameraID=0;
-	camRemoteProxy->camera->isStationary=false;
-	camRemoteProxy->camera->loadCalibrationData(configManager.camIntrinsicParamsFileName.data());
+	camProxy->camera->cameraID=0;
+	camProxy->camera->isStationary=false;
+	camProxy->camera->loadCalibrationData(configManager.camIntrinsicParamsFileName.data());
 
-	cout << "Connecting..." << endl;
-	camRemoteProxy->Connect(configManager.phoneIpAddress.c_str(),configManager.phonePort);
+	if (camRemoteProxy)
+	{
+		cout << "Connecting..." << endl;
+		camRemoteProxy->Connect(configManager.phoneIpAddress.c_str(),configManager.phonePort);
+	}
 
 	// --------------------------- Execute main task
 	cout << "Main task started" << endl;
 
 	// ---Currently, multiple possible measurements are supported.
 	// - Original "capture 100 frames and report capture times" measurement
-	camRemoteProxy->PerformCaptureSpeedMeasurement_A(100,configManager.MLogFilename.c_str());
+	//camRemoteProxy->PerformCaptureSpeedMeasurement_A(100,configManager.MLogFilename.c_str());
 	// - Reading TimeSyncBeacon measurement
-	//M2_TimeSyncTest(camProxy,10);
+	M2_TimeSyncTest(camProxy,10);
 
 	cout << "Main task finished" << endl;
 	// --------------------------- Closing...
-	cout << "Disconnecting..." << endl;
-	camRemoteProxy->Disconnect();
+	if (camRemoteProxy)
+	{
+		cout << "Disconnecting..." << endl;
+		camRemoteProxy->Disconnect();
+	}
 
-	delete camRemoteProxy;
+	delete camProxy;
 	cout << "Done." << endl;
 }

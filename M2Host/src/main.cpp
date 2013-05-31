@@ -84,7 +84,8 @@ void M2_TimeSyncTest(CameraProxy *camProxy, int captureNum)
 		// Save image timestamp
 		long long lastTimeStampUs = camProxy->lastImageTakenTimestamp;
 		// Read image BeaconTime
-		long long lastBeaconTimeMs = 0;//readTimeStampBeaconMsecFromImage(camProxy->lastImageTaken);
+		// TODO: insert code for reading the TimeSyncBeacon here!
+		lastBeaconTimeMs = desiredBeaconTimeMs;//readTimeStampBeaconMsecFromImage(camProxy->lastImageTaken);
 
 		mlog << desiredBeaconTimeMs << ";" << lastBeaconTimeMs << ";" << desiredTimeStampUs << ";" << lastTimeStampUs << endl;
 		cout << "desired-last BeaconTime: " << (desiredBeaconTimeMs - lastBeaconTimeMs) << " ms" << endl;
@@ -135,7 +136,7 @@ int main(int argc, char *argv[])
 #error TODO: Sleep not implemented for non-Win32.
 #endif
 
-	const bool useLocalCamera=false;
+	const bool useLocalCamera=true;
 
 	CameraProxy *camProxy = NULL;
 	CameraRemoteProxy *camRemoteProxy = NULL;

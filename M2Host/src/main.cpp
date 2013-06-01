@@ -130,13 +130,9 @@ int main(int argc, char *argv[])
 	// Waiting a little to allow other processes to init...
 	// Useful if started together with CamClient which needs to start its server.
 	cout << "Waiting 3s..." << endl;
-#ifdef WIN32
-	Sleep(3000);
-#else
-#error TODO: Sleep not implemented for non-Win32.
-#endif
+	PlatformSpecifics::getInstance()->SleepMs(3000);
 
-	const bool useLocalCamera=true;
+	const bool useLocalCamera=false;
 
 	CameraProxy *camProxy = NULL;
 	CameraRemoteProxy *camRemoteProxy = NULL;

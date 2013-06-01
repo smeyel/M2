@@ -21,6 +21,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libCameraAbstraction", "Fra
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Recorder", "Recorder\Recorder.vcxproj", "{B915A461-13D1-481C-A5B9-E4B6B7E82B6C}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libPlatformSpecifics", "Framework\libPlatformSpecifics\libPlatformSpecifics.vcxproj", "{5C2ABDC3-6E47-40C0-80A1-A020F188F756}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -67,6 +69,10 @@ Global
 		{B915A461-13D1-481C-A5B9-E4B6B7E82B6C}.Debug|Win32.Build.0 = Debug|Win32
 		{B915A461-13D1-481C-A5B9-E4B6B7E82B6C}.Release|Win32.ActiveCfg = Release|Win32
 		{B915A461-13D1-481C-A5B9-E4B6B7E82B6C}.Release|Win32.Build.0 = Release|Win32
+		{5C2ABDC3-6E47-40C0-80A1-A020F188F756}.Debug|Win32.ActiveCfg = Debug|Win32
+		{5C2ABDC3-6E47-40C0-80A1-A020F188F756}.Debug|Win32.Build.0 = Debug|Win32
+		{5C2ABDC3-6E47-40C0-80A1-A020F188F756}.Release|Win32.ActiveCfg = Release|Win32
+		{5C2ABDC3-6E47-40C0-80A1-A020F188F756}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -10,6 +10,11 @@
 #include "JpegMessage.h"
 #include "StdoutLogger.h"
 
+// Marker detection and tracking
+#include "chessboarddetector.h"
+#include "camera.h"
+
+
 const char *MyPhoneServer::imageWindowName = "JPEG";
 
 void MyPhoneServer::init(char *inifilename, int argc, char **argv)
@@ -28,6 +33,9 @@ void MyPhoneServer::init(char *inifilename, int argc, char **argv)
 		// Use given filename to create file based camera
 		camProxy = new CameraLocalProxy(configManager.camSourceFilename.data());
 	}
+	camProxy->camera->cameraID=0;
+	camProxy->camera->isStationary=false;
+	camProxy->camera->loadCalibrationData(configManager.camIntrinsicParamsFileName.data());
 
 	// Init logger (singleton)
 	Logger *logger = new StdoutLogger();
@@ -47,8 +55,15 @@ void MyPhoneServer::init(char *inifilename, int argc, char **argv)
 	{
 		cv::namedWindow(imageWindowName, CV_WINDOW_AUTOSIZE);
 	}
-}
 
+	// Init marker detection and tracking
+	const Size dsize(640,480);	// TODO: should always correspond to the real frame size!
+	detectionCollector = new DetectionCollector();
+	tracker = new TwoColorCircleMarker::MarkerCC2Tracker();
+	tracker->setResultExporter(detectionCollector);
+	tracker->init(inifilename,true,dsize.width,dsize.height);
+	detectionCollector->cameraProxy = camProxy;	// Now it can get current timestamp and camera transformations
+}
 
 JsonMessage *MyPhoneServer::PingCallback(PingMessage *msg)
 {
@@ -61,6 +76,7 @@ JsonMessage *MyPhoneServer::TakePictureCallback(TakePictureMessage *msg)
 	JsonMessage *answer = NULL;
 	timeMeasurement.start(TimeMeasurementCodeDefs::ImageCapture);
 	camProxy->CaptureImage(msg->desiredtimestamp);
+	//detectionCollector->ShowLocations(camProxy->lastImageTaken);	// ADDS INDICATORS!
 	timeMeasurement.finish(TimeMeasurementCodeDefs::ImageCapture);
 
 	if (configManager.sendMatImage)
@@ -142,4 +158,31 @@ JsonMessage *MyPhoneServer::SendLogCallback(SendlogMessage *msg)
 		answer->data.push_back(ptr[i]);
 	}
 	return answer;
+}
+
+JsonMessage *MyPhoneServer::TextCallback(TextMessage *textMessage)
+{
+	cout << "Received TEXT message with text=" << textMessage->content << endl;
+	if (!strcmp(textMessage->content,"CALIBRATE"))
+	{
+		cout << "Calibration command received... trying for 50 frames..." << endl;
+		if (camProxy->CaptureUntilCalibrated(50))
+		{
+			cout << "Calibration successful." << endl;
+			textMessage->copyToContent("OK");
+		}
+		else
+		{
+			cout << "Calibration FAILED." << endl;
+			textMessage->copyToContent("FAILED");
+		}
+	}
+	else if (!strcmp(textMessage->content,"DETECT"))
+	{
+		cout << "Marker detection command received..." << endl;
+		camProxy->CaptureImage(0);
+		tracker->processFrame(*(camProxy->lastImageTaken),camProxy->camera->cameraID,0.0);
+	}
+
+	return textMessage;
 }

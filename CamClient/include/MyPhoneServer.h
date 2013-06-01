@@ -3,6 +3,12 @@
 #include "PhoneServer.h"
 #include "CameraLocalProxy.h"
 #include "myconfigmanager.h"
+#include "TextMessage.h"
+
+// For DetectionCollector
+#include "DetectionResultExporterBase.h"
+#include "MarkerBase.h"
+#include "MarkerCC2Tracker.h"
 
 class MyPhoneServer : public PhoneServer
 {
@@ -31,7 +37,41 @@ class MyPhoneServer : public PhoneServer
 		}
 	};
 
+	class DetectionCollector : public TwoColorCircleMarker::DetectionResultExporterBase
+	{
+		Vector<Point2d> pointVect;
+	public:
+		// Allows retrieval of current timestamp and
+		//	camera transformations
+		// Warning! Uses default lastImageTakenTimestamp
+		CameraProxy *cameraProxy;
+
+		virtual void writeResult(TwoColorCircleMarker::MarkerBase *marker)
+		{
+			Ray ray = cameraProxy->pointImg2World(marker->center);
+			long long timestamp = cameraProxy->lastImageTakenTimestamp;
+			// Write results to stdout
+			cout << "-- New marker" << endl
+				 << "- Image coordinates: " << marker->center.x << "/" << marker->center.y << endl
+				 << "- Ray: " << ray << endl
+				 << "- Timestamp: " << timestamp << endl
+				 << "- IsCenterValid: " << marker->isCenterValid << endl;
+			pointVect.push_back(cv::Point2d(marker->center.x,marker->center.y));
+		}
+		void ShowLocations(Mat *frame)
+		{
+			for(unsigned int i=0; i<pointVect.size(); i++)
+			{
+				Point2d p = pointVect[i];
+				circle(*frame,p,3,Scalar(255,255,255));
+			}
+		}
+	};
+
 	static const char *imageWindowName;
+
+	DetectionCollector *detectionCollector;
+	TwoColorCircleMarker::MarkerCC2Tracker *tracker;
 
 public:
 	/** @warning Do not forget to initialize! */
@@ -50,6 +90,11 @@ public:
 			delete camProxy;
 			camProxy = NULL;
 		}
+		if (detectionCollector)
+		{
+			delete detectionCollector;
+			detectionCollector = NULL;
+		}
 	}
 
 	void init(char *inifilename, int argc, char **argv);
@@ -65,6 +110,10 @@ public:
 
 	/** SendLog callback */
 	virtual JsonMessage *SendLogCallback(SendlogMessage *msg);
+
+	/** Text callback */
+	virtual JsonMessage *TextCallback(TextMessage *textMessage);
+
 };
 
 

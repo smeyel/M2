@@ -23,6 +23,7 @@ class MyConfigManager
 		sendMatImage = reader->getBoolValue("main","sendMatImage", argc, argv);
 		camID = reader->getIntValue("main","camID", argc, argv);
 		showResponseOnCout = reader->getBoolValue("main","showResponseOnCout", argc, argv);
+		camIntrinsicParamsFileName = reader->getStringValue("main","camIntrinsicParamsFileName");
 
 		delete SIreader;
 		return true;
@@ -43,6 +44,8 @@ public:
 	std::string logFileName;
 	int serverPort;
 	bool showResponseOnCout;
+	std::string camIntrinsicParamsFileName;
+
 };
 
 #endif

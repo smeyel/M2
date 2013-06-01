@@ -12,6 +12,7 @@
 // Communication
 #include "../include/PhoneProxy.h"
 #include "JpegMessage.h"
+#include "TextMessage.h"
 #include "MatImageMessage.h"
 #include "MeasurementLogMessage.h"
 #include "CameraRemoteProxy.h"
@@ -20,7 +21,8 @@
 #include "myconfigmanager.h"
 #include "TimeMeasurement.h"
 #include "../include/TimeMeasurementCodeDefines.h"
-#include "FileLogger.h"
+//#include "FileLogger.h"
+#include "StdOutLogger.h"
 
 // SMEyeL image processing and 3D world headers
 #include "chessboarddetector.h"
@@ -70,9 +72,7 @@ public:
 	}
 };
 
-
-
-void M2_TrackingTest(CameraRemoteProxy *camProxy)
+void M2_LocalTrackingTest(CameraRemoteProxy *camProxy)
 {
 	// Init image processing (marker detection)
 	const Size dsize(640,480);	// TODO: should always correspond to the real frame size!
@@ -128,6 +128,8 @@ void M2_TrackingTest(CameraRemoteProxy *camProxy)
 
 		// If the images are shown, have to wait to allow it to display...
 		// Process possible keypress
+		JsonMessage *tmpMsg = NULL;
+		TextMessage *textMsg = NULL;
 		char ch = waitKey(50);
 		switch (ch)
 		{
@@ -182,6 +184,88 @@ void M2_TrackingTest(CameraRemoteProxy *camProxy)
 	}
 }
 
+void sendTextMsg(CameraRemoteProxy *camProxy, const char *txt)
+{
+	cout << "Sending TextMessage" << endl;
+	TextMessage *textMsg = new TextMessage();
+	textMsg->copyToContent(txt);
+	camProxy->phoneproxy->Send(textMsg);
+	delete textMsg;
+	JsonMessage *tmpMsg = camProxy->phoneproxy->ReceiveNew();
+	tmpMsg->log();
+	delete tmpMsg;
+	tmpMsg=NULL;
+}
+
+void M2_RemoteTrackingTest(CameraRemoteProxy *camProxy)
+{
+	enum _mode
+	{
+		nop,
+		finished,
+	} mode = nop;
+
+	frameIdx=0;
+	while(mode != finished)
+	{
+		camProxy->CaptureImage(0);
+		// Image processing
+		OPENCV_ASSERT(camProxy->lastImageTaken->type()==CV_8UC3,"M2_Tracking","Mat type not CV_8UC3.");
+
+		// Showing the picture results
+		OPENCV_ASSERT(camProxy->lastImageTaken->type()==CV_8UC3,"M2_Tracking","Mat type not CV_8UC3. Was it received successfully?");
+		imshow(imageWindowName,*(camProxy->lastImageTaken));
+
+		// If the images are shown, have to wait to allow it to display...
+		// Process possible keypress
+		char ch = waitKey(25);
+		switch (ch)
+		{
+		case -1:	// Nothing pressed
+			break;
+		case 27:	// Escape
+		case 'x':
+			mode = finished;
+			cout << "Mode: finished" << endl;
+			break;
+		case 'c':
+			sendTextMsg(camProxy,"CALIBRATE");
+			break;
+		case 'd':
+			sendTextMsg(camProxy,"DETECT");
+			break;
+		default:
+			cout << "Keys:" << endl
+				<< "Esc	quit" << endl
+				<< "x	quit" << endl
+				<< "c	Calibrate with chessboard" << endl
+				<< "d	Detect marker" << endl;
+		}
+
+		frameIdx++;
+	}
+
+	cout << "Necessary pictures taken. Receiving measurement log..." << endl;
+	camProxy->phoneproxy->RequestLog();
+
+	JsonMessage *msg = NULL;
+	MeasurementLogMessage *logMsg = NULL;
+	Mat img;
+	msg = camProxy->phoneproxy->ReceiveNew();
+	if (msg->getMessageType() == MeasurementLog)
+	{
+		logMsg = (MeasurementLogMessage *)msg;
+		logMsg->writeAuxFile((char*)(configManager.remoteMLogFilename.c_str()));
+	}
+	else
+	{
+		cout << "Error... received something else than JPEG... see the log for details!" << endl;
+		Logger::getInstance()->Log(Logger::LOGLEVEL_ERROR,"M2HostTracking","Received something else than JPEG image:\n");
+		msg->log();
+	}
+}
+
+
 /** Implementation of M2 scenario
 */
 int main(int argc, char *argv[])
@@ -195,7 +279,8 @@ int main(int argc, char *argv[])
 	configManager.init(configfilename);
 
 	// Setup statistics output file
-	Logger *logger = new FileLogger(configManager.logFileName.c_str());
+	//Logger *logger = new FileLogger(configManager.logFileName.c_str());
+	Logger *logger = new StdoutLogger();
 	logger->SetLogLevel(Logger::LOGLEVEL_INFO);
 	Logger::getInstance()->Log(Logger::LOGLEVEL_VERBOSE,"M2HostTracking","M2Host started\n");
 
@@ -230,7 +315,8 @@ int main(int argc, char *argv[])
 	// --------------------------- Execute main task
 	cout << "Main task started" << endl;
 
-	M2_TrackingTest(camProxy);
+	//M2_LocalTrackingTest(camProxy);
+	M2_RemoteTrackingTest(camProxy);
 
 	cout << "Main task finished" << endl;
 	// --------------------------- Closing...

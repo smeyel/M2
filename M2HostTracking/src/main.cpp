@@ -192,7 +192,14 @@ void sendTextMsg(CameraRemoteProxy *camProxy, const char *txt)
 	camProxy->phoneproxy->Send(textMsg);
 	delete textMsg;
 	JsonMessage *tmpMsg = camProxy->phoneproxy->ReceiveNew();
-	tmpMsg->log();
+	if (tmpMsg)
+	{
+		tmpMsg->log();
+	}
+	else
+	{
+		cout << "No response, connection closed by remote side." << endl;
+	}
 	delete tmpMsg;
 	tmpMsg=NULL;
 }
@@ -203,14 +210,30 @@ void M2_RemoteTrackingTest(CameraRemoteProxy *camProxy)
 	{
 		nop,
 		finished,
+		chessboard,
+		tracking
 	} mode = nop;
 
 	frameIdx=0;
 	while(mode != finished)
 	{
-		camProxy->CaptureImage(0);
-		// Image processing
-		OPENCV_ASSERT(camProxy->lastImageTaken->type()==CV_8UC3,"M2_Tracking","Mat type not CV_8UC3.");
+		if (mode == nop)
+		{
+			// User may watch remote image...
+			camProxy->CaptureImage(0);
+		}
+		else if(mode == chessboard)
+		{
+			sendTextMsg(camProxy,"CALIBRATE");
+		}
+		else if(mode == tracking)
+		{
+			//sendTextMsg(camProxy,"DETECT");
+			//TextMessage *ans = camProxy->SingleTrackMarker(0,false,camProxy->lastImageTaken);
+			TextMessage *ans = camProxy->SingleTrackMarker(0,true,camProxy->lastImageTaken);
+			ans->log();
+		}
+
 
 		// Showing the picture results
 		OPENCV_ASSERT(camProxy->lastImageTaken->type()==CV_8UC3,"M2_Tracking","Mat type not CV_8UC3. Was it received successfully?");
@@ -226,20 +249,25 @@ void M2_RemoteTrackingTest(CameraRemoteProxy *camProxy)
 		case 27:	// Escape
 		case 'x':
 			mode = finished;
-			cout << "Mode: finished" << endl;
+			sendTextMsg(camProxy,"QUIT");
+			cout << "Mode: finished, QUIT command sent." << endl;
 			break;
 		case 'c':
-			sendTextMsg(camProxy,"CALIBRATE");
+			mode = chessboard;
 			break;
-		case 'd':
-			sendTextMsg(camProxy,"DETECT");
+		case 'n':
+			mode = nop;
+			break;
+		case 't':
+			mode = tracking;
 			break;
 		default:
 			cout << "Keys:" << endl
 				<< "Esc	quit" << endl
 				<< "x	quit" << endl
+				<< "n	NOP, just watching the image" << endl
 				<< "c	Calibrate with chessboard" << endl
-				<< "d	Detect marker" << endl;
+				<< "t	Track marker" << endl;
 		}
 
 		frameIdx++;

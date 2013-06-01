@@ -39,8 +39,8 @@ class MyPhoneServer : public PhoneServer
 
 	class DetectionCollector : public TwoColorCircleMarker::DetectionResultExporterBase
 	{
-		Vector<Point2d> pointVect;
 	public:
+		Vector<Point2d> pointVect;
 		// Allows retrieval of current timestamp and
 		//	camera transformations
 		// Warning! Uses default lastImageTakenTimestamp
@@ -72,6 +72,8 @@ class MyPhoneServer : public PhoneServer
 
 	DetectionCollector *detectionCollector;
 	TwoColorCircleMarker::MarkerCC2Tracker *tracker;
+
+	JsonMessage *createImageMessageFromMat(Mat *image, long long timestamp);
 
 public:
 	/** @warning Do not forget to initialize! */

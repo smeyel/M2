@@ -71,20 +71,16 @@ JsonMessage *MyPhoneServer::PingCallback(PingMessage *msg)
 	return ping;
 }
 
-JsonMessage *MyPhoneServer::TakePictureCallback(TakePictureMessage *msg)
+// w.r.t configManager.sendMatImage, creates new MatImageMessage or JpegMessage from image
+JsonMessage *MyPhoneServer::createImageMessageFromMat(Mat *image, long long timestamp)
 {
 	JsonMessage *answer = NULL;
-	timeMeasurement.start(TimeMeasurementCodeDefs::ImageCapture);
-	camProxy->CaptureImage(msg->desiredtimestamp);
-	//detectionCollector->ShowLocations(camProxy->lastImageTaken);	// ADDS INDICATORS!
-	timeMeasurement.finish(TimeMeasurementCodeDefs::ImageCapture);
-
 	if (configManager.sendMatImage)
 	{
 		// Sending images in openCV Mat format
 		MatImageMessage *matAnswer = new MatImageMessage();
-		matAnswer->timestamp = camProxy->lastImageTakenTimestamp;
-		matAnswer->Encode(camProxy->lastImageTaken);
+		matAnswer->timestamp = timestamp;
+		matAnswer->Encode(image);
 
 		matAnswer->log();
 		if (configManager.showResponseOnCout)
@@ -96,11 +92,11 @@ JsonMessage *MyPhoneServer::TakePictureCallback(TakePictureMessage *msg)
 	else	// Sending JPEG compressed images
 	{
 		JpegMessage *jpegAnswer = new JpegMessage();
-		jpegAnswer->timestamp = camProxy->lastImageTakenTimestamp;
+		jpegAnswer->timestamp = timestamp;
 
 		// JPEG compression
 		timeMeasurement.start(TimeMeasurementCodeDefs::JpegCompression);
-		jpegAnswer->Encode(camProxy->lastImageTaken);
+		jpegAnswer->Encode(image);
 		timeMeasurement.finish(TimeMeasurementCodeDefs::JpegCompression);
 
 		// Assembly of the answer
@@ -120,15 +116,77 @@ JsonMessage *MyPhoneServer::TakePictureCallback(TakePictureMessage *msg)
 			timeMeasurement.finish(TimeMeasurementCodeDefs::ShowImage);
 		}
 	}
+	return answer;
+}
+
+
+JsonMessage *MyPhoneServer::TakePictureCallback(TakePictureMessage *msg)
+{
+	timeMeasurement.start(TimeMeasurementCodeDefs::ImageCapture);
+	camProxy->CaptureImage(msg->desiredtimestamp);
+	//detectionCollector->ShowLocations(camProxy->lastImageTaken);	// ADDS INDICATORS!
+	timeMeasurement.finish(TimeMeasurementCodeDefs::ImageCapture);
+
+	JsonMessage *answer = createImageMessageFromMat(
+		camProxy->lastImageTaken,
+		camProxy->lastImageTakenTimestamp);
+
 	imageNumber++;
 	return answer;
 }
 
 JsonMessage *MyPhoneServer::SendPositionCallback(SendPositionMessage *msg)
 {
+	// Take picture
+	timeMeasurement.start(TimeMeasurementCodeDefs::ImageCapture);
+	camProxy->CaptureImage(msg->desiredtimestamp);
+	timeMeasurement.finish(TimeMeasurementCodeDefs::ImageCapture);
+
+	// Detect marker
+	detectionCollector->pointVect.clear();
+	if (camProxy->camera->getIsTSet())
+	{
+		tracker->processFrame(*(camProxy->lastImageTaken),camProxy->camera->cameraID,imageNumber);
+	}
+	else
+	{
+		cout << "ERROR: Cannot track marker! Camera not calibrated!" << endl;
+		Logger::getInstance()->Log(Logger::LOGLEVEL_ERROR,"CamClient","Cannot execute SendPosition, camera not calibrated!");
+	}
+	//detectionCollector->ShowLocations(camProxy->lastImageTaken);	// ADDS INDICATORS!
+
+	// Assemble position response (overriding send procedure, increases handle time with communication overhead!)
+	TextMessage *textMsg = new TextMessage();
+	if (detectionCollector->pointVect.size()>0)
+	{
+		char buff[100];
+		Point2d first = detectionCollector->pointVect[0];
+		sprintf(buff,"n=%d, first x=%lf y=%lf",
+			detectionCollector->pointVect.size(),
+			first.x, first.y);
+		textMsg->copyToContent(buff);
+	}
+	else
+	{
+		textMsg->copyToContent("NONE");
+	}
+	Send(textMsg);
+
+	delete textMsg;
+	textMsg = NULL;
+
+	// Sending image if asked for
+	JsonMessage *answer = NULL;
+	if (msg->sendImage)
+	{
+		JsonMessage *answer = createImageMessageFromMat(
+			camProxy->lastImageTaken,
+			camProxy->lastImageTakenTimestamp);
+		Send(answer);
+	}
+
 	imageNumber++;
-	// TODO
-	return NULL;
+	return answer;
 }
 
 JsonMessage *MyPhoneServer::SendLogCallback(SendlogMessage *msg)
@@ -182,6 +240,11 @@ JsonMessage *MyPhoneServer::TextCallback(TextMessage *textMessage)
 		cout << "Marker detection command received..." << endl;
 		camProxy->CaptureImage(0);
 		tracker->processFrame(*(camProxy->lastImageTaken),camProxy->camera->cameraID,0.0);
+	}
+	else if (!strcmp(textMessage->content,"QUIT"))
+	{
+		cout << "QUIT command received..." << endl;
+		exit(0);
 	}
 
 	return textMessage;

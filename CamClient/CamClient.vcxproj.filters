@@ -18,21 +18,15 @@
     <ClCompile Include="src\main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\messagehandling.cpp">
+    <ClCompile Include="src\MyPhoneServer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="include\myconfigmanager.h">
+    <ClInclude Include="include\MyPhoneServer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="include\TimeMeasurementCodeDefines.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="include\messagehandling.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="include\globals.h">
+    <ClInclude Include="include\MyConfigManager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

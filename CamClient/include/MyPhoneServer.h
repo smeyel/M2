@@ -53,7 +53,7 @@ class MyPhoneServer : public PhoneServer
 			// Write results to stdout
 			cout << "-- New marker" << endl
 				 << "- Image coordinates: " << marker->center.x << "/" << marker->center.y << endl
-				 << "- Ray: " << ray << endl
+//				 << "- Ray: " << ray << endl
 				 << "- Timestamp: " << timestamp << endl
 				 << "- IsCenterValid: " << marker->isCenterValid << endl;
 			pointVect.push_back(cv::Point2d(marker->center.x,marker->center.y));

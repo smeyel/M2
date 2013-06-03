@@ -23,6 +23,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Recorder", "Recorder\Record
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libPlatformSpecifics", "Framework\libPlatformSpecifics\libPlatformSpecifics.vcxproj", "{5C2ABDC3-6E47-40C0-80A1-A020F188F756}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ColorFilterTest", "ColorFilterTest\ColorFilterTest.vcxproj", "{46FC9CC0-8B18-43CA-8683-D6BC028C1507}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -73,6 +75,10 @@ Global
 		{5C2ABDC3-6E47-40C0-80A1-A020F188F756}.Debug|Win32.Build.0 = Debug|Win32
 		{5C2ABDC3-6E47-40C0-80A1-A020F188F756}.Release|Win32.ActiveCfg = Release|Win32
 		{5C2ABDC3-6E47-40C0-80A1-A020F188F756}.Release|Win32.Build.0 = Release|Win32
+		{46FC9CC0-8B18-43CA-8683-D6BC028C1507}.Debug|Win32.ActiveCfg = Debug|Win32
+		{46FC9CC0-8B18-43CA-8683-D6BC028C1507}.Debug|Win32.Build.0 = Debug|Win32
+		{46FC9CC0-8B18-43CA-8683-D6BC028C1507}.Release|Win32.ActiveCfg = Release|Win32
+		{46FC9CC0-8B18-43CA-8683-D6BC028C1507}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

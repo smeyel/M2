@@ -48,7 +48,7 @@ class MyPhoneServer : public PhoneServer
 
 		virtual void writeResult(TwoColorCircleMarker::MarkerBase *marker)
 		{
-			Ray ray = cameraProxy->pointImg2World(marker->center);
+			//Ray ray = cameraProxy->pointImg2World(marker->center);
 			long long timestamp = cameraProxy->lastImageTakenTimestamp;
 			// Write results to stdout
 			cout << "-- New marker" << endl

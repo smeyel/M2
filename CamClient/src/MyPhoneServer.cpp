@@ -144,7 +144,8 @@ JsonMessage *MyPhoneServer::SendPositionCallback(SendPositionMessage *msg)
 
 	// Detect marker
 	detectionCollector->pointVect.clear();
-	if (camProxy->camera->getIsTSet())
+	tracker->processFrame(*(camProxy->lastImageTaken),camProxy->camera->cameraID,imageNumber);
+/*	if (camProxy->camera->getIsTSet())
 	{
 		tracker->processFrame(*(camProxy->lastImageTaken),camProxy->camera->cameraID,imageNumber);
 	}
@@ -152,7 +153,7 @@ JsonMessage *MyPhoneServer::SendPositionCallback(SendPositionMessage *msg)
 	{
 		cout << "ERROR: Cannot track marker! Camera not calibrated!" << endl;
 		Logger::getInstance()->Log(Logger::LOGLEVEL_ERROR,"CamClient","Cannot execute SendPosition, camera not calibrated!");
-	}
+	}*/
 	//detectionCollector->ShowLocations(camProxy->lastImageTaken);	// ADDS INDICATORS!
 
 	// Assemble position response (overriding send procedure, increases handle time with communication overhead!)

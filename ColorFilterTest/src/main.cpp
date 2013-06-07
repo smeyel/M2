@@ -10,6 +10,11 @@
 #include "MyFsmColorFilter.h"
 #include "StdoutLogger.h"
 
+#include "TimeMeasurement.h"
+
+const int tm_filter_lut = 1;
+const int tm_filter_fsm = 2;
+
 using namespace std;
 using namespace cv;
 using namespace smeyel;
@@ -29,6 +34,12 @@ void help()
 // Record to multiple files by first capturing into memory and then saving into AVI at once. (Pre-allocate many buffer Mat-s)
 int main(int argc, char *argv[], char *window_name)
 {
+	TimeMeasurement timeMeasurement;
+	timeMeasurement.init();
+	timeMeasurement.setMeasurementName("Filter execution times");
+	timeMeasurement.setname(tm_filter_lut,"LUT");
+	timeMeasurement.setname(tm_filter_fsm,"FSM");
+
 	Logger *logger = new StdoutLogger();
 	logger->SetLogLevel(Logger::LOGLEVEL_WARNING);
 
@@ -65,8 +76,12 @@ int main(int argc, char *argv[], char *window_name)
 
 		bbVector0.clear();
 		bbVector1.clear();
+		timeMeasurement.start(tm_filter_lut);
 		filter0->Filter(&src,&dst0,&bbVector0);
+		timeMeasurement.finish(tm_filter_lut);
+		timeMeasurement.start(tm_filter_fsm);
 		filter1->Filter(&src,&dst1,&bbVector1);
+		timeMeasurement.finish(tm_filter_fsm);
 
 		filter0->InverseLut(dst0,vis0);
 		filter1->InverseLut(dst1,vis1);
@@ -84,5 +99,9 @@ int main(int argc, char *argv[], char *window_name)
 			break;
 		}
 	}
+
+	timeMeasurement.showresults();
+	char ch = waitKey(-1);
+
 	return 0;
 }

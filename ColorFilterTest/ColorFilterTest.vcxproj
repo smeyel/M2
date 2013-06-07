@@ -81,6 +81,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="src\ColorFilter.cpp" />
+    <ClCompile Include="src\FsmBuilder.cpp" />
     <ClCompile Include="src\FsmColorFilter.cpp" />
     <ClCompile Include="src\LutColorFilter.cpp" />
     <ClCompile Include="src\main.cpp" />
@@ -112,6 +113,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\ColorFilter.h" />
+    <ClInclude Include="include\FsmBuilder.h" />
     <ClInclude Include="include\FsmColorFilter.h" />
     <ClInclude Include="include\LutColorFilter.h" />
     <ClInclude Include="include\MyFsmColorFilter.h" />

@@ -11,6 +11,38 @@ namespace smeyel
 	/** Abstract base class for color filters */
 	class ColorFilter
 	{
+	public:
+		class BoundingBoxCheckParams
+		{
+		public:
+			BoundingBoxCheckParams()
+			{
+				// Set defaults
+				minWidht = 5;
+				maxWidth = 300;
+				minHeight = 5;
+				maxHeight = 300;
+				minRatio = 0.2;
+				maxRatio = 5;
+			}
+
+			int minWidht, maxWidth;
+			int minHeight, maxHeight;
+			float minRatio, maxRatio;	// width / height
+
+			bool check(cv::Rect rect)
+			{
+				if (rect.width < minWidht || rect.width > maxWidth)
+					return false;
+				if (rect.height < minHeight || rect.height > maxHeight)
+					return false;
+				float ratio = (float)rect.width / (float)rect.height;
+				if (ratio < minRatio || ratio > maxRatio)
+					return false;
+				return true;
+			}
+		};
+
 	private:
 		/** Represents a bounding box. Used to keep track of the blobs to
 			finally get the location and size of the blob.
@@ -46,7 +78,17 @@ namespace smeyel
 			Handled by the bounding box generation functions below.
 			Implementations should copy this vector after processing is completed.
 		*/
+		std::vector<cv::Rect> initialBoundingBoxes;
+
+		/** Final bounding boxes. */
 		std::vector<cv::Rect> boundingBoxes;
+
+		/**  initialBoundingBoxes -> boundingBoxes using boundingBoxCheckParams
+			@warning: filter functions should not forget to call this before using boundingBoxes
+		*/
+		void ConsolidateBoundingBoxes();
+
+		BoundingBoxCheckParams boundingBoxCheckParams;
 
 		/** Inits processing of a new frame */
 		void StartNewFrame();
@@ -60,11 +102,18 @@ namespace smeyel
 
 		/** Post-processes the detections of the current row. */
 		void FinishRow(int rowIdx);
+
+		/** Add bounding box if it conforms the checks */
+		void AddBoundingBoxIfQualifies(cv::Rect boundingBox);
+
 		/**///@} */
 
 	public:
+
 		/** Constructor */
 		ColorFilter();
+
+		void SetBoundingBoxCheckParams(BoundingBoxCheckParams params);
 
 		/** Execute filter on an image
 			@param src	Source image
@@ -72,6 +121,8 @@ namespace smeyel
 			@param boundingBoxes	Vector to collect detected areas (if applicable and not NULL)
 		*/
 		virtual void Filter(cv::Mat *src, cv::Mat *dst, std::vector<cv::Rect> *resultBoundingBoxes = NULL) = 0;
+
+		void ShowBoundingBoxes(cv::Mat &img, cv::Scalar color);
 	};
 
 

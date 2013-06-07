@@ -9,14 +9,17 @@ ColorFilter::ColorFilter()
 {
 	// Pre-allocate space
 	detectionRects.reserve(100);
+	initialBoundingBoxes.reserve(100);
 	boundingBoxes.reserve(100);
 	detectionRects.clear();
+	initialBoundingBoxes.clear();
 	boundingBoxes.clear();
 }
 
 void ColorFilter::StartNewFrame()
 {
 	detectionRects.clear();
+	initialBoundingBoxes.clear();
 	boundingBoxes.clear();
 }
 
@@ -89,6 +92,23 @@ void ColorFilter::RegisterDetection(int row, int colStart, int colEnd)
 	}
 }
 
+void ColorFilter::ConsolidateBoundingBoxes()
+{
+	// Simply copy qualifying bounding boxes
+	// TODO: later add merges, overlap checks etc.
+	for (int i=0; i<initialBoundingBoxes.size(); i++)
+	{
+		if (this->boundingBoxCheckParams.check(initialBoundingBoxes[i]))
+			boundingBoxes.push_back(initialBoundingBoxes[i]);
+	}
+}
+
+void ColorFilter::SetBoundingBoxCheckParams(BoundingBoxCheckParams params)
+{
+	this->boundingBoxCheckParams = params;
+}
+
+
 void ColorFilter::FinishRow(int rowIdx)
 {
 	// Create marker candidate from every discontinued detection rectangle
@@ -110,7 +130,7 @@ void ColorFilter::FinishRow(int rowIdx)
 			newBoundingBox.y = detectionRects[i].rowMin;
 			newBoundingBox.width = detectionRects[i].colMax-detectionRects[i].colMin;
 			newBoundingBox.height = rowIdx-detectionRects[i].rowMin;
-			boundingBoxes.push_back(newBoundingBox);
+			initialBoundingBoxes.push_back(newBoundingBox);
 
 			// Deactivate detection rect
 			detectionRects[i].isAlive = false;
@@ -121,4 +141,12 @@ void ColorFilter::FinishRow(int rowIdx)
 			detectionRects[i].isDetectedInCurrentRow = false;
 		}
 	}
+}
+
+void ColorFilter::ShowBoundingBoxes(cv::Mat &img, cv::Scalar color)
+{
+		for(int i=0; i<boundingBoxes.size(); i++)
+		{
+			rectangle(img,boundingBoxes[i],color);
+		}
 }

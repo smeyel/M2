@@ -11,12 +11,11 @@
 
 using namespace smeyel;
 
-class MyFsmColorFilter : public FsmColorFilter	// Warning! Derived from MY... to inherit LUT!
+class MyFsmColorFilter : public FsmColorFilter
 {
 public:
 	MyFsmColorFilter();
 	void init();
-	virtual uchar fsm(uchar state, uchar lutValue);
 };
 
 #endif

@@ -10,9 +10,17 @@ namespace smeyel
 	/** LUT based color filter */
 	class FsmColorFilter : public LutColorFilter
 	{
+	protected:
+		unsigned int *transitions;
+		unsigned int stateNumber;
+		unsigned int minStateIdToSave;
+
 	public:
 		/** Constructor */
-		FsmColorFilter() { }
+		FsmColorFilter();
+
+		/** Destructor */
+		~FsmColorFilter();
 
 		/** Sets LUT to given colorcode for given RGB color.
 			Used for runtime color LUT adjustments.
@@ -30,6 +38,7 @@ namespace smeyel
 		virtual void Filter(cv::Mat *src, cv::Mat *dst, std::vector<cv::Rect> *resultBoundingBoxes)
 		{
 			Filter_Internal(*src,*dst);
+			ConsolidateBoundingBoxes();
 			// Copy bounding boxes from internal vector
 			*resultBoundingBoxes = boundingBoxes;
 		}
@@ -44,7 +53,7 @@ namespace smeyel
 			If you want to return bounding boxes, use the bounding box functions from ColorFilter inside this function.
 			@warning TODO: Virtual function call introduces critical overhead! Use function pointer instead?
 		*/
-		virtual uchar fsm(uchar state, uchar lutValue) = 0;
+		//virtual uchar fsm(uchar state, uchar lutValue) = 0;
 	};
 }
 

@@ -2,8 +2,25 @@
 
 using namespace smeyel;
 
+FsmColorFilter::FsmColorFilter()
+{
+	this->transitions = NULL;
+}
+
+FsmColorFilter::~FsmColorFilter()
+{
+	if (this->transitions)
+	{
+		delete this->transitions;
+		this->transitions = NULL;
+		this->stateNumber = 0;
+	}
+}
+
 void FsmColorFilter::Filter_Internal(cv::Mat &src, cv::Mat &dst)
 {
+	assert(this->transitions != NULL);
+
 	// Assert for only 8UC1 output images
 	assert(dst.type() == CV_8UC1);
 	// Assert dst has same size as src
@@ -16,12 +33,13 @@ void FsmColorFilter::Filter_Internal(cv::Mat &src, cv::Mat &dst)
 	assert(DetectionMask->cols == dst.cols);
 	assert(DetectionMask->rows == dst.rows);
 
-
 	uchar colorCode;
 	uchar state = FSM_STATE_INIT;
 
 	int lastDetectionCol = -1;
 	int continuousDetectionStartCol = -1;
+
+	unsigned int minStateId = this->minStateIdToSave;
 
 	// Init processing of a new frame
 	StartNewFrame();
@@ -36,6 +54,11 @@ void FsmColorFilter::Filter_Internal(cv::Mat &src, cv::Mat &dst)
 		// Update mask data pointers
 		uchar *detectionMaskPtr = (uchar *)(DetectionMask->data + row*DetectionMask->step);
 
+		// Every row starts with the initial state.
+		state = FSM_STATE_INIT;
+		lastDetectionCol = -1;
+		continuousDetectionStartCol = -1;
+
 		// Go along every BGR colorspace pixel
 		for (int col=0; col<src.cols; col++)
 		{
@@ -49,12 +72,13 @@ void FsmColorFilter::Filter_Internal(cv::Mat &src, cv::Mat &dst)
 			colorCode = this->RgbLut[idx];
 
 			// FSM
-			state = fsm(state, colorCode);
+			state = transitions[state*stateNumber+colorCode];
+			//state = fsm(state, colorCode);
 
 			*resultPtr++ = state;
 
 			// Bounding box handling: bounding state values > 127
-			if ((state & 0x80))
+			if ((state >= minStateId))
 			{
 				// Handle detection collection
 				if (lastDetectionCol == -1)	// Starting first detection in this column

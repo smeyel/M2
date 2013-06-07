@@ -1,53 +1,11 @@
 #include "MyFsmColorFilter.h"
+#include "FsmBuilder.h"
 
 #define FSM_STATE_INIT	0
-#define FSM_STATE_TRAP	1
-#define FSM_STATE_RED	2
-#define FSM_STATE_REDBLK	128
-
-
-uchar MyFsmColorFilter::fsm(uchar state, uchar lutValue)
-{
-	uchar newState = FSM_STATE_TRAP;	// Undefined state transition
-	switch(state)
-	{
-	case FSM_STATE_INIT:
-		switch(lutValue)
-		{
-		case COLORCODE_RED:
-			newState = FSM_STATE_RED;
-			break;
-		default:
-			newState = FSM_STATE_INIT;
-			break;
-		}
-		break;
-	case FSM_STATE_RED:
-		switch(lutValue)
-		{
-		case COLORCODE_BLK:
-			newState = FSM_STATE_REDBLK;
-			break;
-		default:
-			newState = FSM_STATE_INIT;
-			break;
-		}
-		break;
-	case FSM_STATE_REDBLK:
-		switch(lutValue)
-		{
-		case COLORCODE_BLK:
-			newState = FSM_STATE_REDBLK;
-			break;
-		default:
-			newState = FSM_STATE_INIT;
-			break;
-		}
-		break;
-	}
-
-	return newState;
-}
+#define FSM_STATE_WHT	2
+#define FSM_STATE_RED	3
+#define FSM_STATE_REDWHT	4
+#define FSM_STATE_REDBLU	5
 
 MyFsmColorFilter::MyFsmColorFilter()
 {
@@ -98,11 +56,55 @@ void MyFsmColorFilter::init()
 	}
 
 	// Setup inverse LUT
-	InitInverseLut(200,0,200);
+/*	InitInverseLut(200,0,200);
 	SetInverseLut(COLORCODE_NONE, 100,0,100);
 	SetInverseLut(COLORCODE_BLK, 0,0,0);
 	SetInverseLut(COLORCODE_WHT, 255,255,255);
 	SetInverseLut(COLORCODE_RED, 255,0,0);
 	SetInverseLut(COLORCODE_GRN, 0,255,0);
+	SetInverseLut(COLORCODE_BLU, 0,0,255);*/
+	InitInverseLut(100,0,100);
+	SetInverseLut(COLORCODE_NONE, 0,0,0);
+	SetInverseLut(COLORCODE_BLK, 0,0,0);
+	SetInverseLut(COLORCODE_WHT, 64,64,64);
+	SetInverseLut(COLORCODE_RED, 64,0,0);
+	SetInverseLut(COLORCODE_GRN, 0,64,0);
 	SetInverseLut(COLORCODE_BLU, 0,0,255);
+
+	SetInverseLut(10, 255,0,0);	// debug color
+
+	// Setup FSM
+	FsmBuilder builder;
+	builder.init(6,6);
+	// Init trap (or default) state
+	builder.trapStateAll(FSM_STATE_INIT);
+	// From INIT
+	builder.setNextState(FSM_STATE_INIT, COLORCODE_WHT, FSM_STATE_WHT);	// ->WHT
+	builder.setNextState(FSM_STATE_INIT, COLORCODE_RED, FSM_STATE_RED);	// ->WHT
+	// From WHT
+	builder.setNextState(FSM_STATE_WHT, COLORCODE_WHT, FSM_STATE_WHT);	// stay
+	builder.setNextState(FSM_STATE_WHT, COLORCODE_NONE, FSM_STATE_WHT);	// stay
+	builder.setNextState(FSM_STATE_WHT, COLORCODE_RED, FSM_STATE_RED);	// ->RED
+	// From RED
+	builder.setNextState(FSM_STATE_RED, COLORCODE_RED, FSM_STATE_RED);	// stay
+	builder.setNextState(FSM_STATE_RED, COLORCODE_NONE, FSM_STATE_RED);	// stay
+	builder.setNextState(FSM_STATE_RED, COLORCODE_BLK, FSM_STATE_RED);	// stay (may be BLU)
+	builder.setNextState(FSM_STATE_RED, COLORCODE_WHT, FSM_STATE_REDWHT);	// -> REDWHT
+	builder.setNextState(FSM_STATE_RED, COLORCODE_BLU, FSM_STATE_REDBLU);	// -> REDBLU
+	// From REDWHT
+	builder.setNextState(FSM_STATE_REDWHT, COLORCODE_WHT, FSM_STATE_REDWHT);	// stay
+	builder.setNextState(FSM_STATE_REDWHT, COLORCODE_NONE, FSM_STATE_REDWHT);	// stay
+	builder.setNextState(FSM_STATE_REDWHT, COLORCODE_BLU, FSM_STATE_REDBLU);	// -> REDBLU
+	builder.setNextState(FSM_STATE_REDWHT, COLORCODE_RED, FSM_STATE_RED);	// -> RED
+	// From REDBLU
+	builder.setNextState(FSM_STATE_REDBLU, COLORCODE_NONE, FSM_STATE_REDBLU);	// stay
+	builder.setNextState(FSM_STATE_REDBLU, COLORCODE_BLU, FSM_STATE_REDBLU);	// stay
+	builder.setNextState(FSM_STATE_REDBLU, COLORCODE_GRN, FSM_STATE_REDBLU);	// stay
+
+	this->stateNumber = 6;
+	this->minStateIdToSave = 5;
+
+	// TODO: vertical brakes due to (single line for example) can be avoided by a 2D FSM...
+
+	this->transitions = builder.createFsmTransitionMatrix();
 }

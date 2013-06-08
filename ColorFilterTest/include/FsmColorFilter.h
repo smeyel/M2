@@ -23,6 +23,8 @@ namespace smeyel
 		/** A bounding box is only saved if it contains states at least minStateIdToCommit */
 		unsigned int minStateToCommit;
 
+		unsigned int initialState;
+
 	private:
 		/** Internal filtering function called by Filter(). */
 		void Filter_Internal(cv::Mat &src, cv::Mat &dst);

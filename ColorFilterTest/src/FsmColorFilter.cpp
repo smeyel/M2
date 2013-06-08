@@ -5,6 +5,7 @@ using namespace smeyel;
 FsmColorFilter::FsmColorFilter()
 {
 	this->transitions = NULL;
+	this->initialState = 0;
 }
 
 FsmColorFilter::~FsmColorFilter()
@@ -20,7 +21,7 @@ FsmColorFilter::~FsmColorFilter()
 void FsmColorFilter::Filter_Internal(cv::Mat &src, cv::Mat &dst)
 {
 	assert(this->transitions != NULL);
-	assert(this->minStateIdToSave <=  this->minStateIdToCommit);	// Must have forgotten to set...
+	assert(this->minStateToSave <=  this->minStateToCommit);	// Must have forgotten to set...
 
 	// Assert for only 8UC1 output images
 	assert(dst.type() == CV_8UC1);
@@ -29,7 +30,8 @@ void FsmColorFilter::Filter_Internal(cv::Mat &src, cv::Mat &dst)
 	assert(src.rows == dst.rows);
 
 	uchar colorCode;
-	unsigned int stateIdx = FSM_STATE_INIT;
+	unsigned int initStateID = this->initialState;
+	unsigned int stateIdx = initStateID;
 	int colNum = src.cols;	// for acceleration
 
 	int lastDetectionCol = -1;
@@ -51,7 +53,7 @@ void FsmColorFilter::Filter_Internal(cv::Mat &src, cv::Mat &dst)
 		uchar *resultPtr = (uchar *)(dst.data + row*dst.step);
 
 		// Every row starts with the initial state.
-		stateIdx = FSM_STATE_INIT;
+		stateIdx = initStateID;
 		lastDetectionCol = -1;
 		continuousDetectionStartCol = -1;
 
@@ -114,7 +116,7 @@ void FsmColorFilter::Filter_Internal(cv::Mat &src, cv::Mat &dst)
 void FsmColorFilter::Filter_Internal_NoOutput(cv::Mat &src)
 {
 	assert(this->transitions != NULL);
-	assert(this->minStateIdToSave <=  this->minStateIdToCommit);	// Must have forgotten to set...
+	assert(this->minStateToSave <=  this->minStateToCommit);	// Must have forgotten to set...
 
 	uchar colorCode;
 	unsigned int stateIdx = FSM_STATE_INIT;

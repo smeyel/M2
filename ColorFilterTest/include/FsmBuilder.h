@@ -29,6 +29,13 @@ public:
 
 	void setDefaultForInput(unsigned int input, unsigned int defaultNextState);
 
+	/** Copy state. Used for creating counting state sets */
+	void copyState(unsigned int srcState, unsigned int dstState);
+
+	/** Copies startState maxCount times after each other */
+	void setCounterState(unsigned int startState, unsigned int maxCount);
+	void setCounterInput(unsigned int startState, unsigned int maxCount, unsigned int input, unsigned int fallbackState);
+
 	unsigned int *createFsmTransitionMatrix(int &stateNumber, int &inputNumber);
 };
 

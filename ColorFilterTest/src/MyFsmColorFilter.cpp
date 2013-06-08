@@ -1,11 +1,10 @@
 #include "MyFsmColorFilter.h"
 #include "FsmBuilder.h"
 
-#define FSM_STATE_INIT	0
-#define FSM_STATE_WHT	2
-#define FSM_STATE_RED	3
-#define FSM_STATE_REDWHT	4
-#define FSM_STATE_REDBLU	5
+#define FSM_STATE_INIT		0
+#define FSM_STATE_RED		1	// 10 states: 1-10
+#define FSM_STATE_REDBLU	11	// 5 states: 11-15
+#define FSM_STATE_BLU		16	// 10 states: 16-25
 
 MyFsmColorFilter::MyFsmColorFilter()
 {
@@ -55,58 +54,64 @@ void MyFsmColorFilter::init()
 		}
 	}
 
+/*
+#define FSM_STATE_INIT		0
+#define FSM_STATE_RED		1	// 10 states: 1-10
+#define FSM_STATE_REDBLU	11	// 5 states: 11-15
+#define FSM_STATE_BLU		16	// 10 states: 16-25
+*/
+
 	// Setup inverse LUT
-/*	InitInverseLut(200,0,200);
-	SetInverseLut(COLORCODE_NONE, 100,0,100);
-	SetInverseLut(COLORCODE_BLK, 0,0,0);
-	SetInverseLut(COLORCODE_WHT, 255,255,255);
-	SetInverseLut(COLORCODE_RED, 255,0,0);
-	SetInverseLut(COLORCODE_GRN, 0,255,0);
-	SetInverseLut(COLORCODE_BLU, 0,0,255);*/
-	InitInverseLut(100,0,100);
-	SetInverseLut(COLORCODE_NONE, 0,0,0);
-	SetInverseLut(COLORCODE_BLK, 0,0,0);
-	SetInverseLut(COLORCODE_WHT, 64,64,64);
-	SetInverseLut(COLORCODE_RED, 64,0,0);
-	SetInverseLut(COLORCODE_GRN, 0,64,0);
-	SetInverseLut(COLORCODE_BLU, 0,0,255);
-
-	SetInverseLut(10, 255,0,0);	// debug color
-
-	// TODO: REDWHT csak pár pixel lehet! Köztes NONE is csak pár lehet... és GRN se legyen túl sok...
+	InitInverseLut(64,64,0);
+	SetInverseLut(FSM_STATE_INIT, 0,0,0);
+	for(int i=0; i<10; i++) SetInverseLut(FSM_STATE_RED+i, 128,0,0);
+	for(int i=0; i<5; i++) SetInverseLut(FSM_STATE_REDBLU+i, 128,0,128);
+	for(int i=0; i<10; i++) SetInverseLut(FSM_STATE_BLU+i, 128,128,255);
 
 	// Setup FSM
 	FsmBuilder builder;
 	builder.init(100,100,FSM_STATE_INIT);
 	// From INIT
-	builder.setNextState(FSM_STATE_INIT, COLORCODE_WHT, FSM_STATE_WHT);	// ->WHT
-	builder.setNextState(FSM_STATE_INIT, COLORCODE_RED, FSM_STATE_RED);	// ->WHT
-	// From WHT
-	builder.setNextState(FSM_STATE_WHT, COLORCODE_WHT, FSM_STATE_WHT);	// stay
-	builder.setNextState(FSM_STATE_WHT, COLORCODE_NONE, FSM_STATE_WHT);	// stay
-	builder.setNextState(FSM_STATE_WHT, COLORCODE_RED, FSM_STATE_RED);	// ->RED
+	builder.setNextState(FSM_STATE_INIT, COLORCODE_RED, FSM_STATE_RED);
+
 	// From RED
-	builder.setNextState(FSM_STATE_RED, COLORCODE_RED, FSM_STATE_RED);	// stay
-	builder.setNextState(FSM_STATE_RED, COLORCODE_NONE, FSM_STATE_RED);	// stay
-	builder.setNextState(FSM_STATE_RED, COLORCODE_BLK, FSM_STATE_RED);	// stay (may be BLU)
-	builder.setNextState(FSM_STATE_RED, COLORCODE_WHT, FSM_STATE_REDWHT);	// -> REDWHT
-	builder.setNextState(FSM_STATE_RED, COLORCODE_BLU, FSM_STATE_REDBLU);	// -> REDBLU
-	// From REDWHT
-	builder.setNextState(FSM_STATE_REDWHT, COLORCODE_WHT, FSM_STATE_REDWHT);	// stay
-	builder.setNextState(FSM_STATE_REDWHT, COLORCODE_NONE, FSM_STATE_REDWHT);	// stay
-	builder.setNextState(FSM_STATE_REDWHT, COLORCODE_BLU, FSM_STATE_REDBLU);	// -> REDBLU
-	builder.setNextState(FSM_STATE_REDWHT, COLORCODE_RED, FSM_STATE_RED);	// -> RED
+	builder.setNextState(FSM_STATE_RED, COLORCODE_RED, FSM_STATE_RED);		// stay, reset counter
+	builder.setNextState(FSM_STATE_RED, COLORCODE_NONE, FSM_STATE_RED+1);	// stay, count (should come RED or BLU soon)
+	builder.setNextState(FSM_STATE_RED, COLORCODE_BLU, FSM_STATE_BLU);
+	builder.setNextState(FSM_STATE_RED, COLORCODE_BLK, FSM_STATE_REDBLU);	// WHT allowed between RED and BLU
+	builder.setNextState(FSM_STATE_RED, COLORCODE_WHT, FSM_STATE_REDBLU);	// WHT allowed between RED and BLU
+	builder.setCounterState(FSM_STATE_RED,10);
+	builder.setCounterInput(FSM_STATE_RED,10,COLORCODE_NONE,FSM_STATE_INIT);
+
 	// From REDBLU
-	builder.setNextState(FSM_STATE_REDBLU, COLORCODE_NONE, FSM_STATE_REDBLU);	// stay
-	builder.setNextState(FSM_STATE_REDBLU, COLORCODE_BLU, FSM_STATE_REDBLU);	// stay
-	builder.setNextState(FSM_STATE_REDBLU, COLORCODE_GRN, FSM_STATE_REDBLU);	// stay
+	builder.setNextState(FSM_STATE_REDBLU, COLORCODE_NONE, FSM_STATE_REDBLU);	// stay, count
+	builder.setNextState(FSM_STATE_REDBLU, COLORCODE_WHT, FSM_STATE_REDBLU);	// stay, count
+	builder.setNextState(FSM_STATE_REDBLU, COLORCODE_BLK, FSM_STATE_REDBLU);	// stay, count
+	builder.setNextState(FSM_STATE_REDBLU, COLORCODE_RED, FSM_STATE_RED);	// fallback to RED area
+	builder.setNextState(FSM_STATE_REDBLU, COLORCODE_BLU, FSM_STATE_BLU);
+	builder.setCounterState(FSM_STATE_REDBLU,5);
+	builder.setCounterInput(FSM_STATE_REDBLU,5,COLORCODE_NONE,FSM_STATE_INIT);
+	builder.setCounterInput(FSM_STATE_REDBLU,5,COLORCODE_WHT,FSM_STATE_INIT);
+
+	// From BLU
+	builder.setNextState(FSM_STATE_BLU, COLORCODE_BLU, FSM_STATE_BLU);		// stay, reset counter
+	builder.setNextState(FSM_STATE_BLU, COLORCODE_RED, FSM_STATE_RED);		// End of marker center
+	builder.setNextState(FSM_STATE_BLU, COLORCODE_NONE, FSM_STATE_BLU+1);	// stay, count (should come BLU soon)
+	builder.setNextState(FSM_STATE_BLU, COLORCODE_GRN, FSM_STATE_BLU+1);	// stay, count (should come BLU soon)
+	builder.setNextState(FSM_STATE_BLU, COLORCODE_BLK, FSM_STATE_BLU+1);	// stay, count (should come BLU soon)
+	builder.setCounterState(FSM_STATE_BLU,10);
+	builder.setCounterInput(FSM_STATE_BLU,10,COLORCODE_NONE,FSM_STATE_INIT);	// End of marker center
+	builder.setCounterInput(FSM_STATE_BLU,10,COLORCODE_GRN,FSM_STATE_INIT);		// End of marker center
+	builder.setCounterInput(FSM_STATE_BLU,10,COLORCODE_BLK,FSM_STATE_INIT);		// End of marker center
 
 	// TODO: vertical brakes due to (single line for example) can be avoided by a 2D FSM...
 	int inputNumber;
 	int stateNumber;
 	this->transitions = builder.createFsmTransitionMatrix(stateNumber, inputNumber);
+	assert(inputNumber<256);	// We use a CV_8UC1 image for storing the states
+	assert(stateNumber<256);	// We use a CV_8UC1 image for storing the color codes
 
 	this->stateNumber = stateNumber;
-	this->minStateIdToSave = 5;
+	this->minStateIdToSave = FSM_STATE_BLU;
 
 }

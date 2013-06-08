@@ -86,6 +86,37 @@ void FsmBuilder::setDefaultForInput(unsigned int input, unsigned int defaultNext
 		setNextState(s, input, defaultNextState);
 }
 
+void FsmBuilder::copyState(unsigned int srcState, unsigned int dstState)
+{
+	int srcIdx, dstIdx;
+	for(int i=0; i<maxInputNumber; i++)
+	{
+		srcIdx = srcState*maxStateNumber+i;
+		dstIdx = dstState*maxStateNumber+i;
+		transitions[dstIdx] = transitions[srcIdx];
+	}
+}
+
+void FsmBuilder::setCounterState(unsigned int startState, unsigned int maxCount)
+{
+	for(int i=0; i<maxCount; i++)
+	{
+		copyState(startState, startState+i);
+	}
+}
+
+void FsmBuilder::setCounterInput(unsigned int startState, unsigned int maxCount, unsigned int input, unsigned int fallbackState)
+{
+	assert(maxCount>1);
+	for(int i=0; i<maxCount-1; i++)
+	{
+		setNextState(startState+i, input, startState+i+1);
+	}
+	setNextState(startState+maxCount-1, input, fallbackState);
+}
+
+
+
 unsigned int *FsmBuilder::createFsmTransitionMatrix(int &stateNumber, int &inputNumber)
 {
 	// Creates an array corresponding the real number of used states and inputs.

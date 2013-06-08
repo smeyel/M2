@@ -50,6 +50,9 @@ namespace smeyel
 		*/
 		virtual void Filter(cv::Mat *src, cv::Mat *dst, std::vector<cv::Rect> *resultBoundingBoxes = NULL);
 
+		void FilterRoI(cv::Mat &src, cv::Rect &roi, cv::Mat &dst);
+
+
 		/** Inverse LUT (for visualization) */
 		void InverseLut(cv::Mat &src, cv::Mat &dst);
 		void InitInverseLut(uchar r, uchar g, uchar b);

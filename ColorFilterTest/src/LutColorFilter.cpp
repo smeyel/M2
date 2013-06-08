@@ -36,6 +36,17 @@ void LutColorFilter::SetLutItem(uchar r, uchar g, uchar b, uchar colorCode)
 	RgbLut[idx] = colorCode;
 }
 
+void LutColorFilter::FilterRoI(Mat &src, Rect &roi, Mat &dst)
+{
+	assert(src->type() == CV_8UC3);
+	assert(dst->type() == CV_8UC1);
+
+	Mat srcRoi(src,roi);
+	Mat dstRoi(dst,roi);
+
+	Filter_NoBoundingBox(srcRoi,dstRoi);
+}
+
 void LutColorFilter::Filter(Mat *src, Mat *dst, std::vector<Rect> *resultBoundingBoxes)
 {
 	// Assert for only 8UC3 input images (BGR)

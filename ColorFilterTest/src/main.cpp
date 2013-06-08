@@ -77,7 +77,7 @@ int main(int argc, char *argv[], char *window_name)
 		bbVector0.clear();
 		bbVector1.clear();
 		timeMeasurement.start(tm_filter_lut);
-		filter0->Filter(&src,&dst0,&bbVector0);
+		filter0->Filter(&src,&dst0,NULL); //&bbVector0);
 		timeMeasurement.finish(tm_filter_lut);
 		timeMeasurement.start(tm_filter_fsm);
 		filter1->Filter(&src,&dst1,&bbVector1);

@@ -20,6 +20,8 @@ namespace smeyel
 		unsigned int stateNumber;
 		/** Image areas with state ID >= minStateIdToSave will be marked with bounding boxes.*/
 		unsigned int minStateIdToSave;
+		/** A bounding box is only saved if it contains states at least minStateIdToCommit */
+		unsigned int minStateIdToCommit;
 
 		/** Internal filtering function called by Filter(). */
 		void Filter_Internal(cv::Mat &src, cv::Mat &dst);

@@ -1,10 +1,14 @@
 #include "MyFsmColorFilter.h"
 #include "FsmBuilder.h"
 
-#define FSM_STATE_INIT		0
-#define FSM_STATE_RED		1	// 10 states: 1-10
-#define FSM_STATE_REDBLU	11	// 5 states: 11-15
-#define FSM_STATE_BLU		16	// 10 states: 16-25
+#define STATE_INIT					0
+#define STATE_RED_UNSURE			1	// 5 state pure red requirement
+#define STATE_RED_UNSURE_NOISE		6	// 10 state noise tolerance
+#define STATE_RED_SURE				16	// 10 state noise tolerance
+#define STATE_REDBLU				26	// 10 state transient tolerance
+#define STATE_BLU_UNSURE			36	// 5 state pure blue required
+#define STATE_BLU_UNSURE_NOISE		41	// 10 state noise tolerance
+#define STATE_BLU_SURE				51	// 10 state noise tolerance
 
 MyFsmColorFilter::MyFsmColorFilter()
 {
@@ -55,56 +59,95 @@ void MyFsmColorFilter::init()
 	}
 
 /*
-#define FSM_STATE_INIT		0
-#define FSM_STATE_RED		1	// 10 states: 1-10
-#define FSM_STATE_REDBLU	11	// 5 states: 11-15
-#define FSM_STATE_BLU		16	// 10 states: 16-25
+#define STATE_INIT					0
+#define STATE_RED_UNSURE			1	// 5 state pure red requirement
+#define STATE_RED_UNSURE_NOISE		6	// 10 state noise tolerance
+#define STATE_RED_SURE				16	// 10 state noise tolerance
+#define STATE_REDBLU				26	// 10 state transient tolerance
+#define STATE_BLU_UNSURE			36	// 5 state pure blue required
+#define STATE_BLU_UNSURE_NOISE		41	// 10 state noise tolerance
+#define STATE_BLU_SURE				51	// 10 state noise tolerance
 */
 
 	// Setup inverse LUT
 	InitInverseLut(64,64,0);
 	SetInverseLut(FSM_STATE_INIT, 0,0,0);
-	for(int i=0; i<10; i++) SetInverseLut(FSM_STATE_RED+i, 128,0,0);
-	for(int i=0; i<5; i++) SetInverseLut(FSM_STATE_REDBLU+i, 128,0,128);
-	for(int i=0; i<10; i++) SetInverseLut(FSM_STATE_BLU+i, 128,128,255);
+	for(int i=0; i<5; i++) SetInverseLut(STATE_RED_UNSURE+i,		128,0,0);
+	for(int i=0; i<10; i++) SetInverseLut(STATE_RED_UNSURE_NOISE+i, 128,64,64);
+	for(int i=0; i<10; i++) SetInverseLut(STATE_RED_SURE+i,			255,0,0);
+	for(int i=0; i<10; i++) SetInverseLut(STATE_REDBLU+i,			255,0,255);
+	for(int i=0; i<5; i++) SetInverseLut(STATE_BLU_UNSURE+i,		0,0,128);
+	for(int i=0; i<10; i++) SetInverseLut(STATE_BLU_UNSURE_NOISE+i, 64,64,128);
+	for(int i=0; i<10; i++) SetInverseLut(STATE_BLU_SURE+i,			0,0,255);
 
 	// Setup FSM
 	FsmBuilder builder;
 	builder.init(100,100,FSM_STATE_INIT);
-	// From INIT
-	builder.setNextState(FSM_STATE_INIT, COLORCODE_RED, FSM_STATE_RED);
+	// ---------- Inside INIT area
+	builder.setNextState(FSM_STATE_INIT, COLORCODE_RED, STATE_RED_UNSURE);
 
-	// From RED
-	builder.setNextState(FSM_STATE_RED, COLORCODE_RED, FSM_STATE_RED);		// stay, reset counter
-	builder.setNextState(FSM_STATE_RED, COLORCODE_NONE, FSM_STATE_RED+1);	// stay, count (should come RED or BLU soon)
-	builder.setNextState(FSM_STATE_RED, COLORCODE_BLU, FSM_STATE_BLU);
-	builder.setNextState(FSM_STATE_RED, COLORCODE_BLK, FSM_STATE_REDBLU);	// WHT allowed between RED and BLU
-	builder.setNextState(FSM_STATE_RED, COLORCODE_WHT, FSM_STATE_REDBLU);	// WHT allowed between RED and BLU
-	builder.setCounterState(FSM_STATE_RED,10);
-	builder.setCounterInput(FSM_STATE_RED,10,COLORCODE_NONE,FSM_STATE_INIT);
+	// ---------- Inside RED area
+	// Unsure red
+	builder.setNextState(STATE_RED_UNSURE, COLORCODE_RED, STATE_RED_UNSURE+1);		// stay, counter
+	builder.setNextState(STATE_RED_UNSURE, COLORCODE_NONE, STATE_RED_UNSURE_NOISE);	// noise
+	builder.setCounterState(STATE_RED_UNSURE,3);
+	builder.setCounterInput(STATE_RED_UNSURE,3,COLORCODE_RED,STATE_RED_SURE);		// count ends -> surely in red area
 
-	// From REDBLU
-	builder.setNextState(FSM_STATE_REDBLU, COLORCODE_NONE, FSM_STATE_REDBLU);	// stay, count
-	builder.setNextState(FSM_STATE_REDBLU, COLORCODE_WHT, FSM_STATE_REDBLU);	// stay, count
-	builder.setNextState(FSM_STATE_REDBLU, COLORCODE_BLK, FSM_STATE_REDBLU);	// stay, count
-	builder.setNextState(FSM_STATE_REDBLU, COLORCODE_RED, FSM_STATE_RED);	// fallback to RED area
-	builder.setNextState(FSM_STATE_REDBLU, COLORCODE_BLU, FSM_STATE_BLU);
-	builder.setCounterState(FSM_STATE_REDBLU,5);
-	builder.setCounterInput(FSM_STATE_REDBLU,5,COLORCODE_NONE,FSM_STATE_INIT);
-	builder.setCounterInput(FSM_STATE_REDBLU,5,COLORCODE_WHT,FSM_STATE_INIT);
+	// Noise in unsure red
+	builder.setNextState(STATE_RED_UNSURE_NOISE, COLORCODE_RED, STATE_RED_UNSURE);
+	builder.setNextState(STATE_RED_UNSURE_NOISE, COLORCODE_NONE, STATE_RED_UNSURE_NOISE+1);	// count noise
+	builder.setCounterState(STATE_RED_UNSURE_NOISE,10);
+	builder.setCounterInput(STATE_RED_UNSURE_NOISE,10,COLORCODE_NONE,STATE_INIT);
 
-	// From BLU
-	builder.setNextState(FSM_STATE_BLU, COLORCODE_BLU, FSM_STATE_BLU);		// stay, reset counter
-	builder.setNextState(FSM_STATE_BLU, COLORCODE_RED, FSM_STATE_RED);		// End of marker center
-	builder.setNextState(FSM_STATE_BLU, COLORCODE_NONE, FSM_STATE_BLU+1);	// stay, count (should come BLU soon)
-	builder.setNextState(FSM_STATE_BLU, COLORCODE_GRN, FSM_STATE_BLU+1);	// stay, count (should come BLU soon)
-	builder.setNextState(FSM_STATE_BLU, COLORCODE_BLK, FSM_STATE_BLU+1);	// stay, count (should come BLU soon)
-	builder.setCounterState(FSM_STATE_BLU,10);
-	builder.setCounterInput(FSM_STATE_BLU,10,COLORCODE_NONE,FSM_STATE_INIT);	// End of marker center
-	builder.setCounterInput(FSM_STATE_BLU,10,COLORCODE_GRN,FSM_STATE_INIT);		// End of marker center
-	builder.setCounterInput(FSM_STATE_BLU,10,COLORCODE_BLK,FSM_STATE_INIT);		// End of marker center
+	// Sure red (may contain some noise)
+	builder.setNextState(STATE_RED_SURE, COLORCODE_RED, STATE_RED_SURE);	// stay
+	builder.setNextState(STATE_RED_SURE, COLORCODE_BLU, STATE_BLU_UNSURE);	// -> blue area
+	builder.setNextState(STATE_RED_SURE, COLORCODE_WHT, STATE_REDBLU);		// -> red-blue transient area
+	builder.setNextState(STATE_RED_SURE, COLORCODE_BLK, STATE_REDBLU);		// -> red-blue transient area
+	builder.setNextState(STATE_RED_SURE, COLORCODE_NONE, STATE_RED_SURE+1);	// count noise
+	builder.setCounterState(STATE_RED_SURE,10);
+	builder.setCounterInput(STATE_RED_SURE,10,COLORCODE_NONE,STATE_INIT);
 
-	// TODO: vertical brakes due to (single line for example) can be avoided by a 2D FSM...
+	// ---------- Inside RED-BLU transient area
+	builder.setNextState(STATE_REDBLU, COLORCODE_RED, STATE_RED_SURE);		// fallback to red area
+	builder.setNextState(STATE_REDBLU, COLORCODE_BLU, STATE_BLU_UNSURE);	// -> blue area
+	builder.setNextState(STATE_REDBLU, COLORCODE_WHT, STATE_REDBLU+1);		// stay, count
+	builder.setNextState(STATE_REDBLU, COLORCODE_BLK, STATE_REDBLU+1);		// stay, count
+	builder.setNextState(STATE_REDBLU, COLORCODE_GRN, STATE_REDBLU+1);		// stay, count
+	builder.setNextState(STATE_REDBLU, COLORCODE_NONE, STATE_REDBLU+1);		// stay, count
+	builder.setCounterState(STATE_REDBLU,10);
+	builder.setCounterInput(STATE_REDBLU,10,COLORCODE_WHT,STATE_INIT);
+	builder.setCounterInput(STATE_REDBLU,10,COLORCODE_BLK,STATE_INIT);
+	builder.setCounterInput(STATE_REDBLU,10,COLORCODE_GRN,STATE_INIT);
+	builder.setCounterInput(STATE_REDBLU,10,COLORCODE_NONE,STATE_INIT);
+
+	// ---------- Inside BLU area
+	// Unsure blue
+	builder.setNextState(STATE_BLU_UNSURE, COLORCODE_BLU, STATE_BLU_UNSURE+1);		// stay, counter
+	builder.setNextState(STATE_BLU_UNSURE, COLORCODE_BLK, STATE_BLU_UNSURE_NOISE);	// noise
+	builder.setCounterState(STATE_BLU_UNSURE,3);
+	builder.setCounterInput(STATE_BLU_UNSURE,3,COLORCODE_BLU,STATE_BLU_SURE);		// count ends -> surely in blue area
+
+	// Noise in unsure blue
+	builder.setNextState(STATE_BLU_UNSURE_NOISE, COLORCODE_BLU, STATE_BLU_UNSURE);
+	builder.setNextState(STATE_BLU_UNSURE_NOISE, COLORCODE_RED, STATE_RED_UNSURE);	// fallback to red
+	builder.setNextState(STATE_BLU_UNSURE_NOISE, COLORCODE_WHT, STATE_REDBLU);	// fallback to REDBLU
+	builder.setNextState(STATE_BLU_UNSURE_NOISE, COLORCODE_BLK, STATE_BLU_UNSURE_NOISE+1);	// count noise
+	builder.setNextState(STATE_BLU_UNSURE_NOISE, COLORCODE_GRN, STATE_BLU_UNSURE_NOISE+1);	// count noise
+	builder.setCounterState(STATE_BLU_UNSURE_NOISE,10);
+	builder.setCounterInput(STATE_BLU_UNSURE_NOISE,10,COLORCODE_BLK,STATE_INIT);
+	builder.setCounterInput(STATE_BLU_UNSURE_NOISE,10,COLORCODE_GRN,STATE_INIT);
+
+	// Sure blue (may contain some noise)
+	builder.setNextState(STATE_BLU_SURE, COLORCODE_RED, STATE_RED_UNSURE);	// fallback to red
+	builder.setNextState(STATE_BLU_SURE, COLORCODE_BLU, STATE_BLU_SURE);	// stay
+	builder.setNextState(STATE_BLU_SURE, COLORCODE_BLK, STATE_BLU_SURE+1);	// stay, count noise
+	builder.setNextState(STATE_BLU_SURE, COLORCODE_GRN, STATE_BLU_SURE+1);	// stay, count noise
+	builder.setCounterState(STATE_BLU_SURE,10);
+	builder.setCounterInput(STATE_BLU_SURE,10,COLORCODE_BLK,STATE_INIT);
+	builder.setCounterInput(STATE_BLU_SURE,10,COLORCODE_GRN,STATE_INIT);
+
+	// ---------- Build FSM
 	int inputNumber;
 	int stateNumber;
 	this->transitions = builder.createFsmTransitionMatrix(stateNumber, inputNumber);
@@ -112,6 +155,6 @@ void MyFsmColorFilter::init()
 	assert(stateNumber<256);	// We use a CV_8UC1 image for storing the color codes
 
 	this->stateNumber = stateNumber;
-	this->minStateIdToSave = FSM_STATE_BLU;
-
+	this->minStateIdToSave = STATE_BLU_UNSURE;	// TODO: should start with STATE_BLU_UNSURE but only save if _SURE was reached.
+	this->minStateIdToCommit = STATE_BLU_SURE;
 }

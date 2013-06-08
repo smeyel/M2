@@ -20,6 +20,7 @@ FsmColorFilter::~FsmColorFilter()
 void FsmColorFilter::Filter_Internal(cv::Mat &src, cv::Mat &dst)
 {
 	assert(this->transitions != NULL);
+	assert(this->minStateIdToSave <=  this->minStateIdToCommit);	// Must have forgotten to set...
 
 	// Assert for only 8UC1 output images
 	assert(dst.type() == CV_8UC1);
@@ -38,8 +39,10 @@ void FsmColorFilter::Filter_Internal(cv::Mat &src, cv::Mat &dst)
 
 	int lastDetectionCol = -1;
 	int continuousDetectionStartCol = -1;
+	bool isDetectionSaveCommitted = false;
 
-	unsigned int minStateId = this->minStateIdToSave;
+	unsigned int minStateIdSave = this->minStateIdToSave;
+	unsigned int minStateIdCommit = this->minStateIdToCommit;
 
 	// Init processing of a new frame
 	StartNewFrame();
@@ -77,8 +80,8 @@ void FsmColorFilter::Filter_Internal(cv::Mat &src, cv::Mat &dst)
 
 			*resultPtr++ = state;
 
-			// Bounding box handling: bounding state values > 127
-			if ((state >= minStateId))
+			// Bounding box handling
+			if ((state >= minStateIdSave))
 			{
 				// Handle detection collection
 				if (lastDetectionCol == -1)	// Starting first detection in this column
@@ -88,14 +91,22 @@ void FsmColorFilter::Filter_Internal(cv::Mat &src, cv::Mat &dst)
 				}
 				else if (lastDetectionCol < col-1)	// There was a gap since last detection
 				{
-					// Register last continuous detection
-					RegisterDetection(row,continuousDetectionStartCol,lastDetectionCol);
+					if (isDetectionSaveCommitted)
+					{
+						// Register last continuous detection
+						RegisterDetection(row,continuousDetectionStartCol,lastDetectionCol);
+					}
 
 					// Start new continuous detection
 					continuousDetectionStartCol = col;
+					isDetectionSaveCommitted = false;
 				}
-				lastDetectionCol = col;
-			}
+				lastDetectionCol = col;	// update end of detection area
+
+				// Cannot do this earlier, at RegisterDetection we need previous value
+				if (state >= minStateIdCommit)
+					isDetectionSaveCommitted = true;
+			}	// end of bounding box handling
 			detectionMaskPtr++;
 		}	// end for col
 		// Starting new row (if any...)

@@ -4,29 +4,32 @@
 class FsmBuilder
 {
 	unsigned int *transitions;
-	int stateNumber;
-	int inputNumber;
+	int maxStateNumber;
+	int currentStateNumber;
+	int maxInputNumber;
+	int currentInputNumber;
+
 public:
 	FsmBuilder();
 
-	FsmBuilder(int aStateNumber, int aInputNumber);
+	FsmBuilder(int maxStateNumber, int maxInputNumber, int defaultNextState=0);
 
 	~FsmBuilder();
 
-	void init(int aStateNumber, int aInputNumber);
+	void init(int maxStateNumber, int maxInputNumber, int defaultNextState=0);
 
 	/** Set an element of the transition matrix */
 	void setNextState(unsigned int currentState, unsigned int currentInput, unsigned int nextState);
 
-	/** Defines trap state and resets all matrix entries to that.
+	/** Defines default next state (for example trap state) and resets all matrix entries to that.
 	*/
-	void trapStateAll(unsigned int trapState);
+	void all(unsigned int nextState);
 
 	void setDefaultForState(unsigned int state, unsigned int defaultNextState);
 
 	void setDefaultForInput(unsigned int input, unsigned int defaultNextState);
 
-	unsigned int *createFsmTransitionMatrix();
+	unsigned int *createFsmTransitionMatrix(int &stateNumber, int &inputNumber);
 };
 
 #endif

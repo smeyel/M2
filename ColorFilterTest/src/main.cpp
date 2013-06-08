@@ -88,13 +88,16 @@ int main(int argc, char *argv[], char *window_name)
 
 		// Show bounding box number
 		cout << "BB_Num: " << bbVector0.size() << ", " << bbVector1.size() << endl;
+		int size = bbVector1.size();
+		char txt[100];
+		sprintf(txt,"FsmBBNum=%d",size);
+		putText( src, string(txt), cvPoint(25,20), FONT_HERSHEY_DUPLEX, 0.5, CV_RGB(255,255,0) );
 
 		filter1->ShowBoundingBoxes(src,Scalar(0,255,0));
 
 		imshow("Input",src);
 		imshow("Output LUT",vis0);
 		imshow("Output FSM",vis1);
-
 
 		char ch = waitKey(25);
 		if (ch==27)

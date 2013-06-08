@@ -108,3 +108,11 @@ void FsmColorFilter::Filter_Internal(cv::Mat &src, cv::Mat &dst)
 		FinishRow(row);
 	}	// end for row
 }
+
+void FsmColorFilter::Filter(cv::Mat *src, cv::Mat *dst, std::vector<cv::Rect> *resultBoundingBoxes)
+{
+	Filter_Internal(*src,*dst);
+	ConsolidateBoundingBoxes();
+	// Copy bounding boxes from internal vector
+	*resultBoundingBoxes = boundingBoxes;
+}

@@ -7,13 +7,22 @@
 
 namespace smeyel
 {
-	/** LUT based color filter */
+	/** Finite state machine based color filter.
+		The output is a CV_8UC1 type image containing the current
+		state of the FSM for every pixel.
+	*/
 	class FsmColorFilter : public LutColorFilter
 	{
 	protected:
+		/** State transition vector. You may use FsmBuilder to create it. */
 		unsigned int *transitions;
+		/** Number of states. */
 		unsigned int stateNumber;
+		/** Image areas with state ID >= minStateIdToSave will be marked with bounding boxes.*/
 		unsigned int minStateIdToSave;
+
+		/** Internal filtering function called by Filter(). */
+		void Filter_Internal(cv::Mat &src, cv::Mat &dst);
 
 	public:
 		/** Constructor */
@@ -22,38 +31,17 @@ namespace smeyel
 		/** Destructor */
 		~FsmColorFilter();
 
-		/** Sets LUT to given colorcode for given RGB color.
-			Used for runtime color LUT adjustments.
-		*/
-		void SetLutItem(uchar r, uchar g, uchar b, uchar colorCode);
+		/** Execute filter on an image.
+			Internally, performs the filtering and consolidates the bounding boxes.
 
-		/** State image, stores for every pixel the current value of the FSM. Type is CV_8UC1. */
-		cv::Mat *StateImage;
-
-		/** Execute filter on an image
 			@param src	Source image
 			@param dst	Destination image (may be NULL), contains the color codes
-			@param boundingBoxes	Vector to collect detected areas (if not NULL)
+			@param resultBoundingBoxes	Vector to collect detected areas (if not NULL)
+
+			The FSM is initialized to state 0 at the begining of every image line.
+			Bounding boxes surround areas with state ID >= minStateIdToSave.
 		*/
-		virtual void Filter(cv::Mat *src, cv::Mat *dst, std::vector<cv::Rect> *resultBoundingBoxes)
-		{
-			Filter_Internal(*src,*dst);
-			ConsolidateBoundingBoxes();
-			// Copy bounding boxes from internal vector
-			*resultBoundingBoxes = boundingBoxes;
-		}
-
-		void Filter_Internal(cv::Mat &src, cv::Mat &dst);
-
-
-		/** Finite state machine function
-			@param	lutValue	the value of the current pixel, retrieved from the LUT (@see LutColorFilter)
-			@return	The state of the FSM to be stored in the out.
-
-			If you want to return bounding boxes, use the bounding box functions from ColorFilter inside this function.
-			@warning TODO: Virtual function call introduces critical overhead! Use function pointer instead?
-		*/
-		//virtual uchar fsm(uchar state, uchar lutValue) = 0;
+		virtual void Filter(cv::Mat *src, cv::Mat *dst, std::vector<cv::Rect> *resultBoundingBoxes);
 	};
 }
 

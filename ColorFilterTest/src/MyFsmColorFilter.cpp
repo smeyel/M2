@@ -73,11 +73,11 @@ void MyFsmColorFilter::init()
 
 	SetInverseLut(10, 255,0,0);	// debug color
 
+	// TODO: REDWHT csak pár pixel lehet! Köztes NONE is csak pár lehet... és GRN se legyen túl sok...
+
 	// Setup FSM
 	FsmBuilder builder;
-	builder.init(6,6);
-	// Init trap (or default) state
-	builder.trapStateAll(FSM_STATE_INIT);
+	builder.init(100,100,FSM_STATE_INIT);
 	// From INIT
 	builder.setNextState(FSM_STATE_INIT, COLORCODE_WHT, FSM_STATE_WHT);	// ->WHT
 	builder.setNextState(FSM_STATE_INIT, COLORCODE_RED, FSM_STATE_RED);	// ->WHT
@@ -101,10 +101,12 @@ void MyFsmColorFilter::init()
 	builder.setNextState(FSM_STATE_REDBLU, COLORCODE_BLU, FSM_STATE_REDBLU);	// stay
 	builder.setNextState(FSM_STATE_REDBLU, COLORCODE_GRN, FSM_STATE_REDBLU);	// stay
 
-	this->stateNumber = 6;
+	// TODO: vertical brakes due to (single line for example) can be avoided by a 2D FSM...
+	int inputNumber;
+	int stateNumber;
+	this->transitions = builder.createFsmTransitionMatrix(stateNumber, inputNumber);
+
+	this->stateNumber = stateNumber;
 	this->minStateIdToSave = 5;
 
-	// TODO: vertical brakes due to (single line for example) can be avoided by a 2D FSM...
-
-	this->transitions = builder.createFsmTransitionMatrix();
 }

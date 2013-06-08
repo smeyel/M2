@@ -7,15 +7,16 @@
 FsmBuilder::FsmBuilder()
 {
 	transitions = NULL;
-	stateNumber = 0;
-	inputNumber = 0;
+	maxStateNumber = 0;
+	maxInputNumber = 0;
+	currentStateNumber = 0;
+	currentInputNumber = 0;
 }
 
-FsmBuilder::FsmBuilder(int aStateNumber, int aInputNumber)
+FsmBuilder::FsmBuilder(int maxStateNumber, int maxInputNumber, int defaultNextState)
 {
-	init(aStateNumber,aInputNumber);
+	init(maxStateNumber,maxInputNumber,defaultNextState);
 }
-
 
 FsmBuilder::~FsmBuilder()
 {
@@ -24,60 +25,82 @@ FsmBuilder::~FsmBuilder()
 		delete transitions;
 	}
 	transitions = NULL;
-	stateNumber = 0;
-	inputNumber = 0;
+	maxStateNumber = 0;
+	maxInputNumber = 0;
+	currentStateNumber = 0;
+	currentInputNumber = 0;
 }
 
-void FsmBuilder::init(int aStateNumber, int aInputNumber)
+void FsmBuilder::init(int maxStateNumber, int maxInputNumber, int defaultNextState)
 {
 	if (transitions)
 	{
 		delete transitions;
 	}
-	stateNumber = aStateNumber;
-	inputNumber = aInputNumber;
-	transitions = new unsigned int[aStateNumber*aInputNumber];
+	this->maxStateNumber = maxStateNumber;
+	this->maxInputNumber = maxInputNumber;
+	currentStateNumber = 0;
+	currentInputNumber = 0;
+	transitions = new unsigned int[maxStateNumber*maxInputNumber];
+	all(defaultNextState);
 }
 
 /** Set an element of the transition matrix */
 void FsmBuilder::setNextState(unsigned int state, unsigned int input, unsigned int nextState)
 {
-	assert(state<stateNumber);
-	assert(input<inputNumber);
-	assert(nextState<stateNumber);
+	assert(state<maxStateNumber);
+	assert(input<maxInputNumber);
+	assert(nextState<maxStateNumber);
 
-	int idx = state*stateNumber + input;
+	if(state>currentStateNumber)
+		currentStateNumber = state;
+	if(nextState>currentStateNumber)
+		currentStateNumber = nextState;
+	if(input>currentInputNumber)
+		currentInputNumber = input;
+
+	int idx = state*maxStateNumber + input;
 	transitions[idx]=nextState;
 }
 
 /** Defines trap state and resets all matrix entries to that.
 */
-void FsmBuilder::trapStateAll(unsigned int trapState)
+void FsmBuilder::all(unsigned int nextState)
 {
-	assert(trapState<stateNumber);
-	for(int i=0; i<stateNumber*inputNumber; i++)
-		transitions[i] = trapState;
+	// Calling setNextState() allows centralized asserts and
+	//	administration of current state and input number.
+	for(int s=0; s<maxStateNumber; s++)
+		for(int i=0; i<maxInputNumber; i++)
+			setNextState(s, i, nextState);
 }
 
 void FsmBuilder::setDefaultForState(unsigned int state, unsigned int defaultNextState)
 {
-	assert(state<stateNumber);
-	assert(defaultNextState<stateNumber);
-	for(int i=0; i<inputNumber; i++)
+	for(int i=0; i<maxInputNumber; i++)
 		setNextState(state, i, defaultNextState);
 }
 
 void FsmBuilder::setDefaultForInput(unsigned int input, unsigned int defaultNextState)
 {
-	assert(input<inputNumber);
-	assert(defaultNextState<stateNumber);
-	for(int i=0; i<stateNumber; i++)
-		setNextState(i, input, defaultNextState);
+	for(int s=0; s<maxStateNumber; s++)
+		setNextState(s, input, defaultNextState);
 }
 
-unsigned int *FsmBuilder::createFsmTransitionMatrix()
+unsigned int *FsmBuilder::createFsmTransitionMatrix(int &stateNumber, int &inputNumber)
 {
+	// Creates an array corresponding the real number of used states and inputs.
+	stateNumber = currentStateNumber;
+	inputNumber = currentInputNumber;
 	unsigned int *result = new unsigned int[stateNumber*inputNumber];
-	memcpy(result, transitions, stateNumber*inputNumber * sizeof(unsigned int));
+	int srcIdx, dstIdx;
+	for(int s=0; s<stateNumber; s++)
+	{
+		for(int i=0; i<inputNumber; i++)
+		{
+			srcIdx = s*maxStateNumber+i;
+			dstIdx = s*stateNumber+i;
+			result[dstIdx] = transitions[srcIdx];
+		}
+	}
 	return result;
 }

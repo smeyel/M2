@@ -29,11 +29,11 @@ namespace smeyel
 		void useBoundingBoxCheckParams(ColorFilter::BoundingBoxCheckParams params);
 
 		/** Perform any kind of modification to the list of bounding boxes */
-		virtual void processBoundingBoxes(std::vector<cv::Rect> boundingBoxes) { }
+		virtual void processBoundingBoxes(std::vector<cv::Rect> &boundingBoxes) { }
 
 		/** Perform validation of a single bounding box using LUT results on its area
 		*/
-		virtual void processSingleBoundingBox(cv::Rect boundingBox, cv::Mat lutImage, cv::Mat originalImage) { }
+		virtual void processSingleBoundingBox(cv::Rect &boundingBox, cv::Mat &lutImage, cv::Mat &originalImage) { }
 	public:
 		cv::Mat *verboseFsmState;
 		cv::Mat *verboseLutImage;
@@ -43,6 +43,7 @@ namespace smeyel
 		*/
 		bool cleanVerboseImage;
 		bool showBoundingBoxesOnSrc;
+		bool overrideFullLut;
 
 		LutFsmLocator();
 

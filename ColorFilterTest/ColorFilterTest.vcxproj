@@ -87,6 +87,7 @@
     <ClCompile Include="src\LutFsmLocator.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\MyFsmColorFilter.cpp" />
+    <ClCompile Include="src\MyLocator2.cpp" />
     <ClCompile Include="src\MyLutColorFilter.cpp" />
     <ClCompile Include="src\MyLutFsmLocator.cpp" />
   </ItemGroup>
@@ -120,6 +121,7 @@
     <ClInclude Include="include\LutColorFilter.h" />
     <ClInclude Include="include\LutFsmLocator.h" />
     <ClInclude Include="include\MyFsmColorFilter.h" />
+    <ClInclude Include="include\MyLocator2.h" />
     <ClInclude Include="include\MyLutColorFilter.h" />
     <ClInclude Include="include\MyLutFsmLocator.h" />
   </ItemGroup>

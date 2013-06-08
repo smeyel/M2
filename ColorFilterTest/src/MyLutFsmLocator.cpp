@@ -17,11 +17,11 @@ MyLutFsmLocator::MyLutFsmLocator()
 	init();
 }
 
-void MyLutFsmLocator::processBoundingBoxes(std::vector<cv::Rect> boundingBoxes)
+void MyLutFsmLocator::processBoundingBoxes(std::vector<cv::Rect> &boundingBoxes)
 {
 }
 
-void MyLutFsmLocator::processSingleBoundingBox(cv::Rect boundingBox, cv::Mat lutImage, cv::Mat originalImage)
+void MyLutFsmLocator::processSingleBoundingBox(cv::Rect &boundingBox, cv::Mat &lutImage, cv::Mat &originalImage)
 {
 }
 

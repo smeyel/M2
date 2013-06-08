@@ -11,6 +11,7 @@
 #include "StdoutLogger.h"
 
 #include "MyLutFsmLocator.h"
+#include "MyLocator2.h"
 
 #include "TimeMeasurement.h"
 
@@ -61,11 +62,12 @@ int main(int argc, char *argv[], char *window_name)
 	Mat visFsm(480,640,CV_8UC3);
 	Mat visLut(480,640,CV_8UC3);
 
-	MyLutFsmLocator *locator = new MyLutFsmLocator();
+	MyLocator2 *locator = new MyLocator2();
 	locator->verboseFsmState = &visFsm;
 	locator->verboseLutImage = &visLut;
 	locator->showBoundingBoxesOnSrc=true;
 	locator->cleanVerboseImage=true;
+	locator->overrideFullLut = true;
 
 	while(true) //Show the image captured in the window and repeat
 	{

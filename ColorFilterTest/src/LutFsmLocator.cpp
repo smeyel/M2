@@ -10,6 +10,7 @@ LutFsmLocator::LutFsmLocator()
 	lutImage = NULL;
 	cleanVerboseImage = false;
 	showBoundingBoxesOnSrc = false;
+	overrideFullLut = false;
 }
 
 LutFsmLocator::~LutFsmLocator()
@@ -77,13 +78,21 @@ void LutFsmLocator::processImage(cv::Mat &src)
 	if (cleanVerboseImage)
 		lutImage->setTo(0);	// Only for nicer visualization...
 
-	for(int i=0; i<bbVector.size(); i++)
+	if (!overrideFullLut)
 	{
-		Rect &rect = bbVector[i];
-		LutColorFilter::FilterRoI(src,rect,*lutImage);
+		for(int i=0; i<bbVector.size(); i++)
+		{
+			Rect &rect = bbVector[i];
+			LutColorFilter::FilterRoI(src,rect,*lutImage);
 
-		// Insert point: access to single bounding box and LUT image of its area
-		this->processSingleBoundingBox(rect, *lutImage, src);
+			// Insert point: access to single bounding box and LUT image of its area
+			this->processSingleBoundingBox(rect, *lutImage, src);
+		}
+	}
+	else
+	{
+		// Override and perform full LUT
+		LutColorFilter::Filter(&src,lutImage,NULL);
 	}
 
 	if (verboseLutImage)

@@ -37,6 +37,7 @@ public:
 	void setCounterInput(unsigned int startState, unsigned int maxCount, unsigned int input, unsigned int fallbackState);
 
 	unsigned int *createFsmTransitionMatrix(int &stateNumber, int &inputNumber);
+	unsigned int getIdxOfStateID(int stateID);
 };
 
 #endif

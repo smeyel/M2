@@ -51,7 +51,7 @@ int main(int argc, char *argv[], char *window_name)
 	Size S = Size(640,480);
 
 	namedWindow("Input", CV_WINDOW_AUTOSIZE);
-	namedWindow("Output LUT", CV_WINDOW_AUTOSIZE);
+	//namedWindow("Output LUT", CV_WINDOW_AUTOSIZE);
 	namedWindow("Output FSM", CV_WINDOW_AUTOSIZE);
 
 	Mat src(480,640,CV_8UC3);
@@ -77,17 +77,17 @@ int main(int argc, char *argv[], char *window_name)
 		bbVector0.clear();
 		bbVector1.clear();
 		timeMeasurement.start(tm_filter_lut);
-		filter0->Filter(&src,&dst0,NULL); //&bbVector0);
+		filter0->Filter(&src,&dst0,&bbVector0);
 		timeMeasurement.finish(tm_filter_lut);
 		timeMeasurement.start(tm_filter_fsm);
-		filter1->Filter(&src,&dst1,&bbVector1);
+		//filter1->Filter(&src,&dst1,&bbVector1);
+		filter1->Filter(&src,NULL,&bbVector1);
 		timeMeasurement.finish(tm_filter_fsm);
 
 		filter0->InverseLut(dst0,vis0);
 		filter1->InverseLut(dst1,vis1);
 
 		// Show bounding box number
-		cout << "BB_Num: " << bbVector0.size() << ", " << bbVector1.size() << endl;
 		int size = bbVector1.size();
 		char txt[100];
 		sprintf(txt,"FsmBBNum=%d",size);

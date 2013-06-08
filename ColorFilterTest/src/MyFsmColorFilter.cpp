@@ -69,17 +69,6 @@ void MyFsmColorFilter::init()
 #define STATE_BLU_SURE				51	// 10 state noise tolerance
 */
 
-	// Setup inverse LUT
-	InitInverseLut(64,64,0);
-	SetInverseLut(FSM_STATE_INIT, 0,0,0);
-	for(int i=0; i<5; i++) SetInverseLut(STATE_RED_UNSURE+i,		128,0,0);
-	for(int i=0; i<10; i++) SetInverseLut(STATE_RED_UNSURE_NOISE+i, 128,64,64);
-	for(int i=0; i<10; i++) SetInverseLut(STATE_RED_SURE+i,			255,0,0);
-	for(int i=0; i<10; i++) SetInverseLut(STATE_REDBLU+i,			255,0,255);
-	for(int i=0; i<5; i++) SetInverseLut(STATE_BLU_UNSURE+i,		0,0,128);
-	for(int i=0; i<10; i++) SetInverseLut(STATE_BLU_UNSURE_NOISE+i, 64,64,128);
-	for(int i=0; i<10; i++) SetInverseLut(STATE_BLU_SURE+i,			0,0,255);
-
 	// Setup FSM
 	FsmBuilder builder;
 	builder.init(100,100,FSM_STATE_INIT);
@@ -155,6 +144,18 @@ void MyFsmColorFilter::init()
 	assert(stateNumber<256);	// We use a CV_8UC1 image for storing the color codes
 
 	this->stateNumber = stateNumber;
-	this->minStateIdToSave = STATE_BLU_UNSURE;	// TODO: should start with STATE_BLU_UNSURE but only save if _SURE was reached.
-	this->minStateIdToCommit = STATE_BLU_SURE;
+	this->minStateToSave = builder.getIdxOfStateID(STATE_BLU_UNSURE);
+	this->minStateToCommit = builder.getIdxOfStateID(STATE_BLU_SURE);
+
+	// Setup inverse LUT
+	InitInverseLut(64,64,0);
+	SetInverseLut(FSM_STATE_INIT, 0,0,0);
+	for(int i=0; i<5; i++) SetInverseLut(builder.getIdxOfStateID(STATE_RED_UNSURE+i),			128,0,0);
+	for(int i=0; i<10; i++) SetInverseLut(builder.getIdxOfStateID(STATE_RED_UNSURE_NOISE+i),	128,64,64);
+	for(int i=0; i<10; i++) SetInverseLut(builder.getIdxOfStateID(STATE_RED_SURE+i),			255,0,0);
+	for(int i=0; i<10; i++) SetInverseLut(builder.getIdxOfStateID(STATE_REDBLU+i),				255,0,255);
+	for(int i=0; i<5; i++) SetInverseLut(builder.getIdxOfStateID(STATE_BLU_UNSURE+i),			0,0,128);
+	for(int i=0; i<10; i++) SetInverseLut(builder.getIdxOfStateID(STATE_BLU_UNSURE_NOISE+i),	64,64,128);
+	for(int i=0; i<10; i++) SetInverseLut(builder.getIdxOfStateID(STATE_BLU_SURE+i),			0,0,255);
+
 }

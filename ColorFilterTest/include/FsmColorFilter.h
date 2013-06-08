@@ -14,17 +14,20 @@ namespace smeyel
 	class FsmColorFilter : public LutColorFilter
 	{
 	protected:
-		/** State transition vector. You may use FsmBuilder to create it. */
+		/** State transition vector, contains _base_index_ of the next state. You may use FsmBuilder to create it. */
 		unsigned int *transitions;
 		/** Number of states. */
 		unsigned int stateNumber;
 		/** Image areas with state ID >= minStateIdToSave will be marked with bounding boxes.*/
-		unsigned int minStateIdToSave;
+		unsigned int minStateToSave;
 		/** A bounding box is only saved if it contains states at least minStateIdToCommit */
-		unsigned int minStateIdToCommit;
+		unsigned int minStateToCommit;
 
+	private:
 		/** Internal filtering function called by Filter(). */
 		void Filter_Internal(cv::Mat &src, cv::Mat &dst);
+
+		void Filter_Internal_NoOutput(cv::Mat &src);
 
 	public:
 		/** Constructor */

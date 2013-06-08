@@ -115,8 +115,6 @@ void FsmBuilder::setCounterInput(unsigned int startState, unsigned int maxCount,
 	setNextState(startState+maxCount-1, input, fallbackState);
 }
 
-
-
 unsigned int *FsmBuilder::createFsmTransitionMatrix(int &stateNumber, int &inputNumber)
 {
 	// Creates an array corresponding the real number of used states and inputs.
@@ -130,8 +128,13 @@ unsigned int *FsmBuilder::createFsmTransitionMatrix(int &stateNumber, int &input
 		{
 			srcIdx = s*maxStateNumber+i;
 			dstIdx = s*stateNumber+i;
-			result[dstIdx] = transitions[srcIdx];
+			result[dstIdx] = transitions[srcIdx]*currentStateNumber;	// IDX-encoding
 		}
 	}
 	return result;
+}
+
+unsigned int FsmBuilder::getIdxOfStateID(int stateID)
+{
+	return stateID*currentStateNumber;
 }

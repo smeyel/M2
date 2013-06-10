@@ -27,6 +27,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ColorFilterTest", "ColorFil
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libImageFilter", "ImageProcessing\libImageFilter\libImageFilter.vcxproj", "{7AED9FEE-4243-4622-B4DD-413A157E446B}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "LutCalibration", "ImageProcessing\LutCalibration\LutCalibration.vcxproj", "{5DE35190-471E-41CA-A191-1DF0CB0E5356}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -85,6 +87,10 @@ Global
 		{7AED9FEE-4243-4622-B4DD-413A157E446B}.Debug|Win32.Build.0 = Debug|Win32
 		{7AED9FEE-4243-4622-B4DD-413A157E446B}.Release|Win32.ActiveCfg = Release|Win32
 		{7AED9FEE-4243-4622-B4DD-413A157E446B}.Release|Win32.Build.0 = Release|Win32
+		{5DE35190-471E-41CA-A191-1DF0CB0E5356}.Debug|Win32.ActiveCfg = Debug|Win32
+		{5DE35190-471E-41CA-A191-1DF0CB0E5356}.Debug|Win32.Build.0 = Debug|Win32
+		{5DE35190-471E-41CA-A191-1DF0CB0E5356}.Release|Win32.ActiveCfg = Release|Win32
+		{5DE35190-471E-41CA-A191-1DF0CB0E5356}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

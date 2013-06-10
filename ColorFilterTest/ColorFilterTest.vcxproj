@@ -32,9 +32,17 @@
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="..\Framework\props\Framework.props" />
+    <Import Project="..\Tracking\props\Tracking.props" />
+    <Import Project="..\ImageProcessing\props\ImageProcessing.props" />
+    <Import Project="..\props\OpenCV_Debug.props" />
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="..\Framework\props\Framework.props" />
+    <Import Project="..\Tracking\props\Tracking.props" />
+    <Import Project="..\ImageProcessing\props\ImageProcessing.props" />
+    <Import Project="..\props\OpenCV_Release.props" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -50,12 +58,12 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(OPENCV_DIR)\include;%(AdditionalIncludeDirectories);include;$(SolutionDir)Framework\libLogConfigTime\include;$(SolutionDir)Framework\libCommunication/include;$(SolutionDir)ImageProcessing/libTwoColorCircleMarker/include;$(SolutionDir)Tracking/lib3dWorld/include;$(SolutionDir)Framework\libCameraAbstraction\include;$(SolutionDir)Framework\libPlatformSpecifics/include;$(SolutionDir)/Framework/libVideoInput/include;include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies);opencv_core243d.lib;opencv_imgproc243d.lib;opencv_highgui243d.lib;opencv_ml243d.lib;opencv_video243d.lib;opencv_features2d243d.lib;opencv_calib3d243d.lib;opencv_objdetect243d.lib;opencv_contrib243d.lib;opencv_legacy243d.lib;opencv_flann243d.lib;ws2_32.lib</AdditionalDependencies>
+      <AdditionalDependencies>kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies);ws2_32.lib</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(OPENCV_DIR)\x86\vc10\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
@@ -68,23 +76,18 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(OPENCV_DIR)\include;%(AdditionalIncludeDirectories);include;$(SolutionDir)Framework\libLogConfigTime\include;$(SolutionDir)Framework\libCommunication/include;$(SolutionDir)ImageProcessing/libTwoColorCircleMarker/include;$(SolutionDir)Tracking/lib3dWorld/include;$(SolutionDir)Framework\libCameraAbstraction\include;$(SolutionDir)Framework\libPlatformSpecifics/include;$(SolutionDir)/Framework/libVideoInput/include;include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies);opencv_core243.lib;opencv_imgproc243.lib;opencv_highgui243.lib;opencv_ml243.lib;opencv_video243.lib;opencv_features2d243.lib;opencv_calib3d243.lib;opencv_objdetect243.lib;opencv_contrib243.lib;opencv_legacy243.lib;opencv_flann243.lib;ws2_32.lib</AdditionalDependencies>
+      <AdditionalDependencies>kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies);ws2_32.lib</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(OPENCV_DIR)\x86\vc10\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="src\ColorFilter.cpp" />
-    <ClCompile Include="src\FsmBuilder.cpp" />
-    <ClCompile Include="src\FsmColorFilter.cpp" />
-    <ClCompile Include="src\LutColorFilter.cpp" />
-    <ClCompile Include="src\LutFsmLocator.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\MyFsmColorFilter.cpp" />
     <ClCompile Include="src\MyLocator2.cpp" />
@@ -107,6 +110,9 @@
     <ProjectReference Include="..\Framework\libVideoInput\libVideoInput.vcxproj">
       <Project>{f0b55c60-9485-43e1-87e2-ede6a73cceef}</Project>
     </ProjectReference>
+    <ProjectReference Include="..\ImageProcessing\libImageFilter\libImageFilter.vcxproj">
+      <Project>{7aed9fee-4243-4622-b4dd-413a157e446b}</Project>
+    </ProjectReference>
     <ProjectReference Include="..\ImageProcessing\libTwoColorCircleMarker\libTwoColorCircleMarker.vcxproj">
       <Project>{e9e73514-1e7d-4ea4-9fe7-fe83f887d38c}</Project>
     </ProjectReference>
@@ -115,11 +121,6 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="include\ColorFilter.h" />
-    <ClInclude Include="include\FsmBuilder.h" />
-    <ClInclude Include="include\FsmColorFilter.h" />
-    <ClInclude Include="include\LutColorFilter.h" />
-    <ClInclude Include="include\LutFsmLocator.h" />
     <ClInclude Include="include\MyFsmColorFilter.h" />
     <ClInclude Include="include\MyLocator2.h" />
     <ClInclude Include="include\MyLutColorFilter.h" />

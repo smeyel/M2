@@ -63,6 +63,7 @@ int main(int argc, char *argv[], char *window_name)
 	Mat visLut(480,640,CV_8UC3);
 
 	MyLocator2 *locator = new MyLocator2();
+	//MyLutFsmLocator *locator = new MyLutFsmLocator();
 	locator->verboseFsmState = &visFsm;
 	locator->verboseLutImage = &visLut;
 	locator->showBoundingBoxesOnSrc=true;

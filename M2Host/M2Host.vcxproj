@@ -52,7 +52,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(OPENCV_DIR)\include;%(AdditionalIncludeDirectories);include;$(SolutionDir)Framework\libLogConfigTime\include;$(SolutionDir)Framework\libCommunication/include;$(SolutionDir)ImageProcessing/libTwoColorCircleMarker/include;$(SolutionDir)Tracking/lib3dWorld/include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(OPENCV_DIR)\include;%(AdditionalIncludeDirectories);include;$(SolutionDir)Framework\libLogConfigTime\include;$(SolutionDir)Framework\libCommunication/include;$(SolutionDir)ImageProcessing/libTwoColorCircleMarker/include;$(SolutionDir)Tracking/lib3dWorld/include;$(SolutionDir)Framework\libCameraAbstraction\include;$(SolutionDir)Framework\libVideoInput\include;$(SolutionDir)Framework\libPlatformSpecifics/include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -71,7 +71,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(OPENCV_DIR)\include;%(AdditionalIncludeDirectories);include;$(SolutionDir)Framework\libLogConfigTime\include;$(SolutionDir)Framework\libCommunication/include;$(SolutionDir)ImageProcessing/libTwoColorCircleMarker/include;$(SolutionDir)Tracking/lib3dWorld/include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(OPENCV_DIR)\include;%(AdditionalIncludeDirectories);include;$(SolutionDir)Framework\libLogConfigTime\include;$(SolutionDir)Framework\libCommunication/include;$(SolutionDir)ImageProcessing/libTwoColorCircleMarker/include;$(SolutionDir)Tracking/lib3dWorld/include;$(SolutionDir)Framework\libCameraAbstraction\include;$(SolutionDir)Framework\libVideoInput\include;$(SolutionDir)Framework\libPlatformSpecifics/include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -82,20 +82,27 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="src\CameraProxy.cpp" />
     <ClCompile Include="src\main.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="include\CameraProxy.h" />
     <ClInclude Include="include\myconfigmanager.h" />
     <ClInclude Include="include\TimeMeasurementCodeDefines.h" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Framework\libCameraAbstraction\libCameraAbstraction.vcxproj">
+      <Project>{a3e85482-db13-4d6a-8dec-c07b6f29aac7}</Project>
+    </ProjectReference>
     <ProjectReference Include="..\Framework\libCommunication\libCommunication.vcxproj">
       <Project>{9e89c9bd-92d5-46a6-b7ab-b59a0ddfb391}</Project>
     </ProjectReference>
     <ProjectReference Include="..\Framework\libLogConfigTime\libLogConfigTime.vcxproj">
       <Project>{8927a516-de0f-4550-ae3f-14876252f716}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\Framework\libPlatformSpecifics\libPlatformSpecifics.vcxproj">
+      <Project>{5c2abdc3-6e47-40c0-80a1-a020f188f756}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\Framework\libVideoInput\libVideoInput.vcxproj">
+      <Project>{f0b55c60-9485-43e1-87e2-ede6a73cceef}</Project>
     </ProjectReference>
     <ProjectReference Include="..\ImageProcessing\libTwoColorCircleMarker\libTwoColorCircleMarker.vcxproj">
       <Project>{e9e73514-1e7d-4ea4-9fe7-fe83f887d38c}</Project>

@@ -144,7 +144,7 @@ JsonMessage *MyPhoneServer::SendPositionCallback(SendPositionMessage *msg)
 
 	// Detect marker
 	detectionCollector->pointVect.clear();
-	tracker->processFrame(*(camProxy->lastImageTaken),camProxy->camera->cameraID,imageNumber);
+	tracker->processFrame(*(camProxy->lastImageTaken),camProxy->camera->cameraID,(float)imageNumber);
 /*	if (camProxy->camera->getIsTSet())
 	{
 		tracker->processFrame(*(camProxy->lastImageTaken),camProxy->camera->cameraID,imageNumber);

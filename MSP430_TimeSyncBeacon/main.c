@@ -41,8 +41,8 @@ static void calc(uint32_t time){
 	static int run_pre = -1;
 	int run = (low<14) ? (low+1) : (low+2);
 	uint32_t gray = binaryToGray(high);
-	uint16_t gray_low = gray & 0x0000ffff;
-	uint16_t gray_high = gray & 0xffff0000;
+	uint16_t gray_low = (gray >> 0) & 0x0000ffff;
+	uint16_t gray_high = (gray >> 16) & 0x0000ffff;
 
 	tlc5916_write_led(run_pre, 0);
 	tlc5916_write_led(run, 1);
@@ -89,7 +89,7 @@ static int boot_up(uint32_t time){
 		tlc5916_write_leds(&pattern, 32, 16);
 		tlc5916_write_leds(&pattern, 48, 16);
 
-		if(time == period*(count-1))
+		if(time >= period*(count-1))
 			return 1;
 
 	}
@@ -116,7 +116,7 @@ static int boot_down(uint32_t time){
 		tlc5916_write_leds(&pattern, 48, 16);
 		pattern &= 0x7fff;
 
-		if(time == period*(count-1))
+		if(time >= period*(count-1))
 			return 1;
 
 	}

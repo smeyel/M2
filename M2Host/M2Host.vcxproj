@@ -110,6 +110,9 @@
     <ProjectReference Include="..\Framework\libVideoInput\libVideoInput.vcxproj">
       <Project>{f0b55c60-9485-43e1-87e2-ede6a73cceef}</Project>
     </ProjectReference>
+    <ProjectReference Include="..\ImageProcessing\libTimeSyncBeacon\libTimeSyncBeacon.vcxproj">
+      <Project>{757c1c16-4b1f-465f-9546-f98ed48a2dff}</Project>
+    </ProjectReference>
     <ProjectReference Include="..\ImageProcessing\libTwoColorCircleMarker\libTwoColorCircleMarker.vcxproj">
       <Project>{e9e73514-1e7d-4ea4-9fe7-fe83f887d38c}</Project>
     </ProjectReference>

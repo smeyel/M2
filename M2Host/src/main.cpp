@@ -59,12 +59,12 @@ void StartTimeSyncTest(CameraProxy *camProxy, int captureNum, long long startBea
 
 	TimeSyncBeacon beacon;
 	Mat beaconInternalVerboseImage;
-	char filename[256];
 
 	// Take initial picture as soon as possible
 	//mlog << "M2_TimeSyncTest measurement result" << endl;
-	mlog << "desiredBeaconTimeUs;lastBeaconTimeUs;desiredTimeStampUs;lastTimeStampUs" << endl;
-	cout << "desiredBeaconTimeUs - lastBeaconTimeUs" << endl;
+	mlog << "frameIdx;desiredBTimeUs;lastBTimeUs;desiredTStampUs;lastTStampUs;"
+		 << "relDesiredBTimeMs;relLastBTimeMs;relDesiredTStampMs;relLastTStampMs;"
+		 << "diff_relLBT_relLTS" <<endl;
 	long long desiredBeaconTimeUs = startBeaconTimeUs + initialPlusDelayUs;
 
 	int frameIdx = 0;
@@ -84,9 +84,14 @@ void StartTimeSyncTest(CameraProxy *camProxy, int captureNum, long long startBea
 		// TODO: insert code for reading the TimeSyncBeacon here!
 		long long lastBeaconTimeUs = beacon.GetTimeUsFromImage(*camProxy->lastImageTaken);
 
-		mlog << (desiredBeaconTimeUs-startBeaconTimeUs) << ";" << (lastBeaconTimeUs-startBeaconTimeUs) << ";"
-			<< (desiredTimeStampUs-startTimeStampUs) << ";" << (lastTimeStampUs-startTimeStampUs) << endl;
-		cout << "desired-last BeaconTime: " << (desiredBeaconTimeUs - lastBeaconTimeUs) << " us" << endl;
+		mlog
+			<< frameIdx << ";"
+			<< desiredBeaconTimeUs << ";" << lastBeaconTimeUs << ";"
+			<< desiredTimeStampUs << ";" << lastTimeStampUs << ";"
+			<< ((desiredBeaconTimeUs-startBeaconTimeUs)/1000) << ";" << ((lastBeaconTimeUs-startBeaconTimeUs)/1000) << ";"
+			<< ((desiredTimeStampUs-startTimeStampUs)/1000) << ";" << ((lastTimeStampUs-startTimeStampUs)/1000) << ";"
+			<< (((lastBeaconTimeUs-startBeaconTimeUs)/1000)-((lastTimeStampUs-startTimeStampUs)/1000)) << endl;
+		cout << "delta: " << (((lastBeaconTimeUs-startBeaconTimeUs)/1000)-((lastTimeStampUs-startTimeStampUs)/1000)) << " ms" << endl;
 
 		char filename[256];
 		sprintf(filename,"timesyncimage%d.jpg",frameIdx);

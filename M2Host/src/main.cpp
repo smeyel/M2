@@ -26,23 +26,12 @@
 
 #include "TimeSyncBeacon.h"
 
-
-// SMEyeL image processing and 3D world headers
-//#include "chessboarddetector.h"
-//#include "camera.h"
-
-// Marker detection
-//#include "DetectionResultExporterBase.h"
-//#include "MarkerBase.h"
-//#include "MarkerCC2Tracker.h"
-
 using namespace cv;
 using namespace std;
 
 MyConfigManager configManager;
 int frameIdx = 0;
 char *configfilename = "m2_default.ini";	// 1st command line parameter overrides it (if exists)
-
 
 /** TimeSyncBeacon time synchronization test
 	- Asks the camera to take a picture, retrieves image and timestamp
@@ -60,8 +49,10 @@ char *configfilename = "m2_default.ini";	// 1st command line parameter overrides
 		- its standard deviation
 		- dependency from the camera settings (various exposure times)
 */
-void M2_TimeSyncTest(CameraProxy *camProxy, int captureNum, bool isInteractive=false)
+void StartTimeSyncTest(CameraProxy *camProxy, int captureNum, long long startBeaconTimeUs, long long startTimeStampUs, long long initialPlusDelayUs)
 {
+	Logger::getInstance()->Log(Logger::LOGLEVEL_INFO,"M2Host","Silent measurement, loglevel set to WARNING");
+	Logger::getInstance()->SetLogLevel(Logger::LOGLEVEL_WARNING);
 	// Open measurement results file
 	std::ofstream mlog;
 	mlog.open(configManager.remoteMLogFilename.c_str(),std::ofstream::binary);
@@ -71,96 +62,115 @@ void M2_TimeSyncTest(CameraProxy *camProxy, int captureNum, bool isInteractive=f
 	char filename[256];
 
 	// Take initial picture as soon as possible
-	camProxy->CaptureImage(0);
-	Mat *image = camProxy->lastImageTaken;
-	long long startTimeStampUs = camProxy->lastImageTakenTimestamp;
-	long long startBeaconTimeMs = 0;//readTimeStampBeaconMsecFromImage(camProxy->lastImageTaken);	// Returns in msec
+	//mlog << "M2_TimeSyncTest measurement result" << endl;
+	mlog << "desiredBeaconTimeUs;lastBeaconTimeUs;desiredTimeStampUs;lastTimeStampUs" << endl;
+	cout << "desiredBeaconTimeUs - lastBeaconTimeUs" << endl;
+	long long desiredBeaconTimeUs = startBeaconTimeUs + initialPlusDelayUs;
 
-	mlog << "M2_TimeSyncTest measurement result" << endl
-		 << "desiredBeaconTimeMs;lastBeaconTimeMs;desiredTimeStampUs;lastTimeStampUs" << endl;
-	cout << "desiredBeaconTimeMs - lastBeaconTimeMs" << endl;
-	long long lastBeaconTimeMs = startBeaconTimeMs;	// Beacon time of the last image
-
-	if (isInteractive)
-	{
-		cout << "Interactive mode desiredTimeStampUs override enabled!" << endl;
-	}
-
+	int frameIdx = 0;
 	bool finished = false;
 	while (!finished)
 	{
 		// Choose DesiredBeaconTime (+2 seconds)
-		long long desiredBeaconTimeMs = lastBeaconTimeMs + 2000;
+		desiredBeaconTimeUs += 2000000;	// Not relative to lastBeaconTimeUs as reading may be wrong...
 		// Calculate DesiredTimeStamp
-		long long desiredTimeStampUs = ((desiredBeaconTimeMs - startBeaconTimeMs) * 1000) + startTimeStampUs;
+		long long desiredTimeStampUs = (desiredBeaconTimeUs - startBeaconTimeUs) + startTimeStampUs;
+// --- TODO: desiredTimeStampUs: is the value reasonable? If not, override to 0!
 		// Take picture at desiredTimeStamp
-		if (isInteractive)
-		{
-			desiredTimeStampUs = 0;
-		}
 		camProxy->CaptureImage(desiredTimeStampUs);
 		// Save image timestamp
 		long long lastTimeStampUs = camProxy->lastImageTakenTimestamp;
 		// Read image BeaconTime
 		// TODO: insert code for reading the TimeSyncBeacon here!
-		lastBeaconTimeMs = desiredBeaconTimeMs;//readTimeStampBeaconMsecFromImage(camProxy->lastImageTaken);
+		long long lastBeaconTimeUs = beacon.GetTimeUsFromImage(*camProxy->lastImageTaken);
 
-		if (!isInteractive)
-		{
-			mlog << desiredBeaconTimeMs << ";" << lastBeaconTimeMs << ";" << desiredTimeStampUs << ";" << lastTimeStampUs << endl;
-			cout << "desired-last BeaconTime: " << (desiredBeaconTimeMs - lastBeaconTimeMs) << " ms" << endl;
-		}
+		mlog << (desiredBeaconTimeUs-startBeaconTimeUs) << ";" << (lastBeaconTimeUs-startBeaconTimeUs) << ";"
+			<< (desiredTimeStampUs-startTimeStampUs) << ";" << (lastTimeStampUs-startTimeStampUs) << endl;
+		cout << "desired-last BeaconTime: " << (desiredBeaconTimeUs - lastBeaconTimeUs) << " us" << endl;
 
-		if (isInteractive)
-		{
-			imshow( "Cam image", *camProxy->lastImageTaken);  
-			char ch = waitKey(25);
-			switch(ch)
-			{
-			case 'b':	// read beacon
-				lastBeaconTimeMs = beacon.GetTimeUsFromImage(*camProxy->lastImageTaken);
-				beacon.tsbr->GenerateImage();
-				merge(beacon.tsbr->channel, 3, beaconInternalVerboseImage);
-				beaconInternalVerboseImage += *camProxy->lastImageTaken;
-				cout << "lastBeaconTimeMs: " << lastBeaconTimeMs << endl;
-				imshow( "Reader output", beaconInternalVerboseImage(beacon.tsbr->getBoundingRect()) );  
-				sprintf(filename,"beaconimage%d.jpg",frameIdx);
+		char filename[256];
+		sprintf(filename,"timesyncimage%d.jpg",frameIdx);
+		imwrite(filename, *camProxy->lastImageTaken );
 
-				imwrite(filename, *camProxy->lastImageTaken );
-				break;
-			case '1':
-				camProxy->SetNormalizedExposure(1);
-				camProxy->SetNormalizedGain(1);
-				cout << "Exposure set" << endl;
-				break;
-			case '2':
-				camProxy->SetNormalizedExposure(5);
-				camProxy->SetNormalizedGain(1);
-				cout << "Exposure set" << endl;
-				break;
-			case '3':
-				camProxy->SetNormalizedExposure(10);
-				camProxy->SetNormalizedGain(1);
-				cout << "Exposure set" << endl;
-				break;
-			case 27:
-				finished=true;
-				break;
-			}
-		}
-		else
+		if (frameIdx >= captureNum)
 		{
-			if (frameIdx >= captureNum)
-			{
-				finished=true;
-			}
+			finished=true;
 		}
 		frameIdx++;
 	}
 
 	mlog.flush();
 	mlog.close();
+	Logger::getInstance()->SetLogLevel(Logger::LOGLEVEL_INFO);
 }
+
+void M2_TimeSyncTest_interactiveDebug(CameraProxy *camProxy, int captureNum)
+{
+	TimeSyncBeacon beacon;
+	Mat beaconInternalVerboseImage;
+	char filename[256];
+
+	long long lastBeaconTimeUs = 0;
+	long long lastTimeStampUs = 0;
+
+	// Take initial picture as soon as possible
+	camProxy->CaptureImage(0);
+	Mat *image = camProxy->lastImageTaken;
+
+	bool finished = false;
+	while (!finished)
+	{
+		camProxy->CaptureImage(0);
+
+		imshow( "Cam image", *camProxy->lastImageTaken);  
+		char ch = waitKey(25);
+		switch(ch)
+		{
+		case 'b':	// read beacon
+			lastBeaconTimeUs = beacon.GetTimeUsFromImage(*camProxy->lastImageTaken);
+			imshow( "Reader in", beacon.tsbr->channel[2] );  
+			beacon.tsbr->GenerateImage();
+			merge(beacon.tsbr->channel, 3, beaconInternalVerboseImage);
+			beaconInternalVerboseImage += (*camProxy->lastImageTaken)*0.5;
+			cout << "lastBeaconTimeUs: " << lastBeaconTimeUs << endl;
+			imshow( "Reader output", beaconInternalVerboseImage);  
+			//imshow( "Reader output", beaconInternalVerboseImage(beacon.tsbr->getBoundingRect()) );  
+			sprintf(filename,"beaconimage%d.jpg",frameIdx);
+			lastTimeStampUs = camProxy->lastImageTakenTimestamp;
+			imwrite(filename, *camProxy->lastImageTaken );
+			break;
+		case 's':
+			cout << "Starting TimeSync measurement (silent mode)" << endl;
+			StartTimeSyncTest(camProxy,100,lastBeaconTimeUs,lastTimeStampUs,5000000);
+			cout << "TimeSync measurement finished" << endl;
+			break;
+		case '1':
+			camProxy->SetNormalizedExposure(1);
+			camProxy->SetNormalizedGain(1);
+			camProxy->SetNormalizedWhiteBalance(30,30,30);
+			cout << "Exposure set" << endl;
+			break;
+		case '2':
+			camProxy->SetNormalizedExposure(5);
+			camProxy->SetNormalizedGain(1);
+			camProxy->SetNormalizedWhiteBalance(30,30,30);
+			cout << "Exposure set" << endl;
+			break;
+		case '3':
+			camProxy->SetNormalizedExposure(10);
+			camProxy->SetNormalizedGain(1);
+			camProxy->SetNormalizedWhiteBalance(30,30,30);
+			cout << "Exposure set" << endl;
+			break;
+		case 27:
+			finished=true;
+			break;
+		}
+		frameIdx++;
+	}
+}
+
+
 
 /** Implementation of M2 scenario
 */
@@ -191,13 +201,17 @@ int main(int argc, char *argv[])
 	Logger::getInstance()->Log(Logger::LOGLEVEL_VERBOSE,"M2Host","Local measurement log: %s\nRemote measurement log: %s\n",
 		configManager.localMLogFilename.c_str(), configManager.remoteMLogFilename.c_str());
 
+	const bool useLocalCamera=true;
+
 	// Setup time management
 	// Waiting a little to allow other processes to init...
 	// Useful if started together with CamClient which needs to start its server.
-	cout << "Waiting 3s..." << endl;
-	PlatformSpecifics::getInstance()->SleepMs(3000);
+	if (!useLocalCamera)
+	{
+		cout << "Waiting 3s..." << endl;
+		PlatformSpecifics::getInstance()->SleepMs(3000);
+	}
 
-	const bool useLocalCamera=true;
 
 	CameraProxy *camProxy = NULL;
 	CameraRemoteProxy *camRemoteProxy = NULL;
@@ -230,7 +244,8 @@ int main(int argc, char *argv[])
 	// - Original "capture 100 frames and report capture times" measurement
 	//camRemoteProxy->PerformCaptureSpeedMeasurement_A(100,configManager.MLogFilename.c_str());
 	// - Reading TimeSyncBeacon measurement
-	M2_TimeSyncTest(camProxy,10,true);
+	//M2_TimeSyncTest(camProxy,10);
+	M2_TimeSyncTest_interactiveDebug(camProxy,10);
 
 	cout << "Main task finished" << endl;
 	// --------------------------- Closing...

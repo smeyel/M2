@@ -27,3 +27,9 @@ Release/
 *.csv
 *~
 *.avi
+CamClient/CamClient
+*.o
+M2Host/M2Host
+SMEyeL_M2.*
+.cproject
+.project

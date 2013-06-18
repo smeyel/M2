@@ -10,7 +10,7 @@ using namespace std;
 class MyConfigManager
 {
 	// This method is called by init of the base class to read the configuration values.
-	virtual bool readConfiguration(char *filename, const int argc, const char **argv)
+    virtual bool readConfiguration(const char *filename, const int argc, const char **argv)
 	{
 		SimpleIniConfigReader *SIreader = new SimpleIniConfigReader(filename,argc,argv);
 		ConfigReader *reader = SIreader;
@@ -30,7 +30,7 @@ class MyConfigManager
 	}
 
 public:
-	void init(char *filename, int argc, char **argv)
+    void init(const char *filename, int argc, char **argv)
 	{
 		readConfiguration(filename,(const int)argc,(const char **)argv);
 	}

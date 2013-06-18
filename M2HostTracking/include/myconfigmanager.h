@@ -7,7 +7,7 @@ using namespace LogConfigTime;
 
 class MyConfigManager
 {
-	virtual bool readConfiguration(char *filename)
+    virtual bool readConfiguration(const char *filename)
 	{
 		SimpleIniConfigReader *SIreader = new SimpleIniConfigReader(filename);
 		ConfigReader *reader = SIreader;
@@ -25,7 +25,7 @@ class MyConfigManager
 	}
 
 public:
-	void init(char *filename)
+    void init(const char *filename)
 	{
 		readConfiguration(filename);
 	}

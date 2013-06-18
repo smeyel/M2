@@ -8,7 +8,7 @@
 #include "MeasurementLogMessage.h"
 #include "MatImageMessage.h"
 #include "JpegMessage.h"
-#include "StdoutLogger.h"
+#include "StdOutLogger.h"
 
 // Marker detection and tracking
 #include "chessboarddetector.h"

@@ -38,7 +38,7 @@ using namespace std;
 
 MyConfigManager configManager;
 int frameIdx = 0;
-char *configfilename = "m2_default.ini";	// 1st command line parameter overrides it (if exists)
+const char *configfilename = "m2_default.ini";	// 1st command line parameter overrides it (if exists)
 const char *imageWindowName = "Received JPEG";
 
 class DetectionCollector : public TwoColorCircleMarker::DetectionResultExporterBase
@@ -118,6 +118,10 @@ void M2_LocalTrackingTest(CameraRemoteProxy *camProxy)
 			putText( *(camProxy->lastImageTaken), string("TRACKING MODE"), cvPoint( camProxy->lastImageTaken->cols-200, 20 ), FONT_HERSHEY_DUPLEX, 0.5, CV_RGB(255,255,255) );
 
 			break;
+        case nop:
+            break;
+        default:
+            break;
 		}
 
 		// Showing the picture results
@@ -128,8 +132,8 @@ void M2_LocalTrackingTest(CameraRemoteProxy *camProxy)
 
 		// If the images are shown, have to wait to allow it to display...
 		// Process possible keypress
-		JsonMessage *tmpMsg = NULL;
-		TextMessage *textMsg = NULL;
+        //JsonMessage *tmpMsg = NULL;   //Norbi - unused variable
+        //TextMessage *textMsg = NULL;  //Norbi - unused variable
 		char ch = waitKey(50);
 		switch (ch)
 		{

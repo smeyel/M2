@@ -6,9 +6,12 @@ Framework:
 ImageProcessing:
 	make -C ImageProcessing/
 	
-M2Host: Tracking ImageProcessing Framework
+M2Host: Tracking ImageProcessing Framework CamClient
 	make -C M2Host/
-	
+
+M2HostTracking: Tracking ImageProcessing Framework CamClient
+	make -C M2HostTracking/
+
 Tracking:
 	make -C Tracking/
 
@@ -19,6 +22,7 @@ clean:
 	make -C Framework/ clean
 	make -C ImageProcessing/ clean
 	make -C M2Host/ clean
+	make -C M2HostTracking/ clean
 	make -C Tracking/ clean
 	make -C CamClient/ clean
 	

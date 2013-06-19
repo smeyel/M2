@@ -31,6 +31,7 @@ import android.view.SurfaceView;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
+import android.widget.FrameLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -66,11 +67,13 @@ public class MainActivity extends Activity {
 	 protected static final int TIME_ID = 0x1338;
 	 private boolean saveToSD = false;
 	 private static final String  TAG = "TMEAS";
-	 //static ServerSocket ss = null;
+	 ServerSocket ss = null;
 	 static String mClientMsg = "";
 	 static byte[] lastPhotoData;
 	 static long OnShutterEventTimestamp;
+	 static Object syncObj = new Object();
 	 
+	 CameraPreview mPreview;
 	 Camera mCamera;
 	 Thread myCommsThread = null;
 	 String current_time = null;
@@ -79,7 +82,6 @@ public class MainActivity extends Activity {
 
 	        @Override
 	        public void onPictureTaken(byte[] data, Camera camera) {
-	        	//TempTickCountStorage.OnPictureTakenEvent = TempTickCountStorage.GetTimeStamp();
 	        	CommsThread.TM.Stop(CommsThread.PostProcessJPEGMsID);
 	        	CommsThread.TM.Start(CommsThread.PostProcessPostJpegMsID);
 	        	//Option to save the picture to SD card
@@ -98,12 +100,13 @@ public class MainActivity extends Activity {
 		            }
 		            Log.v("Photographer", "Picture saved at path: " + pictureFile);
 	        	}
-	            
-	            Intent intent = new Intent(MainActivity.this, SendImageService.class);
-				//intent.putExtra("BYTE_ARRAY", data);
 	            lastPhotoData = data;
-				intent.putExtra("TIMESTAMP",OnShutterEventTimestamp);
-				startService(intent);            	            
+	            synchronized (syncObj) //notifys the Commsthread, if the picture is complete
+    	   		{
+    	        	CommsThread.isPictureComplete = true;
+    	        	syncObj.notifyAll();
+    	   		}
+				mCamera.startPreview();
 	        }
 	    };
 	    
@@ -112,7 +115,6 @@ public class MainActivity extends Activity {
 	    	@Override
 	    	public void onShutter()
 	    	{
-    			//TempTickCountStorage.OnShutterEvent = TempTickCountStorage.GetTimeStamp();
 	    		OnShutterEventTimestamp = TimeMeasurement.getTimeStamp();
 	            current_time = String.valueOf(OnShutterEventTimestamp); 
 	    		CommsThread.TM.Stop(CommsThread.TakePictureMsID);   
@@ -195,24 +197,33 @@ public class MainActivity extends Activity {
 		mCamera = Camera.open();
 
 // eredeti elõnézet
-//		mPreview = new CameraPreview(this, mCamera);
-//		preview=(FrameLayout) findViewById(R.id.cameraPreview);
-//		preview.addView(mPreview);
+		
+		mPreview = new CameraPreview(this, mCamera);
+		FrameLayout preview=(FrameLayout) findViewById(R.id.camera_preview);
+		preview.addView(mPreview);
 		
 		// az elõnézeti képet így nem látjuk
-		SurfaceView mview = new SurfaceView(getBaseContext());
+		/*SurfaceView mview = new SurfaceView(getBaseContext());
 		try {
+			Camera.Parameters parameters = mCamera.getParameters();
+			parameters.setFlashMode(Camera.Parameters.FLASH_MODE_AUTO);
+			parameters.setFocusMode(Camera.Parameters.FOCUS_MODE_AUTO);
+			parameters.setAntibanding(Camera.Parameters.ANTIBANDING_AUTO);
+
+			
+			mCamera.setParameters(parameters);
+			
 			mCamera.setPreviewDisplay(mview.getHolder());
 			mCamera.startPreview();
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			Log.e("Creating preview", "Error while creating preview " + e.toString());
 			//e.printStackTrace();
-		}
+		}*/
 		
 		//thread a socket üzenetek számára
-		myCommsThread = new Thread(new CommsThread(myUpdateHandler, mCamera, mPicture, mShutter));
-		myCommsThread.start();	
+			myCommsThread = new Thread(new CommsThread(myUpdateHandler, mCamera, mPicture, mShutter, ss));
+			myCommsThread.start();	
 	}
 	
     @Override
@@ -220,8 +231,6 @@ public class MainActivity extends Activity {
     {
         super.onResume();
         OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION_2_4_3, this, mLoaderCallback);
-//        timeMeasurement = new TimeMeasurement();
-//        timeMeasurement.loadOpenCVAsync(this);
     }
 	
 	@Override
@@ -232,13 +241,6 @@ public class MainActivity extends Activity {
 			}
 		super.onStop();
 		myCommsThread.interrupt(); //a socketkapcsolatra várakozó thread-et hogyan érdemes kezelni?
-		
-		/*try {
-			ss.close();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}*/
 	}
 	
 	private String getLocalIpAddress() {

@@ -21,6 +21,14 @@ class MyConfigManager
 		MLogFilename = reader->getStringValue("main","MLogFilename");
 		showImage = reader->getBoolValue("main","showImage");
 		camIntrinsicParamsFileName = reader->getStringValue("main","camIntrinsicParamsFileName");
+
+		saveCapturedImages = reader->getBoolValue("main","saveCapturedImages");
+		saveProcessedImages = reader->getBoolValue("main","saveProcessedImages");
+		saveImageAtB = reader->getBoolValue("main","saveImageAtB");
+
+		saveTsbrArray = reader->getBoolValue("main","saveTsbrArray");
+		tsbrVerboseFilename = reader->getStringValue("main","tsbrVerboseFilename");
+
 		return true;
 	}
 
@@ -40,6 +48,15 @@ public:
 	std::string remoteMLogFilename;
 	std::string MLogFilename;
 	std::string camIntrinsicParamsFileName;
+	
+	// saving captured images and intermediate data
+	bool saveCapturedImages;	// During measurement
+	bool saveProcessedImages;	// During measurement
+	bool saveImageAtB;	// When pressing B
+
+	bool saveTsbrArray;	// Save beacon.tsbd->DavidArray
+	std::string tsbrVerboseFilename;
+
 };
 
 #endif

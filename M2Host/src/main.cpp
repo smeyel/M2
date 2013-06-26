@@ -56,6 +56,13 @@ void StartTimeSyncTest(CameraProxy *camProxy, int captureNum, long long startBea
 	// Open measurement results file
 	std::ofstream mlog;
 	mlog.open(configManager.remoteMLogFilename.c_str(),std::ofstream::binary);
+	// Open measurement results file
+	std::ofstream tsbrVerbose;
+	if (configManager.saveTsbrArray)
+	{
+		tsbrVerbose.open(configManager.tsbrVerboseFilename.c_str(),std::ofstream::binary);
+		tsbrVerbose << "frameIdx; tsbrArray values" << endl;
+	}
 
 	TimeSyncBeacon beacon;
 	Mat beaconInternalVerboseImage;
@@ -91,11 +98,37 @@ void StartTimeSyncTest(CameraProxy *camProxy, int captureNum, long long startBea
 			<< ((desiredBeaconTimeUs-startBeaconTimeUs)/1000) << ";" << ((lastBeaconTimeUs-startBeaconTimeUs)/1000) << ";"
 			<< ((desiredTimeStampUs-startTimeStampUs)/1000) << ";" << ((lastTimeStampUs-startTimeStampUs)/1000) << ";"
 			<< (((lastBeaconTimeUs-startBeaconTimeUs)/1000)-((lastTimeStampUs-startTimeStampUs)/1000)) << endl;
-		cout << "delta: " << (((lastBeaconTimeUs-startBeaconTimeUs)/1000)-((lastTimeStampUs-startTimeStampUs)/1000)) << " ms" << endl;
+		cout << frameIdx << ". delta: " << (((lastBeaconTimeUs-startBeaconTimeUs)/1000)-((lastTimeStampUs-startTimeStampUs)/1000)) << " ms" << endl;
 
 		char filename[256];
-		sprintf(filename,"timesyncimage%d.jpg",frameIdx);
-		imwrite(filename, *camProxy->lastImageTaken );
+		if (configManager.saveCapturedImages)
+		{
+			sprintf(filename,"capturedimage%d.jpg",frameIdx);
+			imwrite(filename, *camProxy->lastImageTaken );
+		}
+
+		if (configManager.saveProcessedImages)
+		{
+			sprintf(filename,"processedimage%d.jpg",frameIdx);
+			beacon.tsbr->GenerateImage();
+			merge(beacon.tsbr->channel, 3, beaconInternalVerboseImage);
+			beaconInternalVerboseImage += (*camProxy->lastImageTaken)*0.5;
+			imwrite(filename, beaconInternalVerboseImage );
+		}
+
+		if (configManager.saveTsbrArray)
+		{
+			tsbrVerbose << frameIdx << "; ";
+			for(int i=0; i<64; i++)
+			{
+				tsbrVerbose << (int)(beacon.tsbr->davidArray[i]) << ";";
+				if (i % 16 == 15)
+				{
+					tsbrVerbose << " ";
+				}
+			}
+			tsbrVerbose << endl;
+		}
 
 		if (frameIdx >= captureNum)
 		{
@@ -106,6 +139,11 @@ void StartTimeSyncTest(CameraProxy *camProxy, int captureNum, long long startBea
 
 	mlog.flush();
 	mlog.close();
+	if (configManager.saveTsbrArray)
+	{
+		tsbrVerbose.flush();
+		tsbrVerbose.close();
+	}
 	Logger::getInstance()->SetLogLevel(Logger::LOGLEVEL_INFO);
 }
 
@@ -140,9 +178,12 @@ void M2_TimeSyncTest_interactiveDebug(CameraProxy *camProxy, int captureNum)
 			cout << "lastBeaconTimeUs: " << lastBeaconTimeUs << endl;
 			imshow( "Reader output", beaconInternalVerboseImage);  
 			//imshow( "Reader output", beaconInternalVerboseImage(beacon.tsbr->getBoundingRect()) );  
-			sprintf(filename,"beaconimage%d.jpg",frameIdx);
 			lastTimeStampUs = camProxy->lastImageTakenTimestamp;
-			imwrite(filename, *camProxy->lastImageTaken );
+			if (configManager.saveImageAtB)
+			{
+				sprintf(filename,"b_image%d.jpg",frameIdx);
+				imwrite(filename, *camProxy->lastImageTaken );
+			}
 			break;
 		case 's':
 			cout << "Starting TimeSync measurement (silent mode)" << endl;

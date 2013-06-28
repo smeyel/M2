@@ -44,5 +44,8 @@
     <ClInclude Include="include\MyLocator2.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="include\FsmLearner.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

@@ -47,5 +47,8 @@
     <ClInclude Include="include\FsmLearner.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="include\MyColorCodes.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

@@ -122,6 +122,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\FsmLearner.h" />
+    <ClInclude Include="include\MyColorCodes.h" />
     <ClInclude Include="include\MyFsmColorFilter.h" />
     <ClInclude Include="include\MyLocator2.h" />
     <ClInclude Include="include\MyLutColorFilter.h" />

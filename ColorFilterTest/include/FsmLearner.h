@@ -5,24 +5,33 @@
 #include "LutColorFilter.h"
 #include "FsmBuilder.h"
 
+#define MAXNODECOUNTERNUM	5
+#define COUNTERIDX_ON		1
+#define COUNTERIDX_OFF		0
+
 namespace smeyel
 {
 	class SequenceCounterTreeNode
 	{
 		/** Array of child node pointers. */
 		SequenceCounterTreeNode **children;
+		SequenceCounterTreeNode *parent;
 		int inputValueNumber;
-		int counter;
+		int counter[MAXNODECOUNTERNUM];
 	public:
 
-		SequenceCounterTreeNode(const int inputValueNumber)
+		SequenceCounterTreeNode(const int inputValueNumber, SequenceCounterTreeNode* parentNode)
 		{
 			children = new SequenceCounterTreeNode*[inputValueNumber];
 			for(int i=0; i<inputValueNumber; i++)
 			{
 				children[i]=NULL;
 			}
-			counter=0;
+			parent=parentNode;
+			for(int i=0; i<MAXNODECOUNTERNUM; i++)
+			{
+				counter[i]=0;
+			}
 			this->inputValueNumber = inputValueNumber;
 		}
 
@@ -41,9 +50,14 @@ namespace smeyel
 		{
 			if (children[inputValue] == NULL)
 			{
-				children[inputValue] = new SequenceCounterTreeNode(inputValueNumber);
+				children[inputValue] = new SequenceCounterTreeNode(inputValueNumber,this);
 			}
 			return children[inputValue];
+		}
+
+		SequenceCounterTreeNode *getParentNode()
+		{
+			return this->parent;
 		}
 
 		/**
@@ -64,29 +78,122 @@ namespace smeyel
 			return getChildNode(*inputValues)->getNode(inputValues+1,numberOfValues-1);
 		}
 
-		void incrementCounter()
+		void incrementCounter(int counterIdx)
 		{
-			counter++;
+			OPENCV_ASSERT(counterIdx<MAXNODECOUNTERNUM,"SequenceCounterTreeNode.incrementCounter","Counter IDX > max!");
+			OPENCV_ASSERT(counterIdx>=0,"SequenceCounterTreeNode.incrementCounter","Counter IDX negative!");
+			counter[counterIdx]++;
 		}
 
-		int getCounter()
+		int getCounter(int counterIdx)
 		{
-			return counter;
+			OPENCV_ASSERT(counterIdx<MAXNODECOUNTERNUM,"SequenceCounterTreeNode.getCounter","Counter IDX > max!");
+			OPENCV_ASSERT(counterIdx>=0,"SequenceCounterTreeNode.getCounter","Counter IDX negative!");
+			return counter[counterIdx];
 		}
 
-		int getSubtreeSumCounter()
+		int getSubtreeSumCounter(int counterIdx)
 		{
-			int sum = counter;
+			OPENCV_ASSERT(counterIdx<MAXNODECOUNTERNUM,"SequenceCounterTreeNode.getSubtreeSumCounter","Counter IDX > max!");
+			OPENCV_ASSERT(counterIdx>=0,"SequenceCounterTreeNode.getSubtreeSumCounter","Counter IDX negative!");
+			int sum = counter[counterIdx];
 			for(int i=0; i<inputValueNumber; i++)
 			{
 				// Cannot use getChildNode() as that would create non-existing nodes infinite long...
 				if (children[i]!=NULL)
 				{
-					sum += children[i]->getSubtreeSumCounter();
+					sum += children[i]->getSubtreeSumCounter(counterIdx);
 				}
 			}
 			return sum;
 		}
+
+		/** Overwrites counter of current node with sum of children, except if there are no children (or sum is 0). */
+		int getAndStoreSubtreeSumCounter(int counterIdx)
+		{
+			OPENCV_ASSERT(counterIdx<MAXNODECOUNTERNUM,"SequenceCounterTreeNode.getAndStoreSubtreeSumCounter","Counter IDX > max!");
+			OPENCV_ASSERT(counterIdx>=0,"SequenceCounterTreeNode.getAndStoreSubtreeSumCounter","Counter IDX negative!");
+
+			int childrenSum=0;
+			for(int i=0; i<inputValueNumber; i++)
+			{
+				// Cannot use getChildNode() as that would create non-existing nodes infinite long...
+				if (children[i]!=NULL)
+				{
+					childrenSum += children[i]->getAndStoreSubtreeSumCounter(counterIdx);
+				}
+			}
+
+			if (childrenSum>0)
+			{
+				counter[counterIdx] = childrenSum;
+			}
+
+			return counter[counterIdx];
+		}
+
+		void writeIndent(int indent)
+		{
+			for(int i=0; i<indent; i++)
+				cout << " ";
+		}
+
+		void showRecursive(int indent, int maxCounterIdx, bool showNullChildren)
+		{
+			OPENCV_ASSERT(maxCounterIdx<MAXNODECOUNTERNUM,"SequenceCounterTreeNode.showRecursive","Max counter IDX > max!");
+			OPENCV_ASSERT(maxCounterIdx>=0,"SequenceCounterTreeNode.showRecursive","Max counter IDX negative!");
+			writeIndent(indent);
+			cout << "SequenceCounterTreeNode local counters:";
+			for(int i=0; i<=maxCounterIdx; i++)
+			{
+				cout << " #" << i << "=" << counter[i];
+			}
+			cout << endl;
+			// show children
+			for(int i=0; i<inputValueNumber; i++)
+			{
+				if (children[i])
+				{
+					writeIndent(indent);
+					cout << "Child " << i << ":" << endl;
+					children[i]->showRecursive(indent+1,maxCounterIdx,showNullChildren);
+				}
+				else
+				{
+					if (showNullChildren)
+					{
+						writeIndent(indent);
+						cout << "Child " << i << ": NULL" << endl;
+					}
+				}
+			}
+		}
+
+		void showCompactRecursive(int indent, int maxCounterIdx)
+		{
+			OPENCV_ASSERT(maxCounterIdx<MAXNODECOUNTERNUM,"SequenceCounterTreeNode.showCompactRecursive","Max counter IDX > max!");
+			OPENCV_ASSERT(maxCounterIdx>=0,"SequenceCounterTreeNode.showCompactRecursive","Max counter IDX negative!");
+			for(int i=0; i<=maxCounterIdx; i++)
+			{
+				cout << counter[i];
+				if (i<maxCounterIdx)
+				{
+					cout << "/";
+				}
+			}
+			cout << endl;
+			// show children
+			for(int i=0; i<inputValueNumber; i++)
+			{
+				if (children[i])
+				{
+					writeIndent(indent);
+					cout << i << ": ";
+					children[i]->showCompactRecursive(indent+1,maxCounterIdx);
+				}
+			}
+		}
+
 	};
 
 	/** Used to calculate a transition probability statistic from a sequence of values. */
@@ -101,10 +208,12 @@ namespace smeyel
 		/** The length of history taken into account (order of Markov Chain) */
 		unsigned int markovChainOrder;
 
-		/** Root node of "on" counter tree */
-		SequenceCounterTreeNode *counterTreeNodeOn;
-		/** Root node of "off" counter tree */
-		SequenceCounterTreeNode *counterTreeNodeOff;
+		/** Used to decide whether initial values are still in the lastValues array. */
+		unsigned int valueNumberSinceSequenceStart;
+
+	public: // for DEBUG
+		/** Root node of counter tree */
+		SequenceCounterTreeNode *counterTreeRoot;
 
 	public:
 		/**
@@ -115,8 +224,7 @@ namespace smeyel
 		*/
 		TransitionStat(const unsigned int inputValueNumber, const unsigned int markovChainOrder, const unsigned int initialValue)
 		{
-			counterTreeNodeOn = new SequenceCounterTreeNode(inputValueNumber);
-			counterTreeNodeOff = new SequenceCounterTreeNode(inputValueNumber);
+			counterTreeRoot = new SequenceCounterTreeNode(inputValueNumber,NULL);
 			lastValues = new unsigned int[markovChainOrder];
 			this->inputValueNumber = inputValueNumber;
 			this->markovChainOrder = markovChainOrder;
@@ -126,18 +234,17 @@ namespace smeyel
 
 		~TransitionStat()
 		{
-			delete counterTreeNodeOn;
-			delete counterTreeNodeOff;
+			delete counterTreeRoot;
 			delete lastValues;
-			counterTreeNodeOn = NULL;
-			counterTreeNodeOff = NULL;
+			counterTreeRoot = NULL;
 			lastValues = NULL;
 		}
 
 		void startNewSequence()
 		{
-			for(int i=0; i<markovChainOrder; i++)
+			for(unsigned int i=0; i<markovChainOrder; i++)
 				lastValues[i]=initialValue;
+			valueNumberSinceSequenceStart=0;
 		}
 
 		/**	Adds a new value to the sequence.
@@ -145,25 +252,24 @@ namespace smeyel
 			@param	inputValue	The value of the next element of the sequence the statistic is based on.
 			@param	isTargetArea	Shows whether the current element is inside a target area or not.
 		*/
-		void addValue(const int inputValue, const bool isTargetArea)
+		void addValue(const unsigned int inputValue, const bool isTargetArea)
 		{
+			OPENCV_ASSERT(inputValue<inputValueNumber,"TransitionStat.addValue","value > max!");
+			valueNumberSinceSequenceStart++;
 			// Update history (lastValues)
-			for(int i=0; i<markovChainOrder-1; i++)
+			for(unsigned int i=0; i<markovChainOrder-1; i++)
 				lastValues[i]=lastValues[i+1];
 			lastValues[markovChainOrder-1] = inputValue;
 
-			SequenceCounterTreeNode *node = NULL;
-			if (isTargetArea)
+			// Increment the counter only if initial values are already shifted out of the lastValues array.
+			if (valueNumberSinceSequenceStart>=markovChainOrder)
 			{
-				node = counterTreeNodeOn->getNode(lastValues,markovChainOrder);
-			}
-			else
-			{
-				node = counterTreeNodeOff->getNode(lastValues,markovChainOrder);
-			}
+				SequenceCounterTreeNode *node = NULL;
+				node = counterTreeRoot->getNode(lastValues,markovChainOrder);
 
-			// Increment respective counter
-			node->incrementCounter();
+				// Increment respective counter
+				node->incrementCounter(isTargetArea ? COUNTERIDX_ON : COUNTERIDX_OFF);
+			}
 		}
 	};
 

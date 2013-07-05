@@ -1,4 +1,5 @@
 #include <iostream>	// for standard I/O
+#include <fstream>
 #include <string>   // for strings
 
 #include <opencv2/core/core.hpp>        // Basic OpenCV structures (cv::Mat)
@@ -99,7 +100,7 @@ int test_FSM()
 	return 0;
 }
 
-void feedImageIntoTransitionStat(TransitionStat *stat, Mat &image)
+void feedImageIntoTransitionStat(TransitionStat *stat, Mat &image, bool isOn)
 {
 	// Assert for only 8UC1 output images
 	OPENCV_ASSERT(image.type() == CV_8UC1,"feedImageIntoTransitionStat","Image type is not CV_8UC1");
@@ -114,7 +115,7 @@ void feedImageIntoTransitionStat(TransitionStat *stat, Mat &image)
 		for (int col=0; col<image.cols; col++)
 		{
 			unsigned char value = *ptr++;
-			stat->addValue(value,false);	// WRN: no target area detection yet!!!
+			stat->addValue(value,isOn);
 		}	// end for col
 	}	// end for row
 }
@@ -143,22 +144,32 @@ void test_mkStatFromImage()
 
 	TransitionStat *stat = new TransitionStat(7,3,COLORCODE_NONE);
 
-	while(true) //Show the image captured in the window and repeat
+	int filenameCounter=0;
+	bool running=true;
+	while(running) //Show the image captured in the window and repeat
 	{
 		camProxy0->CaptureImage(0,&src);
 
 		lutColorFilter->Filter(&src,&lut,NULL);
 		lutColorFilter->InverseLut(lut,visLut);
 
-		feedImageIntoTransitionStat(stat,lut);
+		feedImageIntoTransitionStat(stat,lut,false);
 
 		imshow("SRC",src);
 		imshow("LUT",visLut);
 		//imshow("FSM",visFsm);
 
 		char ch = waitKey(25);
-		if (ch==27)
+		switch(ch)
 		{
+		case 27:
+			running = false;
+			break;
+		case 's':	// Save current frame
+			char filename[200];
+			sprintf(filename,"frame%d.jpg",filenameCounter);
+			imwrite(filename,src);
+			filenameCounter++;
 			break;
 		}
 	}
@@ -193,9 +204,118 @@ void test_FsmLearner()
 	stat->counterTreeRoot->showRecursive(0,0,false);
 }
 
+void test_frameSaver()
+{
+	Logger *logger = new StdoutLogger();
+	logger->SetLogLevel(Logger::LOGLEVEL_WARNING);
+
+	CameraLocalProxy *camProxy0 = new CameraLocalProxy(VIDEOINPUTTYPE_PS3EYE,0);
+	camProxy0->getVideoInput()->SetNormalizedExposure(-1);
+	camProxy0->getVideoInput()->SetNormalizedGain(-1);
+	camProxy0->getVideoInput()->SetNormalizedWhiteBalance(-1,-1,-1);
+
+	namedWindow("SRC", CV_WINDOW_AUTOSIZE);
+
+	Mat src(480,640,CV_8UC3);
+
+	int filenameCounter=0;
+	bool running=true;
+	while(running) //Show the image captured in the window and repeat
+	{
+		camProxy0->CaptureImage(0,&src);
+
+		imshow("SRC",src);
+
+		char ch = waitKey(25);
+		switch(ch)
+		{
+		case 27:
+			running = false;
+			break;
+		case 's':	// Save current frame
+			char filename[200];
+			sprintf(filename,"frame%d.jpg",filenameCounter);
+			imwrite(filename,src);
+			filenameCounter++;
+			break;
+		}
+	}
+}
+
+void processImages(istream *filenameListFile, bool isOn, LutColorFilter *filter, TransitionStat *stat)
+{
+	Mat src(480,640,CV_8UC3);
+
+	char filename[256];
+	while (filenameListFile->getline(filename,256)) //Show the image captured in the window and repeat
+	{
+		cout << "Processing file: " << filename << endl;
+		VideoInput *input = VideoInputFactory::CreateVideoInput(VIDEOINPUTTYPE_GENERIC);
+		input->init(filename);
+		input->captureFrame(src);
+
+		Mat lut(src.rows,src.cols,CV_8UC1);
+		Mat visLut(src.rows,src.cols,CV_8UC3);
+
+		filter->Filter(&src,&lut,NULL);
+		filter->InverseLut(lut,visLut);
+
+		feedImageIntoTransitionStat(stat,lut,isOn);
+
+/*		imshow("SRC",src);
+		imshow("LUT",visLut);*/
+
+/*		cout << "press a key" << endl;
+		waitKey(0);*/
+	}
+}
+
+void test_mkStatFromImageList(const char *offImageFilenameList, const char *onImageFilenameList)
+{
+	Logger *logger = new StdoutLogger();
+	logger->SetLogLevel(Logger::LOGLEVEL_WARNING);
+
+	namedWindow("SRC", CV_WINDOW_AUTOSIZE);
+	namedWindow("LUT", CV_WINDOW_AUTOSIZE);
+
+	MyLutColorFilter *lutColorFilter = new MyLutColorFilter();
+
+	TransitionStat *stat = new TransitionStat(7,3,COLORCODE_NONE);
+
+	std::filebuf fileBuff;
+	if (fileBuff.open(offImageFilenameList,std::ios::in))
+	{
+		std::istream istrm(&fileBuff);
+		processImages(&istrm,false,lutColorFilter,stat);
+		fileBuff.close();
+	}
+	if (fileBuff.open(onImageFilenameList,std::ios::in))
+	{
+		std::istream istrm(&fileBuff);
+		processImages(&istrm,true,lutColorFilter,stat);
+		fileBuff.close();
+	}
+
+	stat->counterTreeRoot->getAndStoreSubtreeSumCounter(COUNTERIDX_OFF);
+	stat->counterTreeRoot->getAndStoreSubtreeSumCounter(COUNTERIDX_ON);
+
+	float offSum = stat->counterTreeRoot->getCounter(COUNTERIDX_OFF);
+	float onSum = stat->counterTreeRoot->getCounter(COUNTERIDX_ON);
+
+	stat->counterTreeRoot->divAllCounters(COUNTERIDX_OFF, offSum);
+	stat->counterTreeRoot->divAllCounters(COUNTERIDX_ON, onSum);
+
+	stat->counterTreeRoot->showCompactRecursive(0,1);
+
+	char ch = waitKey(-1);
+}
+
+
 int main(int argc, char *argv[], char *window_name)
 {
 	//test_FSM();
 	//test_FsmLearner();
-	test_mkStatFromImage();
+	//test_mkStatFromImage();
+	//test_frameSaver();
+	test_mkStatFromImageList("off_list.txt","on_list.txt");
 }

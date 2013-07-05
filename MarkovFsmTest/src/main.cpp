@@ -20,6 +20,57 @@ using namespace smeyel;
 using namespace LogConfigTime;
 
 
+unsigned char lastValue = -1;
+bool lastIsTargetArea = false;
+int runLength = 0;
+void addRunLengthQuantizedValue(TransitionStat *stat, unsigned char value, bool isTargetArea)
+{
+	if (value==lastValue)
+	{
+		runLength++;
+		lastIsTargetArea = isTargetArea;
+	}
+	else
+	{
+		int quantizedRunLength = 0;
+		if (runLength>=5)	quantizedRunLength = 1;
+		if (runLength>=10)	quantizedRunLength = 2;
+		if (runLength>=20)	quantizedRunLength = 3;
+		for (int i=0; i<quantizedRunLength; i++)
+			stat->addValue(lastValue,lastIsTargetArea);
+		lastValue = value;
+		runLength = 1;
+		lastIsTargetArea = isTargetArea;
+	}
+}
+
+unsigned char lastScore = 0;
+unsigned char getScoreForRunLengthQuantizedValue(TransitionStat *stat, unsigned char value)
+{
+	if (value==lastValue)
+	{
+		runLength++;
+	}
+	else
+	{
+		int quantizedRunLength = 0;
+		if (runLength>=5)	quantizedRunLength = 1;
+		if (runLength>=10)	quantizedRunLength = 2;
+		if (runLength>=20)	quantizedRunLength = 3;
+		for (int i=0; i<quantizedRunLength-1; i++)	// Fetch n-1 values...
+			stat->getScoreForValue(value);
+		unsigned char score = 0;	// Default for initial cases...
+		if (quantizedRunLength-1>0)
+		{
+			score = stat->getScoreForValue(value);
+		}
+		lastScore = score;
+		lastValue = value;
+		runLength = 1;
+	}
+	return lastScore;
+}
+
 void feedImageIntoTransitionStat(TransitionStat *stat, Mat &image, bool isOn)
 {
 	// Assert for only 8UC1 output images
@@ -35,7 +86,9 @@ void feedImageIntoTransitionStat(TransitionStat *stat, Mat &image, bool isOn)
 		for (int col=0; col<image.cols; col++)
 		{
 			unsigned char value = *ptr++;
-			stat->addValue(value,isOn);
+
+			//stat->addValue(value,isOn);
+			addRunLengthQuantizedValue(stat,value,isOn);
 		}	// end for col
 	}	// end for row
 }
@@ -59,7 +112,9 @@ void getScoreMaskForImage(TransitionStat *stat, Mat &src, Mat &dst)
 		for (int col=0; col<src.cols; col++)
 		{
 			unsigned char value = *srcPtr++;
-			*dstPtr = stat->getScoreForValue(value);
+
+			//*dstPtr = stat->getScoreForValue(value);
+			*dstPtr = getScoreForRunLengthQuantizedValue(stat,value);
 			dstPtr++;
 		}	// end for col
 	}	// end for row
@@ -127,15 +182,21 @@ void processImages(istream *filenameListFile, bool isOn, LutColorFilter *filter,
 }
 
 // Type of callback for promising nodes
-typedef void (*notifycallbackPtr)(SequenceCounterTreeNode *node, float rate);
+typedef void (*notifycallbackPtr)(SequenceCounterTreeNode *node, float precision);
 
-void callback(SequenceCounterTreeNode *node, float rate)
+bool callbackVerbose=true;
+void callback(SequenceCounterTreeNode *node, float precision)
 {
-	cout << "----- Promising node found: " << endl;
+	if(callbackVerbose)
+		cout << "----- Promising node found: " << endl;
 	// set score of node
-	node->auxScore = (unsigned char)((rate-0.8F)/0.2F*255.0F);
+	node->auxScore = (unsigned char)((precision-0.9F)*2550.0F);
+	
+	if(callbackVerbose)
+		cout << "Precision, Score: " << precision << ", " << (int)node->auxScore << endl;
 
-	cout << "Input sequence (reverse order!!!):" << endl;
+	if(callbackVerbose)
+		cout << "Input sequence (reverse order!!!):" << endl;
 	SequenceCounterTreeNode *current = node;
 	SequenceCounterTreeNode *parent = node->getParentNode();
 	while(parent)
@@ -144,21 +205,28 @@ void callback(SequenceCounterTreeNode *node, float rate)
 		current = parent;
 		parent = current->getParentNode();
 	}
-	cout << "(root)" << endl;
-
-	cout << "Subtree:" << endl;
-	node->showCompactRecursive(0,1);
+	if(callbackVerbose)
+	{
+		cout << "(root)" << endl;
+		cout << "Subtree:" << endl;
+		node->showCompactRecursive(0,1);
+	}
 }
 
 
 void checkNode(SequenceCounterTreeNode *node, float sumOn, float sumOff, int maxInputValue, notifycallbackPtr callback)
 {
-	float onRate = node->getCounter(COUNTERIDX_ON) / sumOn;
-	float offRate = node->getCounter(COUNTERIDX_OFF) / sumOff;
-	float rate = onRate / (onRate+offRate);
-	if (rate > 0.95)
+	int onNum = node->getCounter(COUNTERIDX_ON);
+	int offNum = node->getCounter(COUNTERIDX_OFF);
+	int sumNum = onNum+offNum;
+	float onRate = onNum / sumOn;
+	float offRate = offNum / sumOff;
+	float precision = onRate / (onRate+offRate);
+	if (precision > 0.8 && sumNum>10 )
+	//if (precision > 0.95 && sumNum>5 )
+	//if (precision > 0.95 && sumNum>200 )
 	{
-		(*callback)(node, rate);
+		(*callback)(node, precision);
 	}
 	// Continue on children
 	for (int i=0; i<=maxInputValue; i++)
@@ -210,9 +278,6 @@ void test_mkStatFromImageList(const char *offImageFilenameList, const char *onIm
 	stat->counterTreeRoot->getAndStoreSubtreeSumCounter(COUNTERIDX_OFF);
 	stat->counterTreeRoot->getAndStoreSubtreeSumCounter(COUNTERIDX_ON);
 
-	float offSum = (float)stat->counterTreeRoot->getCounter(COUNTERIDX_OFF);
-	float onSum = (float)stat->counterTreeRoot->getCounter(COUNTERIDX_ON);
-
 	stat->counterTreeRoot->showCompactRecursive(0,1);
 
 	findClassifierSequences(stat);
@@ -253,9 +318,121 @@ void test_mkStatFromImageList(const char *offImageFilenameList, const char *onIm
 	}
 }
 
+void test_singleFeed()
+{
+	Logger *logger = new StdoutLogger();
+	logger->SetLogLevel(Logger::LOGLEVEL_WARNING);
+	MyLutColorFilter *lutColorFilter = new MyLutColorFilter();
+	TransitionStat *stat = new TransitionStat(8,3,COLORCODE_NONE);
+
+	Mat src(50,50,CV_8UC3);
+	Mat lut(50,50,CV_8UC1);
+	Mat lutVis(50,50,CV_8UC3);
+	src.setTo(Scalar(0,0,0));
+	rectangle(src,Point2d(25,0),Point2d(30,49),Scalar(255,0,0));
+	lutColorFilter->Filter(&src,&lut,NULL);
+	lutColorFilter->InverseLut(lut,lutVis);
+	imshow("TestImage",src);
+	imshow("LUT",lutVis);
+	waitKey(0);
+	feedImageIntoTransitionStat(stat, lut, true);
+
+	src.setTo(Scalar(0,0,0));
+	rectangle(src,Point2d(25,0),Point2d(30,49),Scalar(0,0,255));
+	lutColorFilter->Filter(&src,&lut,NULL);
+	lutColorFilter->InverseLut(lut,lutVis);
+	imshow("TestImage",src);
+	imshow("LUT",lutVis);
+	waitKey(0);
+	feedImageIntoTransitionStat(stat, lut, false);
+
+	stat->counterTreeRoot->showCompactRecursive(0,1);
+	stat->counterTreeRoot->getAndStoreSubtreeSumCounter(COUNTERIDX_ON);
+	stat->counterTreeRoot->getAndStoreSubtreeSumCounter(COUNTERIDX_OFF);
+
+	findClassifierSequences(stat);
+
+	cout << "done" << endl;
+}
+
+void test_mkStatInteractive()
+{
+	const int markovChainOrder = 10;
+	if (markovChainOrder>4)
+		callbackVerbose=false;
+
+	Logger *logger = new StdoutLogger();
+	logger->SetLogLevel(Logger::LOGLEVEL_WARNING);
+
+	MyLutColorFilter *lutColorFilter = new MyLutColorFilter();
+
+	TransitionStat *stat = new TransitionStat(8,markovChainOrder,COLORCODE_NONE);
+
+	CameraLocalProxy *camProxy0 = new CameraLocalProxy(VIDEOINPUTTYPE_PS3EYE,0);
+	camProxy0->getVideoInput()->SetNormalizedExposure(-1);
+	camProxy0->getVideoInput()->SetNormalizedGain(-1);
+	camProxy0->getVideoInput()->SetNormalizedWhiteBalance(-1,-1,-1);
+
+	namedWindow("SRC", CV_WINDOW_AUTOSIZE);
+	namedWindow("LUT", CV_WINDOW_AUTOSIZE);
+	namedWindow("Score", CV_WINDOW_AUTOSIZE);
+
+	Mat src(480,640,CV_8UC3);
+	Mat lut(480,640,CV_8UC1);
+	Mat score(480,640,CV_8UC1);
+	Mat visLut(480,640,CV_8UC3);
+
+	bool running = true;
+	while(running) //Show the image captured in the window and repeat
+	{
+		camProxy0->CaptureImage(0,&src);
+		
+		lutColorFilter->Filter(&src,&lut,NULL);
+		lutColorFilter->InverseLut(lut,visLut);
+
+		getScoreMaskForImage(stat,lut,score);
+
+		imshow("SRC",src);
+		imshow("LUT",visLut);
+		imshow("Score",score);
+
+		char ch = waitKey(25);
+		switch(ch)
+		{
+		case 27:
+			running=false;
+			cout << "Exiting" << endl;
+			break;
+		case '+':	// on
+			feedImageIntoTransitionStat(stat,lut,true);
+			cout << "Saved ON" << endl;
+			break;
+		case '-':	// off
+			feedImageIntoTransitionStat(stat,lut,false);
+			cout << "Saved OFF" << endl;
+			break;
+		case 'l':	// learn
+			stat->counterTreeRoot->getAndStoreSubtreeSumCounter(COUNTERIDX_OFF);
+			stat->counterTreeRoot->getAndStoreSubtreeSumCounter(COUNTERIDX_ON);
+			if (markovChainOrder<4)
+				stat->counterTreeRoot->showCompactRecursive(0,1);
+			findClassifierSequences(stat);
+			cout << "Trained" << endl;
+			break;
+		case 'r':	// reset
+			delete stat;
+			stat = new TransitionStat(8,markovChainOrder,COLORCODE_NONE);
+			cout << "TransitionStat reset" << endl;
+			break;
+		}
+	}
+}
+
 
 int main(int argc, char *argv[], char *window_name)
 {
 	//test_frameSaver();
-	test_mkStatFromImageList("off_list.txt","on_list.txt");
+	//test_mkStatFromImageList("off_list.txt","on_list.txt");
+	//test_singleFeed();
+	test_mkStatInteractive();
 }

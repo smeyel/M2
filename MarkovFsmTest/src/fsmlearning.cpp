@@ -55,54 +55,11 @@ void test_graphOpt()
 
 	fsmlearner->counterTreeRoot->calculateSubtreeCounters(COUNTERIDX_ON);
 	fsmlearner->counterTreeRoot->calculateSubtreeCounters(COUNTERIDX_OFF);
+
 	fsmlearner->counterTreeRoot->showCompactRecursive(0,1,&inputValueNames);
 
-	//	stat->findClassifierSequences(callback);
-	unsigned int valuesA[] = {COLORCODE_BLK,COLORCODE_GRN,COLORCODE_BLK};
-	unsigned int valuesB[] = {COLORCODE_BLK,COLORCODE_BLU,COLORCODE_BLK};
-	SequenceCounterTreeNode *nodeA = fsmlearner->counterTreeRoot->getNode(valuesA,2,false);
-	SequenceCounterTreeNode *nodeB = fsmlearner->counterTreeRoot->getNode(valuesB,2,false);
 
-	//bool canCombine = stat->checkCanCombineNodes(nodeA,nodeB,0.7F);
-
-	//stat->combineNodes(nodeA,nodeB);
-
-	//checkNodePair(stat,nodeA,nodeB,0.7F);
-	vector<SequenceCounterTreeNode *> *allNodes = new vector<SequenceCounterTreeNode *>();
-	vector<SequenceCounterTreeNode *> *newAllNodes = new vector<SequenceCounterTreeNode *>();
-
-	bool running=true;
-	while (running)
-	{
-		allNodes->clear();
-		fsmlearner->collectNodesBackwards(allNodes,fsmlearner->counterTreeRoot);
-
-		pair<SequenceCounterTreeNode *,SequenceCounterTreeNode *> toCombine =
-			fsmlearner->checkAllCombinationsForMerge(fsmlearner,allNodes,0.7F);
-		if (toCombine.first==NULL || toCombine.second==NULL)
-		{
-			running=false;
-			break;
-		}
-
-		int idA = toCombine.first->getNodeID();
-		int idB = toCombine.second->getNodeID();
-		cout << "------------- combining nodes... -------------" << endl;
-		cout << "COMBING: " << toCombine.first->getNodeID() << " and " << toCombine.second->getNodeID() << endl;
-		fsmlearner->combineNodes(toCombine.first,toCombine.second);
-
-		// TODO: delete should be done inside combineNodes!!!
-		newAllNodes->clear();
-		fsmlearner->collectNodesBackwards(newAllNodes,fsmlearner->counterTreeRoot);
-		fsmlearner->deleteRemovedNodes(allNodes,newAllNodes);
-
-		fsmlearner->counterTreeRoot->showCompactRecursive(0,1,&inputValueNames);
-	}
-
-	delete allNodes;
-	allNodes=NULL;
-
-	//stat->optimizeGraph();
+	fsmlearner->mergeNodesForPrecision(&inputValueNames);
 
 	cout << "------------- combining nodes... -------------" << endl;
 	fsmlearner->counterTreeRoot->showCompactRecursive(0,1,&inputValueNames);

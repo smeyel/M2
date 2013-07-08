@@ -8,7 +8,7 @@ using namespace cv;
 using namespace LogConfigTime;
 using namespace smeyel;
 
-#include "TransitionStat.h"
+#include "FsmLearner.h"
 
 void collectNodesBackwards(vector<SequenceCounterTreeNode *> *allNodes, SequenceCounterTreeNode *node)
 {
@@ -22,21 +22,21 @@ void collectNodesBackwards(vector<SequenceCounterTreeNode *> *allNodes, Sequence
 		collectNodesBackwards(allNodes, node->getChildNode(i));
 
 	// second, add after all children are added
-	for(int i=0; i<allNodes->size(); i++)
+	for(unsigned int i=0; i<allNodes->size(); i++)
 		if ((*allNodes)[i]==node)
 			return;	// Already added
 	allNodes->push_back(node);
 }
 
 pair<SequenceCounterTreeNode *,SequenceCounterTreeNode *>
-	checkAllCombinationsForMerge(TransitionStat *stat, vector<SequenceCounterTreeNode *> *allNodes, float minPrecision)
+	checkAllCombinationsForMerge(FsmLearner *stat, vector<SequenceCounterTreeNode *> *allNodes, float minPrecision)
 {
 	int inputValueNumber = (*allNodes)[0]->getInputValueNumber();
 	int nodeNumber = allNodes->size();
 
-	for(int a=1; a<allNodes->size(); a++)	// "a" is always the next new node
+	for(unsigned int a=1; a<allNodes->size(); a++)	// "a" is always the next new node
 	{
-		for(int b=0; b<a; b++)	// "b" is iterating on all previously checked nodes
+		for(unsigned int b=0; b<a; b++)	// "b" is iterating on all previously checked nodes
 		{
 			assert(a!=b);
 
@@ -80,10 +80,10 @@ void deleteRemovedNodes(
 	vector<SequenceCounterTreeNode *> *oldNodes,
 	vector<SequenceCounterTreeNode *> *newNodes)
 {
-	for(int i=0; i<oldNodes->size(); i++)
+	for(unsigned int i=0; i<oldNodes->size(); i++)
 	{
 		bool found = false;
-		for(int j=0; j<newNodes->size(); j++)
+		for(unsigned int j=0; j<newNodes->size(); j++)
 		{
 			if ((*newNodes)[j]==(*oldNodes)[i])
 				found=true;
@@ -104,7 +104,7 @@ void test_graphOpt()
 	Logger *logger = new StdoutLogger();
 	logger->SetLogLevel(Logger::LOGLEVEL_WARNING);
 	MyLutColorFilter *lutColorFilter = new MyLutColorFilter();
-	TransitionStat *stat = new TransitionStat(8,3,COLORCODE_NONE);
+	FsmLearner *stat = new FsmLearner(8,3,COLORCODE_NONE);
 
 	vector<string> inputValueNames(7);
 	inputValueNames[COLORCODE_BLK]=string("BLK");

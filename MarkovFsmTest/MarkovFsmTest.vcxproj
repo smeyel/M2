@@ -85,10 +85,12 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="include\fsmlearning.h" />
     <ClInclude Include="include\MyColorCodes.h" />
     <ClInclude Include="include\MyLutColorFilter.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\fsmlearning.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\MyLutColorFilter.cpp" />
   </ItemGroup>

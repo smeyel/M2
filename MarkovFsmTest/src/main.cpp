@@ -14,6 +14,8 @@
 
 #include "TransitionStat.h"
 
+#include "fsmlearning.h"
+
 using namespace std;
 using namespace cv;
 using namespace smeyel;
@@ -92,7 +94,7 @@ void callback(SequenceCounterTreeNode *node, float precision)
 	if(callbackVerbose)
 		cout << "Precision, Score: " << precision << ", " << (int)node->auxScore << endl;
 
-	if(callbackVerbose)
+/*	if(callbackVerbose)
 		cout << "Input sequence (reverse order!!!):" << endl;
 	SequenceCounterTreeNode *current = node;
 	SequenceCounterTreeNode *parent = node->getParentNode();
@@ -102,7 +104,7 @@ void callback(SequenceCounterTreeNode *node, float precision)
 			cout << parent->getInputValueForChild(current) << " ";
 		current = parent;
 		parent = current->getParentNode();
-	}
+	} */
 	if(callbackVerbose)
 	{
 		cout << "(root)" << endl;
@@ -134,8 +136,8 @@ void test_mkStatFromImageList(const char *offImageFilenameList, const char *onIm
 		fileBuff.close();
 	}
 
-	stat->counterTreeRoot->getAndStoreSubtreeSumCounter(COUNTERIDX_OFF);
-	stat->counterTreeRoot->getAndStoreSubtreeSumCounter(COUNTERIDX_ON);
+	stat->counterTreeRoot->calculateSubtreeCounters(COUNTERIDX_OFF);
+	stat->counterTreeRoot->calculateSubtreeCounters(COUNTERIDX_ON);
 
 	stat->counterTreeRoot->showCompactRecursive(0,1);
 
@@ -206,8 +208,8 @@ void test_singleFeed()
 	stat->addImage(lut, false);
 
 	stat->counterTreeRoot->showCompactRecursive(0,1);
-	stat->counterTreeRoot->getAndStoreSubtreeSumCounter(COUNTERIDX_ON);
-	stat->counterTreeRoot->getAndStoreSubtreeSumCounter(COUNTERIDX_OFF);
+	stat->counterTreeRoot->calculateSubtreeCounters(COUNTERIDX_ON);
+	stat->counterTreeRoot->calculateSubtreeCounters(COUNTERIDX_OFF);
 
 	stat->findClassifierSequences(callback);
 
@@ -271,8 +273,8 @@ void test_mkStatInteractive()
 			cout << "Saved OFF" << endl;
 			break;
 		case 'l':	// learn
-			stat->counterTreeRoot->getAndStoreSubtreeSumCounter(COUNTERIDX_OFF);
-			stat->counterTreeRoot->getAndStoreSubtreeSumCounter(COUNTERIDX_ON);
+			stat->counterTreeRoot->calculateSubtreeCounters(COUNTERIDX_OFF);
+			stat->counterTreeRoot->calculateSubtreeCounters(COUNTERIDX_ON);
 			if (markovChainOrder<4)
 				stat->counterTreeRoot->showCompactRecursive(0,1);
 			stat->findClassifierSequences(callback);
@@ -287,11 +289,12 @@ void test_mkStatInteractive()
 	}
 }
 
-
 int main(int argc, char *argv[], char *window_name)
 {
 	//test_frameSaver();
 	//test_mkStatFromImageList("off_list.txt","on_list.txt");
+	//test_mkStatInteractive();
+	
 	//test_singleFeed();
-	test_mkStatInteractive();
+	test_graphOpt();
 }

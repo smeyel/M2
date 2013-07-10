@@ -85,6 +85,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="include\dagnode.h" />
     <ClInclude Include="include\fsmlearning.h" />
     <ClInclude Include="include\MyColorCodes.h" />
     <ClInclude Include="include\MyLutColorFilter.h" />

@@ -35,7 +35,7 @@ void test_graphOpt()
 	lutColorFilter->InverseLut(lut,lutVis);
 	imshow("TestImage",src);
 	imshow("LUT",lutVis);
-	waitKey(0);
+	//waitKey(0);
 	fsmlearner->addImage(lut, true);
 
 	//cout << "------------- ON train -------------" << endl;
@@ -47,18 +47,28 @@ void test_graphOpt()
 	lutColorFilter->InverseLut(lut,lutVis);
 	imshow("TestImage",src);
 	imshow("LUT",lutVis);
-	waitKey(0);
+	//waitKey(0);
 	fsmlearner->addImage(lut, false);
 
 	//cout << "------------- OFF train -------------" << endl;
 	//stat->counterTreeRoot->showCompactRecursive(0,1,&inputValueNames);
 
+	// calculateSubtreeCounters
 	fsmlearner->counterTreeRoot->calculateSubtreeCounters(COUNTERIDX_ON);
 	fsmlearner->counterTreeRoot->calculateSubtreeCounters(COUNTERIDX_OFF);
 
+	// Set precisions
+	fsmlearner->setPrecisionStatus(fsmlearner->counterTreeRoot,0.7F);
+
 	fsmlearner->counterTreeRoot->showCompactRecursive(0,1,&inputValueNames);
 
+	// cut
+	cout << "------------- cut -------------" << endl;
+	fsmlearner->counterTreeRoot->cut(0);
 
+	fsmlearner->counterTreeRoot->showCompactRecursive(0,1,&inputValueNames);
+
+	cout << "------------- merge -------------" << endl;
 	fsmlearner->mergeNodesForPrecision(&inputValueNames);
 
 	cout << "------------- combining nodes... -------------" << endl;

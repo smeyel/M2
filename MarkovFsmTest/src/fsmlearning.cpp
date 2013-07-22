@@ -123,7 +123,7 @@ void test_mkStatFromImageList(const char *offImageFilenameList, const char *onIm
 
 	MyLutColorFilter *lutColorFilter = new MyLutColorFilter();
 
-	FsmLearner *fsmlearner = new FsmLearner(8,3,COLORCODE_NONE);
+	FsmLearner *fsmlearner = new FsmLearner(8,10,COLORCODE_NONE);
 
 	std::filebuf fileBuff;
 	if (fileBuff.open(offImageFilenameList,std::ios::in))

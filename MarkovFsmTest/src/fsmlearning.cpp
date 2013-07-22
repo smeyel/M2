@@ -93,10 +93,11 @@ void processImages(istream *filenameListFile, bool isOn, LutColorFilter *filter,
 	char filename[256];
 	while (filenameListFile->getline(filename,256)) //Show the image captured in the window and repeat
 	{
-		cout << "Processing file: " << filename << endl;
 		VideoInput *input = VideoInputFactory::CreateVideoInput(VIDEOINPUTTYPE_GENERIC);
 		input->init(filename);
 		input->captureFrame(src);
+
+		cout << "Processing file: " << filename << ", size=" << src.cols << " x " << src.rows << endl;
 
 		Mat lut(src.rows,src.cols,CV_8UC1);
 		Mat visLut(src.rows,src.cols,CV_8UC3);
@@ -108,8 +109,22 @@ void processImages(istream *filenameListFile, bool isOn, LutColorFilter *filter,
 	}
 }
 
+Point lastMouseClickLocation;
+
+void mouse_callback(int eventtype, int x, int y, int flags, void *param)
+{
+	if (eventtype == CV_EVENT_LBUTTONDOWN)
+	{
+		lastMouseClickLocation = Point(x,y);
+		cout << "Click location saved: " << x << ";" << y << endl;
+	}
+}
+
+
 void test_mkStatFromImageList(const char *offImageFilenameList, const char *onImageFilenameList)
 {
+	int markovChainOrder = 100;
+
 	vector<string> inputValueNames(7);
 	inputValueNames[COLORCODE_BLK]=string("BLK");
 	inputValueNames[COLORCODE_WHT]=string("WHT");
@@ -123,7 +138,7 @@ void test_mkStatFromImageList(const char *offImageFilenameList, const char *onIm
 
 	MyLutColorFilter *lutColorFilter = new MyLutColorFilter();
 
-	FsmLearner *fsmlearner = new FsmLearner(8,10,COLORCODE_NONE);
+	FsmLearner *fsmlearner = new FsmLearner(8,markovChainOrder,COLORCODE_NONE);
 
 	std::filebuf fileBuff;
 	if (fileBuff.open(offImageFilenameList,std::ios::in))
@@ -142,11 +157,17 @@ void test_mkStatFromImageList(const char *offImageFilenameList, const char *onIm
 	fsmlearner->counterTreeRoot->calculateSubtreeCounters(COUNTERIDX_OFF);
 	fsmlearner->counterTreeRoot->calculateSubtreeCounters(COUNTERIDX_ON);
 
+	// Fix dataset imbalances in the counter values
+	float onSum = fsmlearner->counterTreeRoot->getCounter(COUNTERIDX_ON);
+	float offSum = fsmlearner->counterTreeRoot->getCounter(COUNTERIDX_OFF);
+	float multiplier = offSum / onSum;
+	fsmlearner->counterTreeRoot->multiplySubtreeCounters(COUNTERIDX_ON, multiplier);
+
 	// Optimize tree
 	// Set precisions
 	fsmlearner->setPrecisionStatus(fsmlearner->counterTreeRoot,0.7F);
 
-	fsmlearner->counterTreeRoot->showCompactRecursive(0,1,&inputValueNames);
+	//fsmlearner->counterTreeRoot->showCompactRecursive(0,1,&inputValueNames);
 
 	// cut
 	cout << "------------- cut -------------" << endl;
@@ -154,10 +175,11 @@ void test_mkStatFromImageList(const char *offImageFilenameList, const char *onIm
 	fsmlearner->counterTreeRoot->showCompactRecursive(0,1,&inputValueNames);
 
 	cout << "------------- merge -------------" << endl;
-	fsmlearner->mergeNodesForPrecision(&inputValueNames);
+	//fsmlearner->mergeNodesForPrecision(&inputValueNames);
 	fsmlearner->setPrecisionStatus(fsmlearner->counterTreeRoot,0.7F);	// re-set precision status and AUX!
 	fsmlearner->counterTreeRoot->showCompactRecursive(0,1,&inputValueNames);
 
+	SequenceCounterTreeNode::showNodeNumber();
 
 	// -------------- Now start camera and apply statistics (auxScore mask) to the frames
 	CameraLocalProxy *camProxy0 = new CameraLocalProxy(VIDEOINPUTTYPE_PS3EYE,0);
@@ -168,28 +190,45 @@ void test_mkStatFromImageList(const char *offImageFilenameList, const char *onIm
 	namedWindow("SRC", CV_WINDOW_AUTOSIZE);
 	namedWindow("LUT", CV_WINDOW_AUTOSIZE);
 	namedWindow("Score", CV_WINDOW_AUTOSIZE);
+	cvSetMouseCallback("LUT", mouse_callback);
 
 	Mat src(480,640,CV_8UC3);
 	Mat lut(480,640,CV_8UC1);
 	Mat score(480,640,CV_8UC1);
 	Mat visLut(480,640,CV_8UC3);
 
-	while(true) //Show the image captured in the window and repeat
+	bool running=true;
+	bool capture=true;
+	while(running) //Show the image captured in the window and repeat
 	{
-		camProxy0->CaptureImage(0,&src);
+		if (capture)
+		{
+			camProxy0->CaptureImage(0,&src);
 		
-		lutColorFilter->Filter(&src,&lut,NULL);
-		lutColorFilter->InverseLut(lut,visLut);
+			lutColorFilter->Filter(&src,&lut,NULL);
 
-		fsmlearner->getScoreMaskForImage(lut,score);
+			fsmlearner->getScoreMaskForImage(lut,score);
+		}
+		lutColorFilter->InverseLut(lut,visLut);	// May be changed at mouse clicks
 
 		imshow("SRC",src);
 		imshow("LUT",visLut);
 		imshow("Score",score);
 
 		char ch = waitKey(25);
-		if (ch==27)
+		switch(ch)
 		{
+		case 27:
+			running=false;
+			break;
+		case 's':	// stop
+			capture=false;
+			break;
+		case 'r':	// run
+			capture=true;
+			break;
+		case 'v':	// verbose
+			fsmlearner->verboseScoreForImageLocation(lut,lastMouseClickLocation);
 			break;
 		}
 	}

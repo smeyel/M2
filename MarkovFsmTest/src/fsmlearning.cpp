@@ -8,6 +8,7 @@
 
 #include "MyLutColorFilter.h"
 #include "StdoutLogger.h"
+#include "FileLogger.h"
 
 using namespace cv;
 using namespace LogConfigTime;
@@ -134,23 +135,25 @@ void test_mkStatFromImageList(const char *offImageFilenameList, const char *onIm
 	inputValueNames[COLORCODE_NONE]=string("NON");
 
 	Logger *logger = new StdoutLogger();
+	//Logger *logger = new FileLogger("log.txt");
 	logger->SetLogLevel(Logger::LOGLEVEL_WARNING);
+	//logger->SetLogLevel(Logger::LOGLEVEL_VERBOSE);
 
 	MyLutColorFilter *lutColorFilter = new MyLutColorFilter();
 
 	FsmLearner *fsmlearner = new FsmLearner(8,markovChainOrder,COLORCODE_NONE);
 
 	std::filebuf fileBuff;
-	if (fileBuff.open(offImageFilenameList,std::ios::in))
-	{
-		std::istream istrm(&fileBuff);
-		processImages(&istrm,false,lutColorFilter,fsmlearner);
-		fileBuff.close();
-	}
 	if (fileBuff.open(onImageFilenameList,std::ios::in))
 	{
 		std::istream istrm(&fileBuff);
 		processImages(&istrm,true,lutColorFilter,fsmlearner);
+		fileBuff.close();
+	}
+	if (fileBuff.open(offImageFilenameList,std::ios::in))
+	{
+		std::istream istrm(&fileBuff);
+		processImages(&istrm,false,lutColorFilter,fsmlearner);
 		fileBuff.close();
 	}
 
@@ -171,13 +174,14 @@ void test_mkStatFromImageList(const char *offImageFilenameList, const char *onIm
 
 	// cut
 	cout << "------------- cut -------------" << endl;
-	fsmlearner->counterTreeRoot->cut(0);
-	fsmlearner->counterTreeRoot->showCompactRecursive(0,1,&inputValueNames);
+	// Warning: a node look-up nem kezeli rendesen, ha CUT-olva van a fa...
+	//fsmlearner->counterTreeRoot->cut(0);
+	//fsmlearner->counterTreeRoot->showCompactRecursive(0,1,&inputValueNames);
 
 	cout << "------------- merge -------------" << endl;
 	//fsmlearner->mergeNodesForPrecision(&inputValueNames);
 	fsmlearner->setPrecisionStatus(fsmlearner->counterTreeRoot,0.7F);	// re-set precision status and AUX!
-	fsmlearner->counterTreeRoot->showCompactRecursive(0,1,&inputValueNames);
+	//fsmlearner->counterTreeRoot->showCompactRecursive(0,1,&inputValueNames);
 
 	SequenceCounterTreeNode::showNodeNumber();
 
@@ -191,6 +195,7 @@ void test_mkStatFromImageList(const char *offImageFilenameList, const char *onIm
 	namedWindow("LUT", CV_WINDOW_AUTOSIZE);
 	namedWindow("Score", CV_WINDOW_AUTOSIZE);
 	cvSetMouseCallback("LUT", mouse_callback);
+	cvSetMouseCallback("Score", mouse_callback);
 
 	Mat src(480,640,CV_8UC3);
 	Mat lut(480,640,CV_8UC1);

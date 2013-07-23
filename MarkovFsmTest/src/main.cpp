@@ -155,6 +155,8 @@ int main(int argc, char *argv[], char *window_name)
 {
 	//test_frameSaver();
 	test_mkStatFromImageList("off_list.txt","on_list.txt");
+	//test_mkStatFromImageList("off_list_reduced.txt","on_list_reduced.txt");
+	
 	//test_mkStatInteractive();
 	
 	//test_graphOpt();

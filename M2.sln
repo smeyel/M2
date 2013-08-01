@@ -21,8 +21,6 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Recorder", "Recorder\Record
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libPlatformSpecifics", "Framework\libPlatformSpecifics\libPlatformSpecifics.vcxproj", "{5C2ABDC3-6E47-40C0-80A1-A020F188F756}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ColorFilterTest", "ColorFilterTest\ColorFilterTest.vcxproj", "{46FC9CC0-8B18-43CA-8683-D6BC028C1507}"
-EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libTimeSyncBeacon", "ImageProcessing\libTimeSyncBeacon\libTimeSyncBeacon.vcxproj", "{757C1C16-4B1F-465F-9546-F98ED48A2DFF}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libImageFilter", "ImageProcessing\libImageFilter\libImageFilter.vcxproj", "{7AED9FEE-4243-4622-B4DD-413A157E446B}"
@@ -30,8 +28,6 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "M2HostTracking", "M2HostTracking\M2HostTracking.vcxproj", "{3D4B7908-094B-41BA-89CA-1582F318DA0F}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "LutCalibration", "ImageProcessing\LutCalibration\LutCalibration.vcxproj", "{5DE35190-471E-41CA-A191-1DF0CB0E5356}"
-EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MarkovFsmTest", "MarkovFsmTest\MarkovFsmTest.vcxproj", "{61CBB528-B4F7-4230-B685-44D363ADC884}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -79,10 +75,6 @@ Global
 		{5C2ABDC3-6E47-40C0-80A1-A020F188F756}.Debug|Win32.Build.0 = Debug|Win32
 		{5C2ABDC3-6E47-40C0-80A1-A020F188F756}.Release|Win32.ActiveCfg = Release|Win32
 		{5C2ABDC3-6E47-40C0-80A1-A020F188F756}.Release|Win32.Build.0 = Release|Win32
-		{46FC9CC0-8B18-43CA-8683-D6BC028C1507}.Debug|Win32.ActiveCfg = Debug|Win32
-		{46FC9CC0-8B18-43CA-8683-D6BC028C1507}.Debug|Win32.Build.0 = Debug|Win32
-		{46FC9CC0-8B18-43CA-8683-D6BC028C1507}.Release|Win32.ActiveCfg = Release|Win32
-		{46FC9CC0-8B18-43CA-8683-D6BC028C1507}.Release|Win32.Build.0 = Release|Win32
 		{757C1C16-4B1F-465F-9546-F98ED48A2DFF}.Debug|Win32.ActiveCfg = Debug|Win32
 		{757C1C16-4B1F-465F-9546-F98ED48A2DFF}.Debug|Win32.Build.0 = Debug|Win32
 		{757C1C16-4B1F-465F-9546-F98ED48A2DFF}.Release|Win32.ActiveCfg = Release|Win32
@@ -99,10 +91,6 @@ Global
 		{5DE35190-471E-41CA-A191-1DF0CB0E5356}.Debug|Win32.Build.0 = Debug|Win32
 		{5DE35190-471E-41CA-A191-1DF0CB0E5356}.Release|Win32.ActiveCfg = Release|Win32
 		{5DE35190-471E-41CA-A191-1DF0CB0E5356}.Release|Win32.Build.0 = Release|Win32
-		{61CBB528-B4F7-4230-B685-44D363ADC884}.Debug|Win32.ActiveCfg = Debug|Win32
-		{61CBB528-B4F7-4230-B685-44D363ADC884}.Debug|Win32.Build.0 = Debug|Win32
-		{61CBB528-B4F7-4230-B685-44D363ADC884}.Release|Win32.ActiveCfg = Release|Win32
-		{61CBB528-B4F7-4230-B685-44D363ADC884}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

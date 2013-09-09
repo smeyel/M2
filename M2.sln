@@ -3,8 +3,6 @@ Microsoft Visual Studio Solution File, Format Version 11.00
 # Visual Studio 2010
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "M2Host", "M2Host\M2Host.vcxproj", "{EB8F935B-3A5B-4022-B883-6211CE5C6C22}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CamClient", "CamClient\CamClient.vcxproj", "{F4E7A46E-0DFC-47CE-86CD-05F31571693F}"
-EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libVideoInput", "Framework\libVideoInput\libVideoInput.vcxproj", "{F0B55C60-9485-43E1-87E2-EDE6A73CCEEF}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libLogConfigTime", "Framework\libLogConfigTime\libLogConfigTime.vcxproj", "{8927A516-DE0F-4550-AE3F-14876252F716}"
@@ -39,10 +37,6 @@ Global
 		{EB8F935B-3A5B-4022-B883-6211CE5C6C22}.Debug|Win32.Build.0 = Debug|Win32
 		{EB8F935B-3A5B-4022-B883-6211CE5C6C22}.Release|Win32.ActiveCfg = Release|Win32
 		{EB8F935B-3A5B-4022-B883-6211CE5C6C22}.Release|Win32.Build.0 = Release|Win32
-		{F4E7A46E-0DFC-47CE-86CD-05F31571693F}.Debug|Win32.ActiveCfg = Debug|Win32
-		{F4E7A46E-0DFC-47CE-86CD-05F31571693F}.Debug|Win32.Build.0 = Debug|Win32
-		{F4E7A46E-0DFC-47CE-86CD-05F31571693F}.Release|Win32.ActiveCfg = Release|Win32
-		{F4E7A46E-0DFC-47CE-86CD-05F31571693F}.Release|Win32.Build.0 = Release|Win32
 		{F0B55C60-9485-43E1-87E2-EDE6A73CCEEF}.Debug|Win32.ActiveCfg = Debug|Win32
 		{F0B55C60-9485-43E1-87E2-EDE6A73CCEEF}.Debug|Win32.Build.0 = Debug|Win32
 		{F0B55C60-9485-43E1-87E2-EDE6A73CCEEF}.Release|Win32.ActiveCfg = Release|Win32

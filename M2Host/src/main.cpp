@@ -247,7 +247,7 @@ int main(int argc, char *argv[])
 	Logger::getInstance()->Log(Logger::LOGLEVEL_VERBOSE,"M2Host","Local measurement log: %s\nRemote measurement log: %s\n",
 		configManager.localMLogFilename.c_str(), configManager.remoteMLogFilename.c_str());
 
-	const bool useLocalCamera=true;
+	const bool useLocalCamera=false;
 
 	// Setup time management
 	// Waiting a little to allow other processes to init...

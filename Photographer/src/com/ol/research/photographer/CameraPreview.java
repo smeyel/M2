@@ -34,6 +34,10 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
 	@Override
 	public void surfaceCreated(SurfaceHolder holder) {
 		try {
+			Camera.Parameters parameters = mCamera.getParameters();
+			parameters.setFlashMode(Camera.Parameters.FLASH_MODE_AUTO);
+			parameters.setFocusMode(Camera.Parameters.FOCUS_MODE_AUTO);
+			parameters.setAntibanding(Camera.Parameters.ANTIBANDING_AUTO);
 			mCamera.setPreviewDisplay(holder);
 			mCamera.startPreview();
 		} catch (IOException e) {

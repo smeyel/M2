@@ -10,6 +10,8 @@
 using namespace std;
 using namespace cv;
 
+char cameraIntrinsicsFilename[] = "ps3eye_intrinsics_blu.xml";
+
 void help()
 {
 	cout
@@ -65,6 +67,8 @@ int main(int argc, char *argv[], char *window_name)
 			camProxy[camIdx] = remoteProxy;
 		}
 
+		camProxy[camIdx]->camera->loadCalibrationData(cameraIntrinsicsFilename);
+
 		/*Size S = Size((int) inputVideo.get(CV_CAP_PROP_FRAME_WIDTH),    //Acquire input size
 					  (int) inputVideo.get(CV_CAP_PROP_FRAME_HEIGHT));*/
 		Size S = Size(640,480);
@@ -89,20 +93,35 @@ int main(int argc, char *argv[], char *window_name)
 		frame[camIdx] = new Mat(480,640,CV_8UC4);
 	}
 
-	std::cout << "Init complete, starting recording..." << endl;
+	std::cout << "Init complete, press C to find chessboard, R to start recording..." << endl;
 
 	int framecounter = 0;	// 0-based frame counter
-	bool finished = false;
-	while(!finished) //Show the image captured in the window and repeat
+	enum states
 	{
-		cout << "Frame " << framecounter << endl;
+		view,
+		calibrate,
+		record,
+		finished
+	} state = view;
+	while(state != finished) //Show the image captured in the window and repeat
+	{
+		//cout << "Frame " << framecounter << endl;
 
 		for(int camIdx=0; camIdx<cameraNumber; camIdx++)
 		{
 			camProxy[camIdx]->CaptureImage(0,frame[camIdx]);
-			imshow(filename[camIdx].c_str(),*frame[camIdx]);
 
-			*outputVideo[camIdx] << *frame[camIdx];
+			switch (state)
+			{
+			case calibrate:
+				camProxy[camIdx]->TryCalibration(frame[camIdx],true);
+				break;
+			case record:
+				*outputVideo[camIdx] << *frame[camIdx];
+				break;
+			}
+
+			imshow(filename[camIdx].c_str(),*frame[camIdx]);
 		}
 
 		char ch = waitKey(25);
@@ -120,8 +139,18 @@ int main(int argc, char *argv[], char *window_name)
 			setAllCamParams(camProxy,cameraNumber,10,1,30,30,30);
 			cout << "Exposure set" << endl;
 			break;
+		case 'r':
+		case 'R':
+			state = record;
+			cout << "Now RECORDING..." << endl;
+			break;
+		case 'c':
+		case 'C':
+			state = calibrate;
+			cout << "Now trying to find chassboard..." << endl;
+			break;
 		case 27:
-			finished=true;
+			state = finished;
 			break;
 		}
 

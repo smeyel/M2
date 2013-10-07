@@ -230,6 +230,7 @@ void M2_RemoteTrackingTest(CameraRemoteProxy *camProxy)
 		{
 			//sendTextMsg(camProxy,"DETECT");
 			//TextMessage *ans = camProxy->SingleTrackMarker(0,false,camProxy->lastImageTaken);
+			// Send a SendPositionMessage and also ask for the image into to be retrieved into camProxy->lastImageTaken.
 			TextMessage *ans = camProxy->SingleTrackMarker(0,true,camProxy->lastImageTaken);
 			ans->log();
 		}
@@ -249,8 +250,6 @@ void M2_RemoteTrackingTest(CameraRemoteProxy *camProxy)
 		case 27:	// Escape
 		case 'x':
 			mode = finished;
-			sendTextMsg(camProxy,"QUIT");
-			cout << "Mode: finished, QUIT command sent." << endl;
 			break;
 		case 'c':
 			mode = chessboard;
@@ -291,6 +290,9 @@ void M2_RemoteTrackingTest(CameraRemoteProxy *camProxy)
 		Logger::getInstance()->Log(Logger::LOGLEVEL_ERROR,"M2HostTracking","Received something else than JPEG image:\n");
 		msg->log();
 	}
+
+	sendTextMsg(camProxy,"QUIT");
+	cout << "Mode: finished, QUIT command sent." << endl;
 }
 
 

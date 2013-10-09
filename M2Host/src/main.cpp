@@ -163,7 +163,13 @@ void M2_TimeSyncTest_interactiveDebug(CameraProxy *camProxy, int captureNum)
 	bool finished = false;
 	while (!finished)
 	{
-		camProxy->CaptureImage(0);
+		if (!camProxy->CaptureImage(0))
+		{
+			// Capture failed. Possibly because the remote side used an AVI file
+			//	and has reached its end.
+			finished = true;
+			break;
+		}
 
 		imshow( "Cam image", *camProxy->lastImageTaken);  
 		char ch = waitKey(25);

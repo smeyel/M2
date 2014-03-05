@@ -1,6 +1,8 @@
 ﻿
-Microsoft Visual Studio Solution File, Format Version 11.00
-# Visual Studio 2010
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2013
+VisualStudioVersion = 12.0.21005.1
+MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "M2Host", "M2Host\M2Host.vcxproj", "{EB8F935B-3A5B-4022-B883-6211CE5C6C22}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libVideoInput", "Framework\libVideoInput\libVideoInput.vcxproj", "{F0B55C60-9485-43E1-87E2-EDE6A73CCEEF}"
@@ -15,8 +17,6 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "lib3dWorld", "Tracking\lib3
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libCameraAbstraction", "Framework\libCameraAbstraction\libCameraAbstraction.vcxproj", "{A3E85482-DB13-4D6A-8DEC-C07B6F29AAC7}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Recorder", "Recorder\Recorder.vcxproj", "{B915A461-13D1-481C-A5B9-E4B6B7E82B6C}"
-EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libPlatformSpecifics", "Framework\libPlatformSpecifics\libPlatformSpecifics.vcxproj", "{5C2ABDC3-6E47-40C0-80A1-A020F188F756}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libTimeSyncBeacon", "ImageProcessing\libTimeSyncBeacon\libTimeSyncBeacon.vcxproj", "{757C1C16-4B1F-465F-9546-F98ED48A2DFF}"
@@ -26,6 +26,8 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "M2HostTracking", "M2HostTracking\M2HostTracking.vcxproj", "{3D4B7908-094B-41BA-89CA-1582F318DA0F}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "LutCalibration", "ImageProcessing\LutCalibration\LutCalibration.vcxproj", "{5DE35190-471E-41CA-A191-1DF0CB0E5356}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Recorder", "Framework\Recorder\Recorder.vcxproj", "{B915A461-13D1-481C-A5B9-E4B6B7E82B6C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -61,10 +63,6 @@ Global
 		{A3E85482-DB13-4D6A-8DEC-C07B6F29AAC7}.Debug|Win32.Build.0 = Debug|Win32
 		{A3E85482-DB13-4D6A-8DEC-C07B6F29AAC7}.Release|Win32.ActiveCfg = Release|Win32
 		{A3E85482-DB13-4D6A-8DEC-C07B6F29AAC7}.Release|Win32.Build.0 = Release|Win32
-		{B915A461-13D1-481C-A5B9-E4B6B7E82B6C}.Debug|Win32.ActiveCfg = Debug|Win32
-		{B915A461-13D1-481C-A5B9-E4B6B7E82B6C}.Debug|Win32.Build.0 = Debug|Win32
-		{B915A461-13D1-481C-A5B9-E4B6B7E82B6C}.Release|Win32.ActiveCfg = Release|Win32
-		{B915A461-13D1-481C-A5B9-E4B6B7E82B6C}.Release|Win32.Build.0 = Release|Win32
 		{5C2ABDC3-6E47-40C0-80A1-A020F188F756}.Debug|Win32.ActiveCfg = Debug|Win32
 		{5C2ABDC3-6E47-40C0-80A1-A020F188F756}.Debug|Win32.Build.0 = Debug|Win32
 		{5C2ABDC3-6E47-40C0-80A1-A020F188F756}.Release|Win32.ActiveCfg = Release|Win32
@@ -85,6 +83,10 @@ Global
 		{5DE35190-471E-41CA-A191-1DF0CB0E5356}.Debug|Win32.Build.0 = Debug|Win32
 		{5DE35190-471E-41CA-A191-1DF0CB0E5356}.Release|Win32.ActiveCfg = Release|Win32
 		{5DE35190-471E-41CA-A191-1DF0CB0E5356}.Release|Win32.Build.0 = Release|Win32
+		{B915A461-13D1-481C-A5B9-E4B6B7E82B6C}.Debug|Win32.ActiveCfg = Debug|Win32
+		{B915A461-13D1-481C-A5B9-E4B6B7E82B6C}.Debug|Win32.Build.0 = Debug|Win32
+		{B915A461-13D1-481C-A5B9-E4B6B7E82B6C}.Release|Win32.ActiveCfg = Release|Win32
+		{B915A461-13D1-481C-A5B9-E4B6B7E82B6C}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
